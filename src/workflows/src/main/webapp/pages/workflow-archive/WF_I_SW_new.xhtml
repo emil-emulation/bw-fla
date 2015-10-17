@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_I_SW_new}" />
+	
+	<ui:define name="metadata">
+	<style>
+		.remaining_chars {
+			color: rgb(123, 123, 123);
+		}
+		
+		label {
+			font-weight: 700;
+		}
+		
+		input[type="text"] {
+			width: 515px;
+		}
+		
+		[id$=":filePickList"] {
+			width: 825px;
+		}
+		
+		.ui-picklist-source,
+		.ui-picklist-target {
+		   width: 389px !important;
+		   height: 300px !important;
+		}
+		
+		[id$=":licenseInstanceCount"] input {
+			width: 799px;
+		}
+		
+		.input-fmt {
+			width: 534px !important;
+			height: 17px !important;
+			vertical-align: top !important;
+			border-radius: 0px 3px 3px 0px !important;
+			margin-right: 8px !important;
+		} 
+		
+		.btn-fmt {
+			width: 35px !important;
+			vertical-align: top !important;
+			height: 27px !important;
+		}
+		
+		.fileMediumType {
+			margin-left: 5px;
+		}
+		
+		.fileMediumType:before {
+			content: '(';
+		}
+
+		.fileMediumType:after {
+			content: ')';
+		}
+		
+		.ui-picklist-source .fileMediumType {
+		display: none;
+	}
+	</style>
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:panel header="#{WF_I_SW_new.archive.id eq -1 ? 'Create' : 'Edit'} Archive" style="width: 850px; margin: 0 auto 30px auto;">	
+		<h:form id="mainForm">
+			<ui:fragment rendered="#{true}">
+				<p:outputLabel for="id" value="Id:" /> <br />
+				<p:inputText id="id" value="#{WF_I_SW_new.archive.id}" required="true" /> <br />
+				
+				<br />
+			
+				<p:outputLabel for="name" value="Name:" /> <br />
+				<p:inputText id="name" value="#{WF_I_SW_new.archive.name}" required="true" /> <br />
+				
+				<br />
+				
+				<p:outputLabel for="version" value="Version:" /> <br />
+				<p:inputText id="version" value="#{WF_I_SW_new.archive.version}" /> <br />
+				
+				<br />
+							
+				<p:outputLabel for="description" value="Description:" /> <br />
+				<p:inputTextarea id="description" value="#{WF_I_SW_new.archive.description}" rows="4" cols="115"
+				  counter="remaining_chars" maxlength="5000" counterTemplate="{0} characters remaining." /> <br />
+				<h:outputText id="remaining_chars" styleClass="remaining_chars"/> <br />
+				
+				<br />
+			</ui:fragment>
+			
+			<ui:fragment rendered="#{true}">
+				 <p:outputLabel for="platform" value="Platform/System" /><br/>
+				<p:selectOneMenu id="platform" 
+					value="#{WF_I_SW_new.selectedPlatform}">
+					<f:selectItems value="#{WF_I_SW_new.supportedPlatforms}" />
+					<p:ajax event="change" update="mainForm:filePickList" />
+				</p:selectOneMenu><br/>
+				<br />
+				<p:outputLabel for="filePickList" value="Included Files and Directories:" /> <br />
+				
+				<p:pickList id="filePickList" value="#{WF_I_SW_new.files}" var="file" itemValue="#{file}" 
+				  converter="de.bwl.bwfla.workflows.beans.common.EntityConverter"
+				  onTransfer="onFilePickListTransfer(e)">
+					
+					<f:facet name="sourceCaption">Available</f:facet>
+					<f:facet name="targetCaption">Included</f:facet>
+					
+					<p:column style="width: 30px;">
+						<p:graphicImage name="file.png" library="images"/>
+					</p:column>
+					
+					<p:column>
+						<h:outputText value="#{file.path}" />
+						
+					</p:column>
+				</p:pickList>
+				<script type="text/javascript">
+					function onFilePickListTransfer(e) {
+						if ($(e.from).is('.ui-picklist-target')) {
+							return;
+						}
+						
+						currentFilePickerTransferFilename = $(e.items[0]).text();
+						e.items.remove(0)
+						PF('selectMediumDlg').show();
+					}
+				</script>
+				
+				<br />
+			</ui:fragment>
+			
+			<p:outputPanel id="metadata" rendered="#{true}">		
+				<p:panel header="Rendering Capabilites: Native FMTs">
+                    <p:dataTable value="#{WF_I_SW_new.natives}" var="row" binding="#{nativeFormats}">
+                        <p:column>
+                            <p:inputText value="#{WF_I_SW_new.natives[nativeFormats.rowIndex]}" />
+
+                            <p:commandButton styleClass="btn-fmt" icon="ui-icon-close" value=" " 
+                          title="Remove" update="@form"
+                          action="#{WF_I_SW_new.removeFromList(WF_I_SW_new.natives, importFormats.rowIndex)}" />
+                        </p:column>
+                    </p:dataTable>
+                    <br />
+					
+                    <p:commandButton action="#{WF_I_SW_new.addToList(WF_I_SW_new.natives)}" 
+                      update="metadata" value="Add native PUID" icon="ui-icon-plus" /> <br />
+				</p:panel>
+				
+				<br />
+				
+				<p:panel header="Rendering Capabilites: Import FMTs">
+				    <p:dataTable value="#{WF_I_SW_new.imports}" var="row" binding="#{importFormats}">
+				        <p:column>
+				            <p:inputText value="#{WF_I_SW_new.imports[importFormats.rowIndex]}" />
+
+                            <p:commandButton styleClass="btn-fmt" icon="ui-icon-close" value=" " 
+                          title="Remove" update="@form"
+                          action="#{WF_I_SW_new.removeFromList(WF_I_SW_new.imports, importFormats.rowIndex)}" />
+				        </p:column>
+				    </p:dataTable>
+				    
+				    <br />
+					
+					<p:commandButton action="#{WF_I_SW_new.addToList(WF_I_SW_new.imports)}" 
+					  update="metadata" value="Add import PUID" icon="ui-icon-plus" /> <br />
+				</p:panel>
+				
+				<br />
+				
+				<p:panel header="Rendering Capabilites: Export FMTs">
+                    <p:dataTable value="#{WF_I_SW_new.exports}" var="row" binding="#{exportFormats}">
+                        <p:column>
+                            <p:inputText value="#{WF_I_SW_new.exports[exportFormats.rowIndex]}" />
+
+                            <p:commandButton styleClass="btn-fmt" icon="ui-icon-close" value=" " 
+                          title="Remove" update="@form"
+                          action="#{WF_I_SW_new.removeFromList(WF_I_SW_new.exports, exportFormats.rowIndex)}" />
+                        </p:column>
+                    </p:dataTable>
+
+                    <br />
+					
+                    <p:commandButton action="#{WF_I_SW_new.addToList(WF_I_SW_new.exports)}" 
+                      update="metadata" value="Add export PUID" icon="ui-icon-plus" /> <br />
+				</p:panel>
+				
+				<br />
+			</p:outputPanel>
+			
+			<ui:fragment rendered="#{true}">
+				<p:outputLabel for="licenseText" value="License Information" /> <br />
+				<p:inputTextarea id="licenseText" value="#{WF_I_SW_new.archive.licensesText}" rows="4" cols="115"
+				  counter="remaining_chars2" maxlength="600000" counterTemplate="{0} characters remaining." /> <br />
+				<h:outputText id="remaining_chars2" styleClass="remaining_chars"/> <br />
+				
+				<br />
+				
+				<p:outputLabel for="licenseInstanceCount" value="Allowed number of instances: (for unlimited choose -1)" /> <br />
+				<p:spinner id="licenseInstanceCount" value="#{WF_I_SW_new.archive.licenseInstanceCount}" min="-1" /> <br />
+				
+				<br />
+			</ui:fragment>
+			
+			<p:commandButton value="Save #{WF_I_SW_new.archive.id eq -1 ? 'new archive' : 'changes'}" action="#{WF_I_SW_new.forward}" />
+		</h:form>	
+	</p:panel>
+	
+	<!-- Dialogs -->
+	<p:dialog header="Select File Medium" id="selectMediumDlg" widgetVar="selectMediumDlg" modal="true" height="200" width="400"
+	  closable="false" draggable="false" resizable="false">
+	    <h:form>
+		    <p:selectOneMenu value="floppy" widgetVar="selectMediumSelect" style="width: 370px;">
+				<f:selectItem itemLabel="Floppy" itemValue="floppy" />
+				<f:selectItem itemLabel="Cdrom" itemValue="cdrom" />
+		    </p:selectOneMenu>
+		    
+		    <br /><br />
+		    <p:button value="Submit" onclick="rcSetFileMediumType(); return false;" />
+		    <script type="text/javascript">
+				function rcSetFileMediumType() {
+					_rcSetFileMediumType([
+					  {name:'filename', value: window.currentFilePickerTransferFilename},
+					  {name:'type', value: PF('selectMediumSelect').getSelectedValue()}
+					]);
+					
+					PF('selectMediumDlg').hide();
+				}
+		    </script>
+		    <p:remoteCommand name="_rcSetFileMediumType" actionListener="#{WF_I_SW_new.rcSetFileMediumType}" 
+		      update=":mainForm:filePickList" />
+	    </h:form>
+	</p:dialog>   
+	</ui:define>
+</ui:composition>
+</html>

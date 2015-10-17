@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core" xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:define name="metadata">
+		<f:metadata>
+			<f:event type="preRenderView" listener="#{WF_SP_1a.onLoad}" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="content">
+		<p:panel styleClass="infotextPanel">
+			<font>
+				Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
+				<br /> <br />
+				
+				At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			</font>
+		</p:panel>
+	
+		<p:outputPanel id="uploadImages">                  
+		<p:panel header="Upload Images">
+			<p:galleria value="#{WF_SP_1a.images}"
+	            var="image" effect="slide" effectSpeed="1000"
+	            panelWidth="700" panelHeight="250" frameWidth="160" frameHeight="70"
+	            filmstripPosition="top" showCaptions="true" showOverlays="true" transitionInterval="0">
+	            
+			    <p:graphicImage value="/image?file=#{image}" title="#{image}"/>
+			    <p:galleriaOverlay title="#{image}">
+			        Filename: #{image}<br />			        
+			        <a href="#{facesContext.externalContext.requestContextPath}/image?file=#{image}" target="_blank">Link</a>
+			    </p:galleriaOverlay>		
+			</p:galleria>			
+			<br />		
+			<h:form enctype="multipart/form-data">
+				<p:fileUpload fileUploadListener="#{WF_SP_1a.handleFileUpload}" mode="advanced" multiple="single" update=":uploadImages" />
+			</h:form>
+		</p:panel>
+		</p:outputPanel>
+		
+		<br />
+		
+		<p:panel id="panelPrepTask" header="Edit Preparational Task">
+			<h:form>
+				<p:editor id="editorPrepTask" value="#{WF_SP_1a.formFeedback.editorPrepTask}" width="600" />
+				<br />
+				<p:commandButton id="submitButton" ajax="false" value="Speichern" icon="ui-icon-disk" action="#{WF_SP_1a.savePrepTask}" />
+			</h:form>
+		</p:panel>
+
+		<br />
+
+		<p:panel id="panelIssues" header="Edit Issues">
+			<h:form>
+				<h:panelGrid columns="2">
+					<p:selectOneMenu id="issueSelect" value="#{WF_SP_1a.formFeedback.issues_select}">
+						<f:selectItem itemValue="-1" itemLabel="Create New Issue" />
+						<f:selectItems value="#{WF_SP_1a.getIssues()}" />
+						<p:ajax update=":panelIssues" listener="#{WF_SP_1a.changeIssue}" />
+					</p:selectOneMenu>
+					<p:message for="issueSelect" />
+				</h:panelGrid>
+				
+				<br />
+				
+				<h:outputLabel value="Issue Name: " for="issueName"/>
+				<p:inputText id="issueName" value="#{WF_SP_1a.formFeedback.issueName}" /><br /><br />
+
+				<p:editor id="editorIssues" value="#{WF_SP_1a.formFeedback.editorIssues}" width="600" />
+
+				<br />
+				<p:commandButton id="submitButton" ajax="false" value="Save" icon="ui-icon-disk" action="#{WF_SP_1a.saveIssue}" />
+				<p:commandButton id="removeButton" ajax="false" value="Remove" icon=".ui-icon-close" action="#{WF_SP_1a.removeIssue}" />
+			</h:form>
+		</p:panel>
+	</ui:define>
+</ui:composition>
+</html>

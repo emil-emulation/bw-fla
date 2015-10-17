@@ -1,0 +1,375 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://example.com/functions"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:bwl="http://bwfla.bwl.de/facelets">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_I_2}" />
+
+	<ui:define name="title">
+			bwFLA Basic System Environments - View
+	</ui:define>
+
+	<ui:define name="menu">
+		<ui:include src="/template/menu.xhtml" />
+	</ui:define>
+
+	<ui:define name="metadata">
+	</ui:define>
+
+
+	<ui:define name="content">
+		<style>
+#content {
+	margin-top: 0;
+	overflow: hidden;
+	padding: 0;
+}
+
+.checkbox1 {
+	margin-right: 10px;
+}
+
+.checkbox2 {
+	margin-left: 51px;
+}
+
+.checkbox22 {
+	margin-left: 120px;
+}
+
+.ui-tabs.ui-tabs-top {
+	border-bottom: 0px solid transparent !important;
+}
+
+#emulator {
+	display: table-cell;
+	height: auto;
+	vertical-align: middle;
+}
+
+.screenshotWrapper {
+	display: inline-block;
+}
+</style>
+
+
+		<div style="margin-bottom: 10px;">
+			<span class="steplabel">1. Basic Artifact Properties</span> <span
+				class="steplabel steplabelactive">2. Test and Evaluation</span> <span
+				class="steplabel">3. Complete Ingest</span>
+		</div>
+
+		<div id="emulator-outer-wrapper" style="display: table; width: 100%;">
+			<div id="emulator"
+				style="display: table-cell; height: auto; vertical-align: middle;">
+				<ui:include src="/template/emulator_content_default.xhtml">
+					<ui:param name="disablePositionHack" value="#{true}" />
+				</ui:include>
+			</div>
+
+			<div id="evaluation"
+				style="display: table-cell; vertical-align: top; overflow: hidden;">
+				<p:panel style="margin-left: 25px;margin-bottom: 40px;">
+					<div id="evaluation-inner-wrapper" style="overflow: auto;">
+						<h:form>
+							<p:panel id="emuconf" header="Emulator Configuration"
+								style="margin-bottom: 10px;">
+								<p:panelGrid styleClass="formGrid" columns="2">
+									<p:outputLabel for="screenresolution"
+										value="Screen Resolution:" />
+									<p:selectOneMenu id="screenresolution" style="width: 177px;"
+										value="#{WF_I_2.description.resolution}">
+										<f:selectItems value="#{WF_I_2.resolutions}" var="v"
+											itemLabel="#{v.b}" itemValue="#{v.a}" />
+										<p:ajax event="change" update="@this" />
+									</p:selectOneMenu>
+
+									<p:outputLabel for="colodepth" value="Color depth:" />
+									<p:selectOneMenu id="colodepth" style="width: 177px;"
+										value="#{WF_I_2.description.colordepth}">
+										<f:selectItems value="#{WF_I_2.colordepths}" var="v"
+											itemLabel="#{v.b}" itemValue="#{v.a}" />
+										<p:ajax event="change" update="@this" />
+									</p:selectOneMenu>
+								
+									<p:outputLabel for="internetconnectivity"
+										value="Internet Connectivity:" />
+									<p:selectBooleanCheckbox id="internetconnectivity"
+										value="#{WF_I_2.description.internetconnectivity}">
+										<p:ajax event="change" update="@this" />
+									</p:selectBooleanCheckbox>
+
+									<p:outputLabel for="crtsimulation" value="CRT Simulation:" />
+									<p:selectBooleanCheckbox id="crtsimulation"
+										value="#{WF_I_2.description.crtsimulation}">
+										<p:ajax event="change" update="@this" />
+									</p:selectBooleanCheckbox>
+
+									<h:outputText value="Keep custom environment" />
+									<p:selectBooleanCheckbox value="#{WF_I_2.keepEnvironment}">
+										<p:ajax event="change" update="@this" />
+									</p:selectBooleanCheckbox>
+								</p:panelGrid>
+							</p:panel>
+
+							<p:panel style="margin-bottom: 10px;">
+								<div style="margin: 10px 0 5px 5px;">
+									<p:outputPanel id="screenshotWrapper"
+										styleClass="screenshotWrapper">
+										<img height="50" width="50"
+											style="box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); border-radius: 3px;"
+											src="#{WF_I_2.pictureURL}" />
+									</p:outputPanel>
+
+									<p:commandButton value="Screenshot"
+										style="margin-left: 20px;position: relative;top: -20px;"
+										onclick="takeScreenshot()" update="screenshotWrapper" />
+								</div>
+							</p:panel>
+						</h:form>
+
+						<h:form>
+							<p:panel style="margin-bottom: 10px;">
+								<p:tabView id="tabView">
+									<p:tab id="tab_install" title="Installation">
+
+										<div style="min-height: 82px;">
+											<h:panelGrid columns="2" style="min-height: 82px;">
+												<p:selectBooleanCheckbox id="Installation"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.installation_required}" />
+												<p:outputLabel for="Installation" value="Installation" />
+
+												<p:selectBooleanCheckbox id="Success" styleClass="checkbox1"
+													value="#{WF_I_2.description.installation_sucessful}" />
+												<p:outputLabel for="Success" value="Installation Sucessful" />
+
+												<p:selectBooleanCheckbox id="Extra" styleClass="checkbox1"
+													value="#{WF_I_2.description.installation_extra}" />
+												<p:outputLabel for="Extra" value="Installation Extra SW" />
+
+												<p:selectBooleanCheckbox id="Reboot" styleClass="checkbox1"
+													value="#{WF_I_2.description.installation_reboot}" />
+												<p:outputLabel for="Reboot" value="Installation Reboot" />
+											</h:panelGrid>
+										</div>
+
+										<p:watermark for="notes_installation" value="notes" />
+										<p:inputTextarea id="notes_installation"
+											style="margin-top: 10px; width: 310px; height: 80px;"
+											value="#{WF_I_2.description.notes_installation}" />
+									</p:tab>
+									<p:tab id="tab_animation" title="Animation">
+										<div>
+											<span style="font-weight: bold;">Required</span> <span
+												style="font-weight: bold; margin-left: 200px;">Available</span>
+										</div>
+
+										<div style="min-height: 82px;">
+											<h:panelGrid columns="3" style="min-height: 82px;">
+												<p:selectBooleanCheckbox id="fullscreen1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.fullscreen_animation_required}" />
+												<p:outputLabel for="fullscreen1"
+													value="Fullscreen Animation" />
+												<p:selectBooleanCheckbox id="fullscreen2"
+													styleClass="checkbox2"
+													value="#{WF_I_2.description.fullscreen_animation_emulation}" />
+
+												<p:selectBooleanCheckbox id="framerate1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.high_framerate_animation_required}" />
+												<p:outputLabel for="framerate1"
+													value="High Framerate Animation" />
+												<p:selectBooleanCheckbox id="framerate2"
+													styleClass="checkbox2"
+													value="#{WF_I_2.description.high_framerate_animation_emulation}" />
+
+												<p:selectBooleanCheckbox id="movingobjects1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.moving_objects_required}" />
+												<p:outputLabel for="movingobjects1" value="Moving Objects" />
+												<p:selectBooleanCheckbox id="movingobjects2"
+													styleClass="checkbox2"
+													value="#{WF_I_2.description.moving_objects_emulation}" />
+
+												<p:selectBooleanCheckbox id="mutatingobjects1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.mutating_objects_required}" />
+												<p:outputLabel for="mutatingobjects1"
+													value="Mutating Objects" />
+												<p:selectBooleanCheckbox id="mutatingobjects2"
+													styleClass="checkbox2"
+													value="#{WF_I_2.description.mutating_objects_emulation}" />
+											</h:panelGrid>
+										</div>
+
+										<p:watermark for="notes1" value="notes" />
+										<p:inputTextarea id="notes1"
+											style="margin-top: 10px; width: 310px; height: 80px;"
+											value="#{WF_I_2.description.notes_animation}" />
+									</p:tab>
+
+									<p:tab id="tab_audio" title="Audio">
+										<div>
+											<span style="font-weight: bold;">Required</span> <span
+												style="font-weight: bold; margin-left: 200px;">Available</span>
+										</div>
+										<div style="min-height: 82px;">
+											<h:panelGrid columns="3">
+												<p:selectBooleanCheckbox id="audioloops1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.audio_loops_required}" />
+												<p:outputLabel for="audioloops1" value="Audio Loops" />
+												<p:selectBooleanCheckbox id="audioloops2"
+													styleClass="checkbox22"
+													value="#{WF_I_2.description.audio_loops_emulation}" />
+
+												<p:selectBooleanCheckbox id="soundeffects1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.sound_effects_required}" />
+												<p:outputLabel for="soundeffects1" value="Sound Effects" />
+												<p:selectBooleanCheckbox id="soundeffects2"
+													styleClass="checkbox22"
+													value="#{WF_I_2.description.sound_effects_emulation}" />
+											</h:panelGrid>
+										</div>
+
+										<p:watermark for="notes2" value="notes" />
+										<p:inputTextarea id="notes2"
+											style="margin-top: 10px; width: 310px; height: 80px;"
+											value="#{WF_I_2.description.notes_audio}" />
+									</p:tab>
+
+									<p:tab id="tab_interactivity" title="Interactivity">
+										<div>
+											<span style="font-weight: bold;">Required</span> <span
+												style="font-weight: bold; margin-left: 200px;">Available</span>
+										</div>
+
+										<div style="min-height: 82px;">
+											<h:panelGrid columns="3" style="min-height: 82px;">
+												<p:selectBooleanCheckbox id="keyboardinput1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.keyboard_input_required}" />
+												<p:outputLabel for="keyboardinput1" value="Keyboard Input" />
+												<p:selectBooleanCheckbox id="keyboardinput2"
+													styleClass="checkbox22"
+													value="#{WF_I_2.description.keyboard_input_emulation}" />
+
+												<p:selectBooleanCheckbox id="mouseinput1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.mouse_input_required}" />
+												<p:outputLabel for="mouseinput1" value="Mouse Input" />
+												<p:selectBooleanCheckbox id="mouseinput2"
+													styleClass="checkbox22"
+													value="#{WF_I_2.description.mouse_input_emulation}" />
+
+												<p:selectBooleanCheckbox id="lowlatency1"
+													styleClass="checkbox1"
+													value="#{WF_I_2.description.low_latency_required}" />
+												<p:outputLabel for="lowlatency1" value="Low Latency" />
+												<p:selectBooleanCheckbox id="lowlatency2"
+													styleClass="checkbox22"
+													value="#{WF_I_2.description.low_latency_emulation}" />
+											</h:panelGrid>
+										</div>
+
+										<p:watermark for="notes3" value="notes" />
+										<p:inputTextarea id="notes3"
+											style="margin-top: 10px; width: 310px; height: 80px;"
+											value="#{WF_I_2.description.notes_interactivity}" />
+									</p:tab>
+								</p:tabView>
+							</p:panel>
+
+							<p:panel style="margin-bottom: 10px;">
+								<span
+									style="font-weight: bold; margin: 15px 0 0px 0; display: block;">Overall
+									Performance</span>
+
+								<p:outputPanel>
+									<p:selectOneRadio id="overallperformance" layout="custom"
+										value="#{WF_I_2.description.overall_performance}">
+										<f:selectItem itemLabel="Option 1" itemValue="1" />
+										<f:selectItem itemLabel="Option 2" itemValue="2" />
+										<f:selectItem itemLabel="Option 3" itemValue="3" />
+										<f:selectItem itemLabel="Option 4" itemValue="4" />
+									</p:selectOneRadio>
+
+									<p:panelGrid columns="2" styleClass="formGrid">
+										<p:radioButton id="opt1" for="overallperformance"
+											itemIndex="0" />
+										<p:outputLabel for="opt1" value="Works as expected"
+											style="margin-left: 5px;" />
+
+										<p:radioButton id="opt2" for="overallperformance"
+											itemIndex="1" />
+										<p:outputLabel for="opt2" value="Works with minor issues"
+											style="margin-left: 5px;" />
+
+										<p:radioButton id="opt3" for="overallperformance"
+											itemIndex="2" />
+										<p:outputLabel for="opt3" value="Works with major issues"
+											style="margin-left: 5px;" />
+
+										<p:radioButton id="opt4" for="overallperformance"
+											itemIndex="3" />
+										<p:outputLabel for="opt4" value="Unuseable"
+											style="margin-left: 5px;" />
+									</p:panelGrid>
+
+									<p:watermark for="notes4" value="notes" />
+									<p:inputTextarea id="notes4"
+										style="margin-top: 10px; width: 310px; height: 80px;"
+										value="#{WF_I_2.description.notes_overall}" />
+								</p:outputPanel>
+							</p:panel>
+
+							<p:remoteCommand name="submitHelper1" action="#{WF_I_2.forward}" />
+							<p:remoteCommand disabled="true" name="submitHelper2"
+								action="#{WF_I_2.back}" />
+						</h:form>
+					</div>
+				</p:panel>
+
+				<div style="padding: 10px 0px 10px 25px;">
+					<h:form>
+						<p:commandButton disabled="true" value="Basic Artifact Properties"
+							onclick="submitHelper2();" icon="ui-icon-circle-triangle-w" />
+
+						<p:commandButton type="button"
+							onclick="showLoadingAnimation();submitHelper1();"
+							value="Complete Ingest" icon="ui-icon-circle-triangle-e"
+							iconPos="right" style="float: right;
+						" />
+					</h:form>
+				</div>
+			</div>
+
+			<script>
+				$(function(){
+					
+					function resizeEvaluationInnerWrapper() {
+						$('#evaluation-inner-wrapper').height(window.innerHeight - $('#emulator-outer-wrapper').offset().top - 120);
+					}
+
+					$(window).resize(function() {
+						resizeEvaluationInnerWrapper();
+					});
+
+					resizeEvaluationInnerWrapper();
+				});
+			</script>
+		</div>
+	</ui:define>
+	<ui:define name="footer"></ui:define>
+</ui:composition>
+
+</html>

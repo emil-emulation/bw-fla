@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://bwfla.bwl.de/common/datatypes"
+	elementFormDefault="qualified" xmlns="http://bwfla.bwl.de/common/datatypes"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1">
+
+    <xs:element name="EmulationEnvironment" type="emulationEnvironment"/>
+    <xs:element name="NetworkEnvironment" type="networkEnvironment" />
+
+
+    <xs:complexType name="environmentDescription">
+        <xs:sequence>
+            <xs:element name="title" type="xs:string" minOccurs="1" maxOccurs="1" />
+        </xs:sequence>
+    </xs:complexType> 
+
+    <xs:complexType name="environment">
+        <xs:sequence>
+            <xs:element name="id" type="xs:string" minOccurs="1" maxOccurs="1" />
+            <xs:element name="description" type="environmentDescription" />  
+        </xs:sequence>
+    </xs:complexType>
+
+
+	<xs:complexType name="emulationEnvironment">
+		<xs:complexContent>
+			<xs:extension base="environment">
+				<xs:sequence>
+					<xs:element name="arch" type="xs:string"
+						minOccurs="1" maxOccurs="1" />
+					<xs:element name="emulator" type="emulatorSpec"
+						minOccurs="1" maxOccurs="1" />
+					<xs:element name="ui_options" type="uiOptions" minOccurs="0" maxOccurs="1"></xs:element>
+					<xs:element name="drive" type="drive" minOccurs="0"
+						maxOccurs="unbounded" />
+					<xs:element name="nic" type="nic" minOccurs="0"
+						maxOccurs="unbounded" />
+					<xs:element name="binding" type="resource"
+						minOccurs="0" maxOccurs="unbounded" />
+
+					<xs:element name="nativeConfig" minOccurs="0"
+						maxOccurs="1">
+						<xs:complexType>
+							<xs:simpleContent>
+								<xs:extension base="xs:string">
+									<xs:attribute name="linebreak"
+										type="xs:string" use="optional" />
+								</xs:extension>
+							</xs:simpleContent>
+						</xs:complexType>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+
+	<xs:complexType name="networkEnvironment">
+		<xs:complexContent>
+			<xs:extension base="environment">
+				<xs:sequence>
+					<xs:element name="network" type="network" minOccurs="1"
+						maxOccurs="unbounded" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="drive">
+		<xs:complexContent>
+			<xs:extension base="device">
+				<xs:sequence>
+					<xs:element name="data" type="xs:string" minOccurs="0" maxOccurs="1" />
+					<xs:element name="iface" type="xs:string" minOccurs="0"
+						maxOccurs="1" />
+					<xs:element name="bus" type="xs:string" minOccurs="0" maxOccurs="1" />
+					<xs:element name="unit" type="xs:string" minOccurs="0" maxOccurs="1" />
+					<xs:element name="type" minOccurs="0" maxOccurs="1">
+						<xs:simpleType>
+							<xs:annotation>
+								<xs:appinfo>
+									<jaxb:typesafeEnumClass name="DriveType" />
+								</xs:appinfo>
+							</xs:annotation>
+							<xs:restriction base="xs:string">
+								<xs:enumeration value="cdrom" />
+								<xs:enumeration value="disk" />
+								<xs:enumeration value="floppy" />
+								<xs:enumeration value="iso" />
+							</xs:restriction>
+						</xs:simpleType>
+					</xs:element>
+					<xs:element name="boot" type="xs:boolean" minOccurs="0"
+						maxOccurs="1" />
+					<xs:element name="plugged" type="xs:boolean" maxOccurs="1"
+						minOccurs="1" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+
+	<xs:complexType name="resource">
+		<xs:sequence>
+			<xs:element name="url" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="transport" default="auto" minOccurs="0"
+				maxOccurs="1">
+				<xs:simpleType>
+					<xs:annotation>
+						<xs:appinfo>
+							<jaxb:typesafeEnumClass name="TransportType" />
+						</xs:appinfo>
+					</xs:annotation>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="nbd" />
+						<xs:enumeration value="file" />
+						<xs:enumeration value="auto" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="access" default="cow" minOccurs="1" maxOccurs="1">
+				<xs:simpleType>
+					<xs:annotation>
+						<xs:appinfo>
+							<jaxb:typesafeEnumClass name="AccessType" />
+						</xs:appinfo>
+					</xs:annotation>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="cow" />
+						<xs:enumeration value="copy" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:string" use="optional"></xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="nic">
+		<xs:complexContent>
+			<xs:extension base="device">
+				<xs:sequence>
+					<xs:element name="hwaddress" type="xs:string" minOccurs="1"
+						maxOccurs="1" />
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="device"></xs:complexType>
+
+
+	<xs:complexType name="network">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="emulator" type="emulationNode" />
+		</xs:choice>
+	</xs:complexType>
+
+	<xs:complexType name="networkNode">
+		<xs:sequence>
+			<xs:element name="hwaddress" type="xs:string" minOccurs="0"
+				maxOccurs="1" />
+			<xs:element name="ipv4address" type="xs:string" minOccurs="0"
+				maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="emulationNode">
+		<xs:complexContent>
+			<xs:extension base="networkNode">
+				<xs:choice>
+                    <xs:element name="environmentId" type="xs:string" minOccurs="1"
+                    maxOccurs="1" />
+                    <xs:element name="EmulationEnvironment" type="emulationEnvironment" minOccurs="1"
+                    maxOccurs="1" />
+				</xs:choice>
+                <xs:attribute name="template" type="xs:boolean"></xs:attribute>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:complexType name="emulatorSpec">
+		<xs:sequence>
+			<xs:element name="machine" maxOccurs="1" minOccurs="0">
+			 <xs:complexType>
+			     <xs:attribute name="base" type="xs:string" use="optional"></xs:attribute>
+			 </xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="bean" type="xs:string" use="required">
+		</xs:attribute>
+		<xs:attribute name="version" type="xs:string" use="optional"></xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="uiOptions">
+		<xs:sequence>
+			<xs:element name="html5" type="html5Options"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+    <xs:complexType name="html5Options">
+    	<xs:sequence>
+    		<xs:element name="pointer_lock" type="xs:boolean"></xs:element>
+    		<xs:element name="crt" type="xs:string"></xs:element>
+    	</xs:sequence>
+    </xs:complexType>
+</xs:schema>

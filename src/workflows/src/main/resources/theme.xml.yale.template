@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+	<title>Yale Emulation as a Service (EaaS) Pilot</title>
+	<panel-header>EaaS Pilot Overview</panel-header>
+
+	<logos>
+		<logo>yale_newlogo_yaleblue_1_.png</logo>
+		<logo>beinecke-logo.png</logo>
+		<logo>bwfla-logo2.png</logo>
+		<logo>logo_uni-freiburg.gif</logo>
+	</logos>
+	
+	<welcome-text><![CDATA[
+		The Yale ‘Emulation as a Service’ pilot provides the ability to access historic digital content that is incompatible with today’s technologies using a four step process:<br>
+		&nbsp;&nbsp; 1. <a href="https://en.wikipedia.org/wiki/Emulator" target="_blank">Emulation</a> tools create virtual versions of old computer hardware<br>
+		&nbsp;&nbsp; 2. Software from when the content was created is installed on the emulated hardware. <br>
+		&nbsp;&nbsp; 3. The emulated environments are made accessible in your web browser<br>
+		&nbsp;&nbsp; 4. The emulated old software is used to access the historic content directly in your web browser<br>
+		<br>
+		The EaaS service is being piloted by the <a href="http://www.library.yale.edu/about/departments/preservation/" target="_blank">Preservation Department</a> at <a href="http://web.library.yale.edu/" target="_blank">Yale University Library</a> in conjunction with the <a href="http://beinecke.library.yale.edu/">Beinecke Rare Book & Manuscript Library</a> at Yale University. <br>
+		<br>
+		The EaaS service and supporting software technologies are being provided by the <a href="http://bw-fla.uni-freiburg.de/demo-flusser.html" target="_blank">bwFLA project</a> led by the <a href="http://www.uni-freiburg.de/" target="_blank">University of Freiburg</a>. <br>
+		<br>
+		Please send feedback, comments, questions or suggestions to:<br>
+		Euan Cochrane, Digital Preservation Manager,<br>
+		<a href="mailto:euan.cochrane@yale.edu">euan.cochrane@yale.edu</a>
+	]]></welcome-text>
+	
+	<extracss><![CDATA[
+		.decorate_links a {
+			text-decoration: underline;
+		}
+	
+		/* Include Yale Font */
+		@font-face {
+		  font-family: 'YaleDesWebSmaCap';
+		  font-style: normal;
+		  font-weight: normal;
+		  src: local('Tangerine'), url('/faces/javax.faces.resource/YaleDesWebSmaCap.otf?ln=font') format('truetype');
+		}
+		
+		#header {
+			font-family: 'YaleDesWebSmaCap', Verdana, Arial, Helvetica, sans-serif !important;
+		}
+	]]></extracss>
+	
+	<!-- Leave empty to hide footer -->
+	<footer></footer>
+</properties>

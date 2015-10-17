@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<properties>
+	<title>bwFLA Demo Server</title>
+	<panel-header>bwFLA Demo Server</panel-header>
+
+    <logos>
+        <logo>pyramid.png</logo>
+        <logo>emulation-component.png</logo>
+        <logo>access.png</logo>
+        <logo>deployment.png</logo>
+    </logos>	
+
+	<welcome-text><![CDATA[
+		<h1>bwFLA — Emulation as a Service, Demo Server</h1>
+		<br><br>
+					
+		<h2>Functional Long-Term Archiving</h2>
+		Digital data is highly volatile, the processes and systems that make use of it even more so. Initially creating data and establishing workflows is very costly, in an ever-changing technological environment the upkeep presents a long-term challenge. To fulfill their designed purpose over a long period of time or for making research results, documents and decisions of today verifiable in the future, efficient and authentic access is required.
+		In most cases the best way to render a certain digital object is using its creating applications, since these cover most of the object’s significant properties, hence providing an authentic and possibly an interactive user experience. Therefore, emulation is a key strategy to provide a digital object’s native environment and thus maintain its original characteristics, look & feel and utility.
+		Up to now emulation has been seen as domain reserved for technical experts. Furthermore, emulation did not scale well due to the laborious preparation and technical setup procedures. Therefore, a scalable emulation service model is required: Emulation as a Service (EaaS).
+		<br><br>
+		
+		The fundamental building block of an EaaS architecture are abstract Emulation Components to standardize deployment and to hide individual emulator complexity. Each emulation component encapsulates a specific emulator type as an abstract component with a unified set of software interfaces (API). This way, different classes of emulators become interoperable, e.g. could be interchanged or interconnected. Furthermore, individual emulation components can be efficiently deployed in large-scale cluster or Cloud infrastructures.
+		Currently, emulation components for all major past and present desktop systems, e.g. PPC, m68k, Intel-based x86, etc., and major operating-systems, e.g. OS/2, MS Windows, Mac OS 7 and newer, etc., are available for deployment.
+		<br><br>
+		
+		<h2>Emulation as a Service</h2>
+		Emulation as a strategy for digital preservation is about to become an accepted technology for memory institutions as a method for coping a large variety of complex digital objects. Hence, the demand for ready-made and especially easy-to-use emulation services will grow. In order to provide user-friendly emulation services a scalable, distributed system model is required to be run on heterogeneous Grid or Cluster infrastructure.
+		The Emulation-as-a-Service architecture simplifies access to preserved digital assets allowing end users to interact with the original environments running on different emulators. Ready-made emulation components provide a flexible web service API allowing for development of individual and tailored digital preservation workflows.
+		<br><br>
+		
+		<h2>Use Emulation as a Sevice to:</h2>
+    	* Reproduce, verify and quote scientific experiments<br>
+    	* Access historic digital documents and software in their native environments<br>
+    	* Re-enact business processes and understand past decisions<br>
+    	* Conserve Digital Culture highly authentical and easily accessible<br>
+    	* Enable crowd curation – Share and Care
+
+		<br><br>    	
+    	<h2>Scalable Emulation Services</h2>
+
+		To become scalable and cost-effective, emulation components need to be deployed only when needed. For this, a suitable framework for hardware- and software-deployment is required. Currently bwFLA supports MAAS/Juju as well as OpenStack.
+	]]></welcome-text>
+	
+	<extracss/>
+	
+	<footer>footer.jpg</footer>
+</properties>

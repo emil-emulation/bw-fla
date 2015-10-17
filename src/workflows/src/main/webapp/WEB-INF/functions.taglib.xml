@@ -1,0 +1,14 @@
+<facelet-taglib 
+    xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facelettaglibrary_2_0.xsd"
+    version="2.0">
+    <namespace>http://example.com/functions</namespace>
+
+    <function>
+        <function-name>findBean</function-name>	
+        <function-class>de.bwl.bwfla.workflows.beans.common.Functions</function-class>
+        <function-signature>de.bwl.bwfla.workflows.beans.common.BwflaFormBean findBean(java.lang.String)</function-signature>
+    </function>
+</facelet-taglib>
+

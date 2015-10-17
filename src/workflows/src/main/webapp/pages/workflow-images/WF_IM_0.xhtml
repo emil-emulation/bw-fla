@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_IM_0}" />
+
+	<ui:define name="title">bwFLA Basic System Environments</ui:define>
+
+	<ui:define name="content">
+		<h:form>
+			<p:panelGrid style="width: 650px; margin: 0 auto 30px auto;">
+				<f:facet name="header">
+					<p:row>
+						<p:column colspan="2">
+				Image Registration
+			</p:column>
+					</p:row>
+				</f:facet>
+
+				<p:row>
+					<p:column style="vertical-align: top;">
+					
+						<p:selectOneListbox id="image" value="#{WF_IM_0.selectedImage}"
+							style="height: 390px; width: 320px; float: left; margin: 5px auto 5px auto;"
+							required="false" scrollHeight="390"
+							requiredMessage="Please select an image to proceed">
+							<f:selectItems value="#{WF_IM_0.imagesList}" />
+							<f:selectItem itemLabel="From URL" itemValue="#{null}" />
+						</p:selectOneListbox>
+
+                        <p:outputLabel for="imageUrl">URL</p:outputLabel>
+                        <p:inputText id="imageUrl" value="#{beanName.externalImageUrl}" />
+                        <br />
+                        <p:outputLabel for="imageCOW" value="Copy on Write" />
+						<p:selectBooleanCheckbox id="imageCOW"
+							value="#{beanName.externalImageCOW}">
+							<p:ajax event="change" update="@this" />
+						</p:selectBooleanCheckbox>
+
+					</p:column>
+					<p:column>
+						<p:panelGrid styleClass="formGrid" columns="2">
+							<p:outputLabel for="emulator" value="Select a machine" />
+							<p:selectOneMenu id="emulator" style="width: 250px;"
+								value="#{beanName.selectedTemplate}">
+								<f:selectItems value="#{beanName.templates}" var="e" 
+									itemLabel="#{e.description.title}" itemValue="#{e.id}"/>
+									<p:ajax event="change" update="@this config" />
+							</p:selectOneMenu>
+
+							<p:outputLabel for="name">Name</p:outputLabel>
+							<p:inputText required="true" requiredMessage="Image 'Name' field cannot be empty." id="name" value="#{beanName.name}" />
+		
+							<ui:remove>
+							<p:selectBooleanCheckbox id="internetconnectivity"
+								value="#{beanName.network}">
+								<p:ajax event="change" update="@this" />
+							</p:selectBooleanCheckbox>
+							<p:outputLabel for="internetconnectivity"
+								value="Internet Connectivity" />
+							</ui:remove>
+
+							<p:selectBooleanCheckbox id="crtsimulation"
+								value="#{beanName.crt}">
+								<p:ajax event="change" update="@this" />
+							</p:selectBooleanCheckbox>
+							<p:outputLabel for="crtsimulation" value="CRT Simulation" />
+
+							<p:selectBooleanCheckbox id="relmouse"
+								value="#{beanName.relMouse}">
+								<p:ajax event="change" update="@this" />
+							</p:selectBooleanCheckbox>
+							<p:outputLabel for="relmouse" value="Relative Mouse" />
+
+
+							<p:outputLabel>Native Config</p:outputLabel>
+							<p:inputTextarea id="config"
+								style="margin-top: 
+	        	10px; width: 250px; height: 200px;"
+								value="#{beanName.config}" />
+						</p:panelGrid>
+					</p:column>
+				</p:row>
+				<p:row>
+					<p:column colspan="2">
+						<p:panel header="Help" collapsed="true" toggleable="true"
+							toggleTitle="Help">
+	        	Help / Information
+	        	</p:panel>
+					</p:column>
+				</p:row>
+
+				<f:facet name="footer">
+					<p:row>
+						<p:column colspan="2">
+							<div align="right">
+								<p:commandButton id="nextButton" widgetVar="nextButton"
+									ajax="false" action="#{WF_IM_0.navigate}"
+									onclick="showLoadingAnimation();" value="Next"
+									style="margin-right:10px;" icon="ui-icon-arrowthick-1-e" />
+							</div>
+						</p:column>
+					</p:row>
+				</f:facet>
+
+			</p:panelGrid>
+		</h:form>
+	</ui:define>
+
+</ui:composition>
+</html>

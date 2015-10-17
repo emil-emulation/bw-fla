@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:define name="content">
+		<p:panel styleClass="infotextPanel">
+			<font>
+				Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
+				<br /> <br />
+				
+				At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			</font>
+		</p:panel>
+	
+		<h:form>
+			<p:panel header="Perform these steps on your OS">
+				<h:outputText escape="false" value="#{WF_SP_1.osPreparations}" /><br/>
+			</p:panel>
+			
+			<br />
+			
+			<p:panel header="Known Issues for OS/emu combination">			
+				<ui:repeat value="#{WF_SP_1.issues}" var="issue">
+					<h4 style="margin: 8px 0 0 0;font-size: 16px;">#{issue.name}:</h4>
+					<br />
+					<h:outputText escape="false" value="#{issue.html}" />
+					
+					<br />
+					<p:separator />
+					<br />
+				</ui:repeat>			
+			</p:panel>
+			
+			<br />
+			
+			<h:outputLink value="#{WF_SP_1.stick}">
+				<h:outputText value="Download bwFLA bootable usb-stick image."/>
+			</h:outputLink><br />
+			
+			<br />
+			
+			<p:commandButton ajax="false" action="forward" value="Next" />
+			<p:commandButton ajax="false" action="debug-shortcut" value="DEBUG SHORTCUT TO FEEDBACK" />
+		</h:form>			
+	</ui:define>
+</ui:composition>
+</html>

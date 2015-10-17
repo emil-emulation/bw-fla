@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://example.com/functions"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
+	<title><ui:insert name="title">bwFLA</ui:insert></title>
+    <h:outputScript library="primefaces" name="jquery/jquery.js" />
+    <h:outputScript library="js" name="jquery.browser.js" />
+    <h:outputScript library="js" name="bwfla.commons.js" />
+    <h:outputStylesheet library="css" name="bwfla.css" />
+    <ui:insert name="metadata" />
+</h:head>
+
+<h:body>
+	<div class="wrapper">
+		<div class="content">
+			<ui:insert name="pinging">
+				<ui:include src="/template/pinging.xhtml" />
+			</ui:insert>
+		
+			<div id="header">
+				<ui:insert name="header">
+					<ui:include src="/template/header.xhtml" />
+				</ui:insert>
+				<noscript>
+				  <div class="headerwarn">
+				  	!!! You have disabled or blocked JavaScript, this site requires JavaScript to provide functionality !!!
+				  </div>
+				</noscript>
+			</div>
+		
+			<div id="menu">
+				<ui:insert name="menu">
+					<ui:include src="/template/menu.xhtml" />
+				</ui:insert>
+			</div>
+			<div id="content">
+				<ui:insert name="content">
+					Content
+				</ui:insert>
+			</div>
+		</div>
+	
+		<div id="footer" class="main_footer">
+			<ui:insert name="footer">
+				<ui:include src="/template/footer.xhtml" />
+			</ui:insert>
+		</div>
+	</div>
+	
+	<div class="notification-wrapper">
+		<h:form>
+			<p:growl id="growl" widgetVar="growlVar" autoUpdate="true" showDetail="true" life="5000" />
+		</h:form>		
+	</div>
+	
+	<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
+    
+    <p:graphicImage library="images" name="ajaxloadingbar.gif" />
+	</p:dialog>
+	
+	<script type="text/javascript">
+		
+		function showLoadingAnimation(customMessage) {
+			 PF('statusDialog').show();
+		}
+		
+		function hideLoadingAnimation() {
+			window.userTriggeredLoadingAnimation = false;
+			 PF('statusDialog').hide();
+		}
+	</script>
+	
+	<script type="text/javascript">
+	$(function(){
+		if (!isPrimefacesCompatible()) {
+			growlVar.show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
+		}
+	});
+	</script>
+</h:body>
+
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{errorBean}" />
+	
+	<ui:define name="header">Error Page</ui:define>
+
+	<ui:define name="menu">
+		<h:outputStylesheet library="css" name="menu.css" />
+
+		<div class="menu">
+			<ul>
+				<li>
+					<h:form>
+						<h:commandLink action="#{errorBean.forward}">Home</h:commandLink>
+					</h:form>
+				</li>
+			</ul>
+
+			<ui:insert name="context-menu" />
+
+			<br style="clear: left" />
+		</div>
+	</ui:define>
+	
+	<ui:define name="content" >
+		<b>#{errorBean.apologize} #{errorBean.errorInfo}</b>
+	</ui:define>
+</ui:composition>
+</html>

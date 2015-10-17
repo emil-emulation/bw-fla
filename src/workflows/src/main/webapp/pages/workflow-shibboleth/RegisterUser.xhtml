@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  xmlns:p="http://primefaces.org/ui">
+<head>
+<title></title>
+</head>
+<body>
+  <f:view>
+    <ui:composition template="/template/formTemplate.xhtml">
+      <ui:param name="title" value="Register as a new user" />
+
+      <ui:define name="content">
+
+        <h:form id="form">
+
+          <div id="panel">
+            <p:panel header="Welcome">
+              <div>
+                <h:outputText value="Welcome Register" />
+              </div>
+
+              <p:messages id="messageBox" showDetail="true" />
+
+              <div id="panel">
+                <h3>
+                  <h:outputText value="Meine Daten:" />
+                </h3>
+                <p:panelGrid id="baseData" columns="2">
+                  <h:outputText label="#EPPN"
+                    value="#{registerUserBean.entity.eppn}" />
+                  <h:outputText label="E-Mail"
+                    value="#{registerUserBean.entity.email}" />
+                  <h:outputText label="Sur name"
+                    value="#{registerUserBean.entity.surName}" />
+                  <h:outputText label="Given name"
+                    value="#{registerUserBean.entity.givenName}" />
+                  <h:outputText label="Persistent Id"
+                    value="#{registerUserBean.entity.persistentId}" />
+                  <h:outputText label="Issued by"
+                    value="#{registerUserBean.entity.persistentIdpId}" />
+                  <h:outputText label="Issued for"
+                    value="#{registerUserBean.entity.persistentSpId}" />
+                </p:panelGrid>
+                <p:commandButton id="save"
+                  action="#{registerUserBean.save}"
+                  value="Confirm" ajax="false"
+                  disabled="#{registerUserBean.errorState}" />
+              </div>
+            </p:panel>
+          </div>
+        </h:form>
+      </ui:define>
+    </ui:composition>
+  </f:view>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://example.com/functions"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:bwl="http://bwfla.bwl.de/facelets">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_IE_0}" />
+
+	<ui:define name="title">
+			bwFLA Basic System Environments - View
+	</ui:define>
+
+	<ui:define name="menu">
+		<ui:param name="beanName" value="#{WF_IE_0}" />
+		<ui:include src="/template/menu.xhtml" />
+	</ui:define>
+
+	<ui:define name="content">
+		<style>
+#content {
+	margin-top: 0;
+}
+</style>
+
+		<span class="steplabel steplabelactive">1. Basic Artifact
+			Properties</span>
+		<span class="steplabel">2. Test and Evaluation</span>
+		<span class="steplabel">3. Complete Ingest</span>
+
+		<br />
+		<br />
+
+		<h:form>
+			
+			<p:panelGrid columns="3" style="width: 90%">
+				<f:facet name="header">
+					<p:row>
+						<p:column colspan="3"> Choose Object and Runtime Environment</p:column>
+					</p:row>
+				</f:facet>
+				<p:panelGrid columns="2" styleClass="formGrid"
+					style="width: 30%;  height: 300px; border: 0px solid transparent; margin-left: auto;
+    						margin-right: auto;">
+					<p:outputLabel for="isolink" value="ISO:" />
+					
+					<p:inputText id="isolink" value="#{WF_IE_0.isolink}"
+							style="margin: 6px 0;" />
+					
+				</p:panelGrid>
+
+				<p:panelGrid columns="2" styleClass="formGrid"
+					style="width: 60%; height: 300px; border: 0px solid transparent; margin-left: auto;
+    					margin-right: auto;">
+
+					<p:selectOneListbox id="emulator" value="#{WF_IE_0.selectedBean}"
+						style="height:298px; width: 298px;" required="true"
+						requiredMessage="Please select an Emulator to proceed">
+						<f:selectItems value="#{WF_IE_0.beanList}" />
+						<p:ajax event="change" update="env"
+							listener="#{WF_IE_0.loadEnvList}"
+							onstart="showLoadingAnimation();"
+							oncomplete="hideLoadingAnimation();" />
+					</p:selectOneListbox>
+
+					<p:selectOneListbox id="env" value="#{WF_IE_0.selectedEnv}"
+						style="height:298px; width: 298px; " required="true"
+						requiredMessage="Please select an OS to proceed">
+						<f:selectItems value="#{WF_IE_0.environmentList}" var="env"
+							itemLabel="#{env.description.title}" itemValue="#{env.id}" />
+						<f:selectItems value="#{WF_IE_0.derivatesList}" var="env"
+							itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+						<f:selectItems value="#{WF_IE_0.systemsList}" var="env"
+							itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
+					</p:selectOneListbox>
+
+				</p:panelGrid>
+
+				<f:facet name="footer">
+					<p:row>
+						<p:column colspan="3">
+							<div align="right">
+								<p:commandButton id="nextButton"
+									onclick="showLoadingAnimation()" widgetVar="nextButton"
+									ajax="false" action="#{WF_IE_0.navigate}"
+									value="Test and Evaluation" style="margin-right:10px;"
+									icon="ui-icon-circle-triangle-e" />
+							</div>
+						</p:column>
+					</p:row>
+				</f:facet>
+
+			</p:panelGrid>
+
+		</h:form>
+	</ui:define>
+</ui:composition>
+
+</html>

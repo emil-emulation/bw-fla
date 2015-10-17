@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<ui:composition>
+	<h:head>
+		<h:outputScript library="primefaces" name="jquery/jquery.js" />
+		<h:outputScript library="js" name="jquery.browser.js" />
+		<h:outputScript library="js" name="bwfla.commons.js" />
+		<h:outputStylesheet library="css" name="bwfla.css" />
+	</h:head>
+
+	<ul>
+		<li><a href="#" onclick="showLoadingAnimation();remoteCommandStop();">Stop and Proceed</a></li>
+	</ul>
+
+	<h:form>
+		<p:remoteCommand name="remoteCommandStop" action="#{beanName['forward']}" />
+	</h:form>
+</ui:composition>
+</html>

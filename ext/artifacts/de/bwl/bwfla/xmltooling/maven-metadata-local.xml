@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>de.bwl.bwfla</groupId>
+  <artifactId>xmltooling</artifactId>
+  <versioning>
+    <release>1.4.0</release>
+    <versions>
+      <version>1.4.0</version>
+      <version>1.4.0-sources</version>
+      <version>1.4.0-javadoc</version>
+    </versions>
+    <lastUpdated>20140121130603</lastUpdated>
+  </versioning>
+</metadata>

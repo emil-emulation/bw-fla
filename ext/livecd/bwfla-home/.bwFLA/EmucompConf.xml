@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<emucompConf>
+    <localmode>true</localmode>	
+    <qemuBean>/usr/local/bin/qemu-system-i386</qemuBean>
+    <basiliskBean>/usr/bin/BasiliskII.real</basiliskBean>
+    <sheepShaverBean>/usr/bin/SheepShaver</sheepShaverBean>
+    <dosBoxBean>/usr/bin/dosbox</dosBoxBean>
+    <mameBean>/usr/games/mame</mameBean>
+    <messBean>/usr/games/mess</messBean>
+    <vboxBean>
+        <vboxHeadlessExec>/usr/bin/VBoxSDL</vboxHeadlessExec>
+        <vboxManageExec>/usr/bin/VBoxManage</vboxManageExec>
+    </vboxBean>
+    <amigaBean>/usr/bin/e-uae</amigaBean>
+    <hatariBean>/usr/bin/hatari</hatariBean>
+    <vdeSwitchBean>/usr/bin/vde_switch</vdeSwitchBean>
+</emucompConf>

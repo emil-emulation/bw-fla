@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	
+	<ui:define name="content">
+	     <p:panel header="Available machines" footer="Please choose a machine to start" style="width: 850px; margin: 0 auto 30px auto;">
+		<h:form>			
+			<p:selectOneListbox id="machine" value="#{WF_UM_0.selectedMachine}" style="height:300px; width: 800px; 
+				margin: auto auto 25px 25px; display: inline-block;" 
+					required="true" requiredMessage="Please select a machine to proceed">
+	        	<f:selectItems value="#{WF_UM_0.machineList}" var="machine" itemLabel="#{machine.description}" itemValue="#{machine.description}" />	        	
+	        </p:selectOneListbox>
+	        
+			<br />
+			<h:commandButton action="#{WF_UM_0.forward}" value="Next" />
+		</h:form>
+		</p:panel>
+	</ui:define>
+
+</ui:composition>
+</html>

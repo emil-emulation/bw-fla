@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplateAlternate.xhtml">
+	<ui:param name="beanName" value="#{WF_L_0}" />
+	<ui:define name="title">bwFLA Demo-Server</ui:define>
+	<ui:define name="menu"/>
+	
+	<ui:define name="content">
+		<div class="page-index">
+			<div style="width: 750px; margin: auto auto; text-align: center;">
+	    		<img style="margin: auto auto 40px; width=100%;" src="#{resource['images:emil-logo.png']}"/>
+	    		<div class="tagline" style="margin-bottom: 1em;">This server shows <strong>demo access-workflow</strong> to illustrate use cases for a local emulation service</div>
+	    		<div>(Press <i>Ctrl+W</i> to close this workflow)</div>
+	    	</div>
+	    	
+			<h:form>
+				<p:panelGrid style="width: 750px; margin: 50px auto;">  	
+					<f:facet name="header">
+						<p:row><p:column colspan="2">
+							Emulator / Image Choice
+						</p:column></p:row>
+					</f:facet>
+					
+					<p:row>
+						<p:column>
+						    <p:selectOneListbox id="emulator" value="#{WF_L_0.selectedBean}" 
+						    	style="height:250px; width: 300px; margin: 10px auto;" 
+						    	required="true" requiredMessage="Please select an Emulator to proceed">
+					        		<f:selectItems value="#{WF_L_0.beanList}" />	        	
+					        		<p:ajax event="change" update="env" listener="#{WF_L_0.loadEnvList}" 
+					        			onstart="showLoadingAnimation();" oncomplete="hideLoadingAnimation();"/>
+					        </p:selectOneListbox>
+				        </p:column>
+				        
+				        <p:column>
+					        <p:selectOneListbox id="env" value="#{WF_L_0.selectedEnv}" 
+					        	style="height:250px; width: 450px; margin: 10px auto"
+					        	required="true" requiredMessage="Please select an OS to proceed">
+					        		<f:selectItems value="#{WF_L_0.environmentList}" 
+					        			var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}" />
+					        		<f:selectItems value="#{WF_L_0.derivatesList}" 
+					        			var="env" itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+					        		<f:selectItems value="#{WF_L_0.systemsList}" 
+					        			var="env" itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
+					        </p:selectOneListbox>
+				        </p:column>
+				   	</p:row>
+				   	
+					<f:facet name="footer">
+						<p:row>
+							<p:column colspan="2">
+								<div align="right">
+									<p:commandButton id="nextButton" onclick="showLoadingAnimation()" 
+									widgetVar="nextButton" ajax="false"  action="#{WF_L_0.navigate}" 
+									value="Start" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e"/>
+								</div>
+							</p:column>
+						</p:row>	
+					</f:facet>
+				</p:panelGrid>
+			</h:form>
+			
+			<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
+    
+		    <p:graphicImage library="images" name="ajaxloadingbar.gif" />
+			</p:dialog>
+			
+			<script type="text/javascript">
+				
+				function showLoadingAnimation(customMessage) {
+					 PF('statusDialog').show();
+				}
+				
+				function hideLoadingAnimation() {
+					window.userTriggeredLoadingAnimation = false;
+					 PF('statusDialog').hide();
+				}
+			</script>
+			
+			<script type="text/javascript">
+			$(function(){
+				if (!isPrimefacesCompatible()) {
+					growlVar.show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
+				}
+			});
+			</script>
+			
+		</div>
+	</ui:define>
+</ui:composition>
+</html>

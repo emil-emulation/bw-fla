@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+
+<ui:composition template="/template/formTemplate.xhtml">
+
+	<ui:define name="metadata">	
+		<style>
+			<h:outputText rendered="#{not empty themeBean.extracss}" value="#{themeBean.extracss}" escape="false" />			
+		</style>
+	</ui:define>
+
+	<ui:define name="title">
+		#{themeBean.title}
+	</ui:define>
+	<ui:define name="menu">
+	
+	<h:form>
+		<p:growl id="growl" life="1500" showDetail="true" sticky="false"/>
+	</h:form>
+	
+	<h:form>	
+				<p:menubar autoDisplay="false">
+				 <p:submenu label="Workflows" icon="ui-icon-shuffle">  
+				 	<p:submenu label="Ingest">
+						<p:menuitem value="Digital  Art" action="#{startBean.gotoIngestDigArt}"/> 
+						<p:menuitem value="Digital Objects" action="#{startBean.gotoIngestDO}"/> 
+					<p:menuitem value="Images"
+							action="#{startBean.gotoNewImage()}" />
+	
+				</p:submenu>				
+					<p:submenu label="Access">
+						<p:menuitem value="Digital Art" action="#{startBean.gotoAccessDigArt}"/>
+						<p:menuitem value="Digital Objects" action="#{startBean.gotoAccessDO}" />
+						<p:menuitem value="Systems" action="#{startBean.gotoAccessSysenv}" />
+					</p:submenu>
+
+					<p:menuitem disabled="true" value="Migration" action="#{startBean.gotoMigration}"/>
+				</p:submenu>
+				<p:submenu label="Archive" icon="ui-icon-note">
+					<p:menuitem value="Base Images" action="#{startBean.gotoBaseImages}" />   
+					<p:menuitem value="Session Recording"
+						action="#{startBean.gotoSessionRecording}" />
+					<p:menuitem value="Session Replay"
+						action="#{startBean.gotoSessionReplay}" />
+
+					
+				</p:submenu>
+				<p:submenu label="Administration" icon="ui-icon-wrench">
+					<p:menuitem value="Configuration" action="#{startBean.gotoConfiguration}" disabled="true"/>
+			</p:submenu>	
+				<p:menuitem value="Login" action="#{startBean.gotoShibboleth}"
+					icon="ui-icon-unlocked" rendered="#{!ShibbolethSession.loggedIn}"
+					disabled="#{!ShibbolethSession.localSpEnabled}" />
+				<p:menuitem value="#{ShibbolethSession.username}"
+					action="#{ShibbolethSession.logout}" icon="ui-icon-locked"
+					rendered="#{ShibbolethSession.loggedIn}" />
+
+				</p:menubar>
+			</h:form>
+
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:panel styleClass="start-panel" header="#{themeBean.panel_header}">
+			<div class="start-panel-inner">
+				<div class="logos-wrapper">
+					<ui:repeat var="logo" value="#{themeBean.logos}">
+						<h:graphicImage styleClass="logo-image" library="images" name="#{logo}" />							
+					</ui:repeat>
+				</div>
+				
+				<div class="decorate_links" style="display: table-cell; vertical-align: top;">
+					<h:outputText value="#{themeBean.welcome_text}" escape="false" />					
+				</div>
+			</div>
+			
+			<p:fieldset styleClass="footer_wrapper" rendered="#{not empty themeBean.footer}">
+				<center>
+					<h:graphicImage styleClass="footer_image" library="images" width="500px" name="#{themeBean.footer}" />
+				</center>
+			</p:fieldset>
+		</p:panel>		
+	</ui:define>
+
+	<ui:define name="footer">
+	</ui:define>
+</ui:composition>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://example.com/functions"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_PLAY_3}" />
+
+	<ui:define name="title">
+		bwFLA Session Replay - Extract Objects
+	</ui:define>
+	
+	<ui:define name="content">
+		<p:dialog modal="true" widgetVar="statusDialog" header="Status"
+			draggable="false" closable="false" resizable="false">
+			<p:graphicImage library="images" name="ajaxloadingbar.gif" />
+		</p:dialog>
+
+		<h:form>
+			<p:dataTable style="width: 850px; margin: 0 auto 30px auto;" var="file" value="#{beanName.files}">
+				<f:facet name="header">Objects extracted from the environment</f:facet>
+				
+				<p:column headerText="Name">
+					<h:outputText value="#{file.getName()}" />
+				</p:column>
+				
+				<p:column headerText="Type">
+					<h:outputText value="#{file.getContentType()}" />
+				</p:column>
+				
+				<p:column headerText="Link">
+					<p:commandLink value="download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop)">
+						<p:fileDownload value="#{file}" />
+					</p:commandLink>
+				</p:column>
+			</p:dataTable>
+			
+		</h:form>
+		
+		
+
+		<h:outputScript type="text/javascript">
+			function start() {
+				PF('statusDialog').show();
+			}
+
+			function stop() {
+				PF('statusDialog').hide();
+			}
+		</h:outputScript>
+
+	</ui:define>
+
+</ui:composition>
+</html>

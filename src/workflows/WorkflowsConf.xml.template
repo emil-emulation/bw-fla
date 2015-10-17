@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflowsConf>
+    <archiveGw>127.0.0.1:8080</archiveGw>
+    <embedGw>http://localhost:8080/faces/pages/workflow-embed/WF_EM_0.xhtml</embedGw>
+    <eaasGw>http://127.0.0.1:8080/eaas-ejb/EaasWS?wsdl</eaasGw>
+    <metaDir>/home/iv1004/Workspace/meta-data/</metaDir>
+    <objDir>/home/iv1004/Workspace/isos-new/</objDir>
+    <sysDir>/mnt/data/meta-data/sysenv/</sysDir>
+    <picDir>/home/iv1004/Downloads</picDir>
+    <swArchive>/home/iv1004/Downloads/swarchive.xml</swArchive>
+    <emailNotifier>
+        <sender>isgandar.valizada@rz.uni-freiburg.de</sender>
+        <recepient>bwfla-intern@rz.uni-freiburg.de</recepient>
+        <smtpHost>mx.uni-freiburg.de</smtpHost>
+    </emailNotifier>
+</workflowsConf>

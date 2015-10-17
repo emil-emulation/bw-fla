@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_MESS_0}" />
+
+	<ui:define name="title">
+			bwFLA Basic System Environments 
+	</ui:define>
+
+	<ui:define name="content">
+		<style>
+.wf-access-chooseiso .truncate {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.wf-access-chooseiso .menu-wrapper {
+	overflow: hidden;
+	padding-left: 20px;
+	padding-right: 43px;
+	padding-bottom: 25px;
+}
+
+.wf-access-chooseiso .sort {
+	float: left;
+}
+
+.wf-access-chooseiso .sort .sortSelect {
+	position: relative;
+	top: 7px;
+}
+
+.wf-access-chooseiso .filter {
+	float: right;
+}
+
+.wf-access-chooseiso .outer {
+	overflow: hidden;
+	margin-bottom: -10px;
+}
+
+.wf-access-chooseiso .inner {
+	width: 120px;
+	height: 180px;
+	float: left;
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-bottom: 10px;
+	position: relative;
+}
+
+.wf-access-chooseiso .inner img {
+	max-height: 100%;
+	max-width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
+
+.wf-access-chooseiso .inner p {
+	height: 15px;
+	margin: 2px;
+	text-align: center;
+}
+
+.wf-access-chooseiso .inner a {
+	display: block;
+	height: 120px;
+	width: 120px;
+	color: #2a6ebb;
+	text-decoration: underline;
+}
+
+.wf-access-chooseiso .inner .lockimage {
+	width: 26px;
+	position: absolute;
+	right: 0;
+	top: 0;
+	z-index: 100;
+}
+</style>
+
+		<p:panel header="Available Objects"
+			footer="Please choose a game"
+			style="width: 850px; margin: 0 auto 30px auto;">
+			<h:form styleClass="wf-access-chooseiso" id="outerForm">
+				<div class="menu-wrapper">
+					<div class="sort">Platform 
+						<p:selectOneMenu value="#{WF_MESS_0.selectedPlatform}"
+							styleClass="sortSelect">
+							<f:selectItems value="#{WF_MESS_0.platformList}" var="platform"
+								itemLabel="#{platform.name}" itemValue="#{platform.name}" />
+							<p:ajax update="outerDescriptorWrapper" event="change"
+								listener="#{WF_MESS_0.changePlatform}" />
+						</p:selectOneMenu>
+					</div>
+				</div>
+
+				<p:outputPanel id="outerDescriptorWrapper">
+					<div class='outer'>
+						<ui:repeat var="software"
+							value="#{WF_MESS_0.descriptionPaginator.model}">
+							<div class='inner'>
+								<p:commandLink
+									actionListener="#{WF_MESS_0.setSelectedRom(software.name)}"
+									action="#{WF_MESS_0.navigate}">
+									<img height="100" width="100"
+										style="box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); border-radius: 2px;"
+										src="#{WF_MESS_0.thumbURL(software.name)}" />
+								</p:commandLink>
+
+								<p>
+									<p:commandLink styleClass="truncate"
+										actionListener="#{WF_MESS_0.setSelectedRom(software.name)}"
+										action="#{WF_MESS_0.navigate}">
+									#{software.name}
+								</p:commandLink>
+								</p>
+
+								<p class="truncate">#{software.description}</p>
+								<p class="truncate">#{software.year}</p>
+
+							</div>
+						</ui:repeat>
+
+						<p:outputPanel style="display: inline-block;margin: 0px 0 15px 0;"
+							rendered="#{WF_MESS_0.descriptionPaginator eq null || WF_MESS_0.descriptionPaginator.recordsTotal eq 0}">
+					We are sorry, but nothing was found..
+					</p:outputPanel>
+
+						<p:outputPanel
+							rendered="#{not (WF_MESS_0.descriptionPaginator eq null || WF_MESS_0.descriptionPaginator.recordsTotal eq 0 || WF_MESS_0.descriptionPaginator.pages eq 1)}">
+							<div
+								style="clear: both; padding: 10px 0; width: 190px; margin: auto;">
+								<p:commandButton
+									disabled="#{WF_MESS_0.descriptionPaginator.pageIndex eq 1}"
+									value="&lt; prev"
+									actionListener="#{WF_MESS_0.descriptionPaginator.prev}"
+									update=":outerForm:outerDescriptorWrapper" />
+								<span style="margin: 0 11px;"><h:outputText
+										value="#{WF_MESS_0.descriptionPaginator.pageIndex} / #{WF_MESS_0.descriptionPaginator.pages}" /></span>
+								<p:commandButton
+									disabled="#{WF_MESS_0.descriptionPaginator.pageIndex eq WF_MESS_0.descriptionPaginator.pages}"
+									value="next &gt;"
+									actionListener="#{WF_MESS_0.descriptionPaginator.next}"
+									update=":outerForm:outerDescriptorWrapper" />
+							</div>
+						</p:outputPanel>
+					</div>
+				</p:outputPanel>
+			</h:form>
+		</p:panel>
+
+
+	</ui:define>
+
+</ui:composition>
+</html>

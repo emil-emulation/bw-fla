@@ -1,0 +1,19 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets" 
+	xmlns:h="http://java.sun.com/jsf/html" 
+	xmlns:f="http://java.sun.com/jsf/core" 
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core" 
+	xmlns:func="http://example.com/functions" 
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:bwl="http://bwfla.bwl.de/facelets">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:define name="metadata">
+	    <f:metadata>
+		    <f:event type="preRenderView" listener="#{WF_I_API.prepareFacadeAndRedirect}" />
+		</f:metadata>
+	</ui:define>
+</ui:composition>
+
+</html>

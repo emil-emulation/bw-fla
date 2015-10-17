@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+
+  <ui:define name="title">
+			bwFLA Shibboleth authentication module
+	</ui:define>
+
+  <f:metadata>
+    <f:event type="javax.faces.event.PreRenderViewEvent"
+      listener="#{ShibbolethSession.initializeSession}" />
+  </f:metadata>
+
+  <ui:define name="content">
+    <h:form id="form" rendered="#{!ShibbolethSession.loggedIn}">
+
+      <p:panelGrid style="width: 650px; margin: 0 auto 30px auto;"
+        columns="1">
+        <f:facet name="header">BWfla Shibboleth authentication module</f:facet>
+
+        <p:outputLabel value="Select federation" for="selectFed" />
+        <p:selectOneMenu id="selectFed"
+          value="#{ShibbolethSession.selectedFederation}"
+          converter="#{federationConverter}">
+          <f:selectItems value="#{ShibbolethSession.federationList}"
+            var="federation"
+            itemLabel="#{federation.name} (id #{federation.id})"
+            itemValue="#{federation}" />
+        </p:selectOneMenu>
+
+
+        <p:outputLabel value="Select IdP" for="idpBox" />
+        <p:selectOneListbox id="idpBox" style="width:400px;"
+          value="#{ShibbolethSession.selectedIdP}"
+          converter="#{samlIdpMetadataConverter}">
+          <f:selectItems value="#{ShibbolethSession.idpList}" var="idp"
+            itemLabel="#{idp.orgName}" itemValue="#{idp}" />
+        </p:selectOneListbox>
+
+        <!-- Login Button -->
+        <p:commandButton id="login" action="#{ShibbolethSession.login}"
+          value="Einloggen" />
+      </p:panelGrid>
+    </h:form>
+    
+    <h:form id="notice" rendered="#{ShibbolethSession.loggedIn}">
+      You are already logged in.
+    </h:form>
+  </ui:define>
+
+</ui:composition>
+</html>

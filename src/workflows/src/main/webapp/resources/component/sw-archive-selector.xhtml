@@ -1,0 +1,30 @@
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:cc="http://java.sun.com/jsf/composite"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://java.sun.com/jsf/core">
+
+	<cc:interface componentType="de.bwl.bwfla.workflows.component.SwArchiveSelector">
+		<cc:attribute name="selectedSoftware" type="de.bwl.bwfla.workflows.softwarearchive.SoftwareDescription" required="true" />
+		<cc:attribute name="onchange" type="java.lang.String" default="" />
+	</cc:interface>
+
+	<cc:implementation>
+		<h:outputStylesheet library="component" name="sw-archive-selector.css" />
+	
+		<p:selectOneListbox id="software" value="#{cc.attrs.selectedSoftware}" style="width: 100%; height: 300px;"
+		  scrollHeight="270" converter="de.bwl.bwfla.workflows.beans.common.EntityConverter" var="a" filter="true" filterMatchMode="startsWith"
+		  onchange="#{cc.attrs.onchange}" styleClass="software-selector-selectbox">
+			<f:selectItems value="#{cc.softwareList}" var="software" itemLabel="#{software.name}" itemValue="#{software}" />
+			
+			<p:column>
+				<div class="software-wrapper">
+					<div class="software-name"><h:outputText value="#{a.name}" /></div>
+					<div class="software-description"><h:outputText value="#{a.description}" /></div>
+				</div>
+			</p:column>
+		</p:selectOneListbox>
+	</cc:implementation>
+</ui:composition>

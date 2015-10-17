@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflowsConf>
+    <archiveGw>132.230.4.15:8080</archiveGw>
+    <embedGw>http://132.230.4.15:8080/faces/pages/workflow-embed/WF_EM_0.xhtml</embedGw>
+    <eaasGw>http://localhost:8080/eaas-ejb/EaasWS?wsdl</eaasGw>
+    <metaDir>/home/iv1004/Workspace/meta-data/</metaDir>
+    <objDir>/home/iv1004/Workspace/sw-archive/transmediale-isos-new/</objDir>
+    <sysDir>/mnt/data/meta-data/sysenv/</sysDir>
+    <picDir>/home/iv1004/Downloads</picDir>
+</workflowsConf>

@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+# create the bwFLA user
+groupadd bwfla
+useradd -m -d /home/bwfla -s /bin/bash -G bwfla,disk,audio,plugdev -u 1004 -g bwfla bwfla 
+chown -R bwfla:bwfla /home/bwfla
+
+# create temp directory
+mkdir -p /tmp/bwfla
+chmod 777 /tmp/bwfla
+chown -R bwfla:bwfla /tmp/bwfla
+
+# installing essential flavor-independent packages
+apt-get update -y
+DEBIAN_FRONTEND='noninteractive' apt-get install -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' -y --force-yes "linux-headers-$(uname -r)" "linux-image-$(uname -r)" openjdk-7-jre

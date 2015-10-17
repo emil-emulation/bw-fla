@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_SWI_0}" />
+
+	<ui:define name="title">bwFLA Basic System Environments</ui:define>
+	
+	<ui:define name="metadata">		
+		<style>
+			.ui-panelgrid tr, .ui-panelgrid td {
+				border: 0;
+			}
+			
+			.ui-panelgrid td input, .ui-panelgrid td textarea {
+				width: 270px;
+			}
+			
+			.files td:first-child {
+				width: 18px;
+				padding: 4px 0px 4px 10px;
+			}
+			
+			.plusbutton {
+				position: relative;
+				left: -16px;
+				top: 1px;
+			}
+			
+			.plusbutton span {
+				padding: 1px 7px !important;
+				font-size: 15px !important;
+			}
+			
+			.uploadbutton span {
+				padding: 1px 7px !important;
+			}
+			
+			.grid > thead > tr > td, .grid > tbody > tr > td, .grid > tfoot > tr > td {
+				border: 1px solid #ddd;	
+			}
+			
+			.dt_files .ui-widget-content {
+				border: 1px solid #dddddd !important;
+			}
+		</style>
+	</ui:define>
+
+	<ui:define name="content">		
+		<p:panelGrid styleClass="grid" style="width: 650px; margin: 0 auto 30px auto;">
+			<f:facet name="header">
+				<p:row>
+					<p:column colspan="2">Add Software Package</p:column>
+				</p:row>
+			</f:facet>
+
+			<p:row>
+				<p:column>
+					<h:form id="newswform">
+						<h:panelGrid id="grid" columns="3" cellpadding="4">   
+							<p:outputLabel for="swname" value="Name:" /> 
+							<p:inputText id="swname" required="true" requiredMessage="Please insert a Name.." value="#{WF_SWI_0.newSWBean.name}" />  
+							<p:message for="swname" />
+							
+							<p:outputLabel for="hardware" value="Hardware:" />
+							<p:selectOneMenu id="hardware" value="#{WF_SWI_0.newSWBean.hardware}" converter="#{HardwareConverter}" panelStyle="width:150px" effect="fade" var="hw" style="width:279px" filter="true" filterMatchMode="startsWith">
+								<f:selectItems value="#{WF_SWI_0.hardwares}" var="hardware" itemLabel="#{hardware.name}" itemValue="#{hardware}" /> 
+					  
+								<p:column><span>#{hw.name}</span></p:column>
+							</p:selectOneMenu>								
+							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="addHWDlg.show();"></p:commandButton>
+							
+							<p:outputLabel for="os" value="Operating System:" />
+							<p:selectOneMenu id="os" value="#{WF_SWI_0.newSWBean.os}" converter="#{OsConverter}" panelStyle="width:150px" effect="fade" var="o" style="width:279px" filter="true" filterMatchMode="startsWith">
+								<f:selectItems value="#{WF_SWI_0.oss}" var="os" itemLabel="#{os.name}" itemValue="#{os}" /> 
+					  
+								<p:column><span>#{o.name}</span></p:column>
+							</p:selectOneMenu>								
+							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="addOsDlg.show();"></p:commandButton>
+							
+							<p:outputLabel for="swdescription" styleClass="swdescription-label" value="Description:" /> 
+							<p:inputTextarea id="swdescription" value="#{WF_SWI_0.newSWBean.description}" />  
+							<p:message for="swdescription" />
+															
+							<p:outputLabel for="swdate" value="Release Date:" /> 
+							<p:calendar id="swdate" value="#{WF_SWI_0.newSWBean.releaseDate}" pattern="dd.MM.yyyy" />  
+							<p:message for="swdate" />
+							
+							<p:outputLabel for="swinfosource" value="Info Source:" /> 
+							<p:inputText id="swinfosource" value="#{WF_SWI_0.newSWBean.infoSource}" />  
+							<p:message for="swinfosource" />	
+							
+							<p:outputLabel for="swlocation" value="Location:" /> 
+							<p:inputText id="swlocation" value="#{WF_SWI_0.newSWBean.location}" />  
+							<p:message for="swlocation" />
+							
+							<p:outputLabel for="swlicence" value="Licence:" /> 
+							<p:inputText id="swlicence" value="#{WF_SWI_0.newSWBean.licence}" />  
+							<p:message for="swlicence" />
+							
+							<p:outputLabel for="swlanguage" value="Language:" /> 
+							<p:selectOneMenu id="swlanguage" value="#{WF_SWI_0.newSWBean.language}" converter="LanguageConverter" panelStyle="width:150px" effect="fade" var="l" style="width:279px" filter="true" filterMatchMode="startsWith">
+								<f:selectItems value="#{WF_SWI_0.languages}" var="language" itemLabel="#{language[3]}" itemValue="#{language}" /> 
+					  
+								<p:column><span>#{l[3]}</span></p:column>
+							</p:selectOneMenu>  
+							<p:message for="swlanguage" />
+							
+							<p:outputLabel for="swdocumentation" value="Documentation:" /> 
+							<p:inputText id="swdocumentation" value="#{WF_SWI_0.newSWBean.documentation}" />  
+							<p:message for="swdocumentation" />
+							
+							<p:outputLabel for="thumbnail" value="Thumbnail Image:" />
+							<p:outputPanel id="thumbnail">
+								<div style="width: 120px; height: 120px; border: 1px solid #ddd; position: relative;">
+									<img style="position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0; max-height: 120px;max-width: 120px;" src="#{WF_SWI_0.thumbnail_url}" />
+								</div>
+							</p:outputPanel>
+							<p:commandButton styleClass="uploadbutton" value="Upload Thumbnail" type="button" onclick="addThumbnailDlg.show();"></p:commandButton>
+							
+							<p:outputLabel for="files" value="Files:" />
+							<p:dataTable id="files" styleClass="dt_files" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}" var="f" value="#{WF_SWI_0.addFilesModel}" paginator="true" rows="10" selection="#{WF_SWI_0.newSWBean.files}" lazy="true" paginatorPosition="bottom">					
+						        <p:column selectionMode="multiple" style="width:2%" />
+						
+						        <p:column headerText="Files" style="width:25%">
+						        	<h:graphicImage rendered="#{not f.directory}" library="images" name="file.png" />
+									<h:graphicImage rendered="#{f.directory}" library="images" name="folder.png" />
+									
+									<span style="position: relative; top: -3px;">#{f.name}</span>
+						        </p:column>
+						    </p:dataTable>
+						    <p:message for="files" />
+						</h:panelGrid>						
+						
+						<p:commandButton style="margin: 5px 0 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.submitNewSW}" update="@form" />
+					</h:form>
+				</p:column>
+			</p:row>
+			
+			<p:row>
+				<p:column colspan="2">
+					<p:panel header="Help" collapsed="true" toggleable="true" toggleTitle="Help">
+						Help / Information
+					</p:panel>
+				</p:column>
+			</p:row>
+
+			<f:facet name="footer">
+				<p:row>
+					<p:column colspan="2">
+						<div align="right">
+							<!--  
+							<p:commandButton id="nextButton" widgetVar="nextButton"	ajax="false" action="null" value="Next" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e" />
+							-->
+						</div>
+					</p:column>
+				</p:row>
+			</f:facet>
+		</p:panelGrid>
+			
+		<script>
+			$(function() {
+				// Small Workarround to position the label of the description textarea
+				$('.swdescription-label').closest('td').css('vertical-align', 'top').css('padding-top', '6px');
+
+				// Small workarround to adjust size of select panels
+				$('#newswform\\:swlanguage_panel').css('width', '170px');
+				$('#newswform\\:hardware_panel').css('width', '170px');
+				$('#newswform\\:os_panel').css('width', '170px');
+			});
+		</script>
+		
+		<!-- Dialogs -->
+		
+		<!-- Create Hardware and HardwareArchitectureType Dialog -->
+		<p:dialog id="addHWDialog" header="Add New Hardware" widgetVar="addHWDlg" modal="true" draggable="false" width="550">  
+			<h:form id="newhwform">
+				<p:panelGrid id="grid" columns="3" cellpadding="4">   
+					<p:outputLabel for="name" value="Name:" /> 
+				   	<p:inputText id="name" required="true" requiredMessage="Please insert a Name.." value="#{WF_SWI_0.hardwareBean.name}" />  
+					<p:message for="name" />
+					   
+					<p:outputLabel for="description" styleClass="swdescription-label" value="Description:" /> 
+					<p:inputTextarea id="description" value="#{WF_SWI_0.hardwareBean.description}" />  
+					<p:message for="description" />
+				   								
+					<p:outputLabel for="date" value="Release Date:" /> 
+					<p:calendar id="date" value="#{WF_SWI_0.hardwareBean.releaseDate}" pattern="dd.MM.yyyy" />  
+					<p:message for="date" />
+				   
+					<p:outputLabel for="infosource" value="Info Source:" /> 
+					<p:inputText id="infosource" value="#{WF_SWI_0.hardwareBean.infoSource}" />  
+					<p:message for="infosource" />	
+				   
+					<p:outputLabel for="location" value="Location:" /> 
+					<p:inputText id="location" value="#{WF_SWI_0.hardwareBean.location}" />  
+					<p:message for="location" />
+				   
+					<p:outputLabel for="licence" value="Licence:" /> 
+					<p:inputText id="licence" value="#{WF_SWI_0.hardwareBean.licence}" />  
+					<p:message for="licence" />
+				   				   
+					<p:outputLabel for="documentation" value="Documentation:" /> 
+					<p:inputText id="documentation" value="#{WF_SWI_0.hardwareBean.documentation}" />  
+					<p:message for="documentation" />
+					
+					<p:outputLabel for="architecturename" value="Architecture Name:" /> 
+					<p:inputText id="architecturename" value="#{WF_SWI_0.hardwareBean.architecturename}" required="true"/>  
+					<p:message for="architecturename" />
+					
+					<p:outputLabel for="architecturetype" value="Architecture Type:" /> 
+					<p:inputText id="architecturetype" value="#{WF_SWI_0.hardwareBean.architecturetype}" />  
+					<p:message for="architecturetype" />
+					
+					<p:outputLabel for="architectureplatform" value="Architecture Platform:" /> 
+					<p:inputText id="architectureplatform" value="#{WF_SWI_0.hardwareBean.architectureplatform}" />  
+					<p:message for="architectureplatform" />			   
+				</p:panelGrid>				   
+				   
+				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewHardware}" update="@form :newswform:hardware" oncomplete="if(!args.validationFailed) {addHWDlg.hide();}"/>
+			</h:form>
+		</p:dialog>
+		
+		<!-- Create Os and OsVersion Dialog -->
+		<p:dialog id="addOsDialog" header="Add New Operating System" widgetVar="addOsDlg" modal="true" draggable="false" width="550">  
+			<h:form id="newosform">
+				<p:panelGrid id="grid" columns="3" cellpadding="4">   
+					<p:outputLabel for="name" value="Name:" /> 
+				   	<p:inputText id="name" required="true" requiredMessage="Please insert a Name.." value="#{WF_SWI_0.osBean.name}" />  
+					<p:message for="name" />
+					   
+					<p:outputLabel for="description" styleClass="swdescription-label" value="Description:" /> 
+					<p:inputTextarea id="description" value="#{WF_SWI_0.osBean.description}" />  
+					<p:message for="description" />
+				   								
+					<p:outputLabel for="date" value="Release Date:" /> 
+					<p:calendar id="date" value="#{WF_SWI_0.osBean.releaseDate}" pattern="dd.MM.yyyy" />  
+					<p:message for="date" />
+				   
+					<p:outputLabel for="infosource" value="Info Source:" /> 
+					<p:inputText id="infosource" value="#{WF_SWI_0.osBean.infoSource}" />  
+					<p:message for="infosource" />	
+				   
+					<p:outputLabel for="location" value="Location:" /> 
+					<p:inputText id="location" value="#{WF_SWI_0.osBean.location}" />  
+					<p:message for="location" />
+				   
+					<p:outputLabel for="licence" value="Licence:" /> 
+					<p:inputText id="licence" value="#{WF_SWI_0.osBean.licence}" />  
+					<p:message for="licence" />
+				   				   
+					<p:outputLabel for="documentation" value="Documentation:" /> 
+					<p:inputText id="documentation" value="#{WF_SWI_0.osBean.documentation}" />  
+					<p:message for="documentation" />
+					
+					<p:outputLabel for="versionname" value="Version Name:" /> 
+					<p:inputText id="versionname" value="#{WF_SWI_0.osBean.versionname}" required="true"/>  
+					<p:message for="versionname" />
+					
+					<p:outputLabel for="versiondescription" value="Architecture Type:" /> 
+					<p:inputText id="versiondescription" value="#{WF_SWI_0.osBean.versiondescription}" />  
+					<p:message for="versiondescription" />
+					
+					<p:outputLabel for="versiondate" value="Version Release Date:" /> 
+					<p:calendar id="versiondate" value="#{WF_SWI_0.osBean.versionreleasedate}" pattern="dd.MM.yyyy" />  
+					<p:message for="versiondate" />			   
+				</p:panelGrid>				   
+				   
+				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewOs}" update="@form :newswform:os" oncomplete="if(!args.validationFailed) {addOsDlg.hide();}"/>
+			</h:form>
+		</p:dialog>
+		
+		<!-- Upload Thumbnail Dialog -->
+		<p:dialog id="addThumbnailDialog" header="Upload Thumbnail Image" widgetVar="addThumbnailDlg" modal="true" draggable="false" width="550">  
+			<h:form enctype="multipart/form-data">
+			    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_SWI_0.handleFileUpload}" update=":newswform:thumbnail" 
+			    	mode="advanced" auto="true" oncomplete="addThumbnailDlg.hide();" allowTypes="/(\.|\/)(jpeg|png)$/" />
+			</h:form>                   
+		</p:dialog>
+	</ui:define>
+</ui:composition>
+</html>

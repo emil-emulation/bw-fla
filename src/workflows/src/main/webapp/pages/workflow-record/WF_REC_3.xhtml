@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+	
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwl="http://bwfla.bwl.de/facelets" >
+	
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_REC_3}"/>
+		<ui:define name="title">
+			bwFLA Session Recording - Storage
+		</ui:define>
+		<ui:define name="menu">
+			<!-- No menu in this page -->
+		</ui:define>
+	
+		<ui:define name="content">
+			<style type="text/css">
+				.textinput {
+					width: 99%;
+					margin-top: 5px;
+				}
+			</style>
+			
+			<h:form>
+				<p:panel id="settings" header="Session Storage Settings" style="width: 800px; margin: auto;">
+					<div style="margin-top: 5px;">
+						<h:outputLabel value="Title:" for="title"/>
+						<i><h:outputText value="(required)" style="float: right;"/></i><br/>
+						<p:inputText id="title" value="#{beanName.title}"  required="true" requiredMessage="The title must be specified!" styleClass="textinput"/>
+						<p:message for="title"/>
+						<p/>
+						<h:outputLabel value="Description:" for="description"/>
+						<i><h:outputText value="(optional)" style="float: right;"/></i><br/>
+						<p:inputTextarea id="description" value="#{beanName.description}" rows="3" cols="100" styleClass="textinput"/>
+					</div>
+				
+					<p:panel header="Help" collapsed="true" toggleable="true" style="margin-top: 20px;">
+						On this page you can setup the storage settings for the recorded session.
+						Additionally you can add some metadata to the recording.
+					</p:panel>
+	
+					<f:facet name="footer">
+						<div style="text-align: right;">
+							<p:commandButton id="cancel-button" value="Cancel" process="@this" update="settings" action="#{beanName.cancel}"/>
+							<p:commandButton id="save-button" value="Save Session" update="settings" action="#{beanName.forward}" style="margin-left: 5px;"/>
+						</div>
+					</f:facet>
+				</p:panel>
+			</h:form>
+		</ui:define>
+	</ui:composition>
+</html>

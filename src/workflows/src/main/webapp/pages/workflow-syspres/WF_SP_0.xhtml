@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:define name="content">
+				<p:panel styleClass="infotextPanel">
+					<font>
+						Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
+						<br /> <br />
+						
+						At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+					</font>
+				</p:panel>
+		
+				<h:form>
+					<h:outputLabel value="Choose platform type:" style="font-weight:bold"/><br/>
+					<h:selectOneListbox style="width: 300px" value="#{WF_SP_0.formStickFormation.emulator_select}"  id="platform" required="true" requiredMessage="Please choose platform type." >
+						<f:selectItems value="#{WF_SP_0.platforms}" />
+						<f:ajax event="change" execute="@this" render="operating_systems" />
+					</h:selectOneListbox><br/><br/>
+
+					<h:outputLabel for="radioButtons" value="Choose your Operating System:" style="font-weight:bold"/><br/>
+					<h:selectOneListbox style="width: 300px" id="operating_systems" value="#{WF_SP_0.formStickFormation.subscriptions_select}" required="true" requiredMessage="Please choose operating system.">
+						<f:selectItems value="#{WF_SP_0.operatingSystems}" />
+					</h:selectOneListbox><br/><br/>
+	
+					<h:outputLabel value="Choose workflow type:" style="font-weight:bold"/><br/>
+					<h:selectOneRadio style="width: 300px" id="radioButtons" required="true" requiredMessage="Please choose workflow type.">
+						<f:selectItem itemValue="forward" itemLabel="On-System" />
+						<f:selectItem itemValue="forward" itemLabel="External" />
+					</h:selectOneRadio><br/><br/>
+									
+					<h:commandButton action="#{WF_SP_0.navigate}" value="Next" />
+				</h:form>
+		</ui:define>
+	</ui:composition>
+
+</html>

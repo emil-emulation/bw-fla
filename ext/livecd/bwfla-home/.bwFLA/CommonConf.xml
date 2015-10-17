@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<commonConf>
+    <processRunner>
+        <wrapperScript>./subprocess-wrapper.sh</wrapperScript>
+        <tmpdirPrefix>bwfla-pr-</tmpdirPrefix>
+        <runflagFilename>running</runflagFilename>
+        <pidFilename>pid</pidFilename>
+        <stdoutFilename>stdout.log</stdoutFilename>
+        <stderrFilename>stderr.log</stderrFilename>
+    </processRunner>
+</commonConf>
+

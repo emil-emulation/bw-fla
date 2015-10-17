@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+BWFLA='bw-fla'
+REV="demo-august-15"
+
+if [ -z "$REV" ]
+then
+    echo "[ERROR] missing bwFLA Git-Revision to checkout before building the docker-container" >&2
+    exit 35
+fi
+
+if [ ! -d "$BWFLA" ]
+then
+    git clone git@132.230.4.15:bw-fla.git "$BWFLA"
+fi
+
+pushd .
+cd "$BWFLA"
+git fetch && git checkout -f "origin/$REV"
+cd 'src/root/'
+mvn clean install
+popd
+
+sudo docker build -t "eaas/bwfla:$REV" .
+echo "successfully created docker-image 'bwfla:$REV'"

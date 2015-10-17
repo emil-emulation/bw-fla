@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<emucompConf>
+    <basiliskBean>/usr/bin/BasiliskII.real</basiliskBean>
+    <sheepShaverBean>/usr/bin/SheepShaver</sheepShaverBean>
+    <dosBoxBean>/usr/bin/dosbox</dosBoxBean>
+    <mameBean>/usr/games/mame</mameBean>
+    <messBean>/usr/games/mess</messBean>
+    <vboxExecs>
+        <vboxHeadlessExec>/usr/bin/VBoxSDL</vboxHeadlessExec>
+        <vboxManageExec>/usr/bin/VBoxManage</vboxManageExec>
+    </vboxExecs>
+    <amigaBean>/usr/bin/e-uae</amigaBean>
+    <hatariBean>/usr/bin/hatari</hatariBean>
+    <vdeSwitchBean>/usr/bin/vde_switch</vdeSwitchBean>
+</emucompConf>

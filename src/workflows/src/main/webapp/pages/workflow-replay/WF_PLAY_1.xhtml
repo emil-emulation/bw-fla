@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwl="http://bwfla.bwl.de/facelets" >
+	
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_PLAY_1}"/>
+		<ui:define name="title">
+			bwFLA Session Replay - Upload File(s)
+		</ui:define>
+		<ui:define name="content">
+			<style type="text/css">
+				.ui-fileupload {
+					width: 700px;
+				}
+			</style>
+
+			<p:dialog header="Please choose the file you want to inject" widgetVar="uploadDialog" modal="true" width="750" resizable="false" draggable="false">
+				<h:form enctype="multipart/form-data">
+					<p:fileUpload mode="advanced" auto="true" fileUploadListener="#{beanName.handleFileUpload}" 
+							widgetVar="fupload" update=":uploadedFilesForm:uploadedFiles" oncomplete="PF('uploadDialog').hide();"/>
+					<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput"/>
+				</h:form>
+			</p:dialog>
+				
+			<p:panel style="width: 850px; margin: auto;">
+				<f:facet name="header">Inject Files Into Emulated Environment (optional)</f:facet>
+				<bwl:file-injection-panel/>
+				<p:panel header="Help" collapsed="true" toggleable="true">
+					On this page you have the opportunity to upload files, which will 
+					then be made accessible in the virtual machine. <br/>
+					This is done by attaching a container (e.g.: a virtual CDROM, Floppy-Disk, etc.), 
+					which holds the file(s), to the virtual machine.<br/>
+					At this stage it is only possible to upload one file per container (CDROM, Floppy Disk, ...)
+				</p:panel>
+				<f:facet name="footer">
+					<h:form style="text-align: right;">
+						<p:commandButton value="Back" ajax="false" action="#{beanName.back}" icon="ui-icon-arrowthick-1-w"/>
+						<p:commandButton id="nextButton" value="Next" ajax="false" action="#{beanName.forward}"
+							 widgetVar="nextButton" style="margin-left: 5px;" icon="ui-icon-arrowthick-1-e"/>
+					</h:form>
+				</f:facet>
+			</p:panel>
+			
+		</ui:define>
+	</ui:composition>
+</html>

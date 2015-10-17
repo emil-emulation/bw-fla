@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="javax.servlet.jstl.api">
+  <dependencies>
+    <module name="javax.api" export="false"/>
+    <module name="javax.servlet.api" export="false"/>
+    <module name="javax.servlet.jsp.api" export="false"/>
+    <module name="org.apache.xalan" export="false"/>
+  </dependencies>
+
+  <resources>
+    <resource-root path="javax.servlet.jsp.jstl-api-1.2.1.jar"/>
+  </resources>
+</module>

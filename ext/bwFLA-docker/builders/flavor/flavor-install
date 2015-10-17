@@ -1,0 +1,159 @@
+#!/bin/bash
+set -ex
+
+
+#################  GENERAL FLAVOR RELATED CHANGES ############ 
+BWFLA='/home/bwfla'
+
+echo "deb http://packages.bw-fla.uni-freiburg.de/ trusty bwfla-demo" > /etc/apt/sources.list.d/bwfla.list
+echo -e "Package: *\nPin: release c=bwfla-demo\nPin-Priority: 1001" > /etc/apt/preferences.d/pin-bwfla.pref
+apt-get update -y
+mkdir $BWFLA/.bwFLA
+
+
+################# 'COMMON' RELATED CHANGES ################## 
+cat << EOF > $BWFLA/.bwFLA/CommonConf.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<commonConf>
+    <hdlConf>
+        <keyfile>$BWFLA/misc/admpriv.bin</keyfile>
+        <authIndex>300</authIndex>
+        <authHandle>0.NA/11270</authHandle>
+    </hdlConf>
+
+    <helpersConf>
+        <hddFat16Create>$BWFLA/misc/hdd_scripts/hdd_create.sh</hddFat16Create>
+        <hddFat16Io>$BWFLA/misc/hdd_scripts/hdd_io.sh</hddFat16Io>
+        <hddHfsCreate>$BWFLA/misc/hdd_scripts/hdd_create_hfs.sh</hddHfsCreate>
+        <hddHfsIo>$BWFLA/misc/hdd_scripts/hdd_io_hfs.sh</hddHfsIo>
+        <floppyFat12Create>$BWFLA/misc/floppy_scripts/floppy_create.sh</floppyFat12Create>
+        <floppyFat12Io>$BWFLA/misc/floppy_scripts/floppy_io.sh</floppyFat12Io>
+    </helpersConf>
+
+    <processRunner>
+        <wrapperScript>$BWFLA/appserver/bin/subprocess-wrapper.sh</wrapperScript>
+        <tmpdirPrefix>bwfla-pr-</tmpdirPrefix>
+        <runflagFilename>running</runflagFilename>
+        <pidFilename>pid</pidFilename>
+        <stdoutFilename>stdout.log</stdoutFilename>
+        <stderrFilename>stderr.log</stderrFilename>
+    </processRunner>
+</commonConf>
+EOF
+
+
+############# 'IMAGEARCHIVE' RELATED CHANGES ############## 
+cat << EOF > $BWFLA/.bwFLA/ImageArchiveConf.xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<imageArchiveConf>
+  <archiveBase>/home/bwfla/image-archive</archiveBase>
+  <nbdPrefix>nbd:%PUBLIC_IP%:10809:exportname=</nbdPrefix>
+  <httpPrefix/>
+</imageArchiveConf>
+EOF
+
+echo -e '[generic]\n\texportpath = /home/bwfla/image-archive/nbd-export' > '/home/bwfla/nbd.conf' 
+apt-get install -y --force-yes nbd-server 
+
+
+################# 'EAAS' RELATED CHANGES ################## 
+cat << EOF > $BWFLA/.bwFLA/EaasConf.xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<eaasConf>
+    <bladeClusterPlugin>
+        <bladeConnection>
+            %NODES%
+        </bladeConnection>
+    </bladeClusterPlugin>   
+</eaasConf>
+EOF
+
+
+################# 'EMUCOMP' RELATED CHANGES ################## 
+apt-get install -y --force-yes \
+hatari \
+hsj \
+basilisk2 \
+dosbox \
+guacd \
+libguac-client-sdlonp0 \
+libsdl1.2debian \
+qemu-utils \
+qemu-system-x86 \
+qemu-system-ppc \
+sheepshaver \
+libcurl3 \
+libcurl3-gnutls
+
+mkdir /etc/mess
+echo "unevenstretch 0" >> /etc/mess/mess.ini
+
+cat << EOF > $BWFLA/.bwFLA/EmucompConf.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<emucompConf>
+    <qemuBean>/usr/bin/qemu-system-</qemuBean>
+    <basiliskBean>/usr/bin/BasiliskII.real</basiliskBean>
+    <sheepShaverBean>/usr/bin/SheepShaver</sheepShaverBean>
+    <dosBoxBean>/usr/bin/dosbox</dosBoxBean>
+    <vboxBean>
+        <vboxHeadlessExec>/usr/bin/VBoxSDL</vboxHeadlessExec>
+        <vboxManageExec>/usr/bin/VBoxManage</vboxManageExec>
+    </vboxBean>
+    <hatariBean>/usr/bin/hatari</hatariBean>
+    <vdeSwitchBean>/usr/bin/vde_switch</vdeSwitchBean>
+</emucompConf>
+EOF
+
+
+################# 'FITS' RELATED CHANGES ################## 
+apt-get install -y --force-yes zip
+mkdir -p 'lib/fits.jar'
+echo 'fits.home=/home/bwfla/misc/fits' > 'lib/fits.jar/fits.properties'
+zip -u "$BWFLA/appserver/standalone/deployments/bwFLA.ear" lib/fits.jar/fits.properties
+rm -r lib
+
+
+################# 'WORKFLOWS' RELATED CHANGES #################
+mkdir -p $BWFLA/{software-archive,object-archives,object-metadata,system-envs,pics}
+cat << EOF > $BWFLA/.bwFLA/WorkflowsConf.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<workflowsConf>
+    <archiveGw>%IMAGE_ARCHIVE%</archiveGw>
+    <eaasGw>http://%EAAS_GATEWAY%/eaas-ejb/EaasWS?wsdl</eaasGw>
+
+    <metaDir>$BWFLA/object-metadata</metaDir>
+    <objDir>$BWFLA/object-archives</objDir>
+    <picDir>$BWFLA/pics</picDir>
+    <swArchive>$BWFLA/software-archive/swarchive.xml</swArchive>
+ 
+    <embedGw>http://%PUBLIC_IP%/faces/pages/workflow-embed/WF_EM_0.xhtml</embedGw>
+</workflowsConf>
+EOF
+
+mkdir $BWFLA/software-archive/{storage,incoming}
+echo "{\"type\":\"FILE\",\"name\":\"User-Objects\",\"baseUri\":\"%BASE_URI%\",\"localPath\":\"$BWFLA/user-objects/\"}" > $BWFLA/object-archives/user-objects.json
+cat << EOF > $BWFLA/software-archive/swarchive.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<fileSoftwareArchive>
+  <name>User-Software</name>
+  <description>A user provided/maintained software archive</description>
+  <archiveDirectory>$BWFLA/software-archive/storage</archiveDirectory>
+  <incomingDirectory>$BWFLA/software-archive/incoming</incomingDirectory>
+  <exportUrlBase>http://%PUBLIC_IP%/swarchive/</exportUrlBase>
+</fileSoftwareArchive>
+EOF
+
+apt-get install -y --force-yes pmount hfsutils mkisofs fuseiso  
+echo -en \\r/dev/loop{0..7}\\n > /etc/pmount.allow
+chmod g+x /usr/bin/pmount 
+chmod g+x /usr/bin/pumount
+ln -sf /sbin/losetup /usr/bin/
+ln -sf /sbin/sfdisk /usr/bin/
+ln -sf /sbin/mkfs.* /usr/bin/
+ln -sf /sbin/mkdosfs /usr/bin/

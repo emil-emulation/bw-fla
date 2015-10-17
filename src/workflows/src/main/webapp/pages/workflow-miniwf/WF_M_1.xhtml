@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"   
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsp/jstl/core"
+	  xmlns:func="http://example.com/functions"
+      xmlns:bwl="http://bwfla.bwl.de/facelets"
+      xmlns:bwlcc="http://java.sun.com/jsf/composite/component">
+	
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_M_1}" />
+	
+		<ui:define name="title">
+			bwFLA Basic System Environments - Upload File(s)
+		</ui:define>
+		
+		<ui:define name="metadata">
+			<style type="text/css">
+				.ui-fileupload {
+					width: 700px;
+				}
+				
+				.ui-accordion-header:hover {
+				    background-color: #EDEDED !important;
+				}
+			</style>
+		</ui:define>
+	
+		<ui:define name="content">				
+			<p:dialog header="Please choose the file you want to inject" widgetVar="uploadDialog" modal="true" width="750" resizable="false" draggable="false">
+				<h:form enctype="multipart/form-data">
+					<p:remoteCommand actionListener="#{beanName['restartTimer']}" name="remoteCommandRestartTimer" />
+				
+				    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_M_1.handleFileUpload}" update=":injectAccordion:injectAccordionDirectTab" mode="advanced" auto="true" oncomplete="PF('uploadDialog').hide();remoteCommandRestartTimer()"/>
+					<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
+				</h:form>
+			</p:dialog>
+			
+			<p:panelGrid style="width: 850px; margin: 0 auto 30px auto;" columns="1">
+				<f:facet name="header">Inject files into emulated environment (optional)</f:facet>
+				
+				<p:accordionPanel id="injectAccordion">
+			        <p:tab title="Directly inject files" id="injectAccordionDirectTab">
+			            <bwl:file-injection-panel/>
+			        </p:tab>
+			        <p:tab title="Inject a Software from a Software-Archive">
+			        	<h:form>
+			        		<p:remoteCommand name="rc" update="@form"  />
+                        	<bwlcc:sw-archive-selector selectedSoftware="#{WF_M_1.selectedSoftware}" onchange="rc()" />  
+			            </h:form>
+			        </p:tab>
+			    </p:accordionPanel>
+				
+				<p:panel header="Help" collapsed="true" toggleable="true" toggleTitle="Help">
+					On this page you have the opportunity to upload files, which will 
+					then be made accessible in the virtual machine. <br />
+					This is done by attaching a container (e.g.: a virtual CDROM, Floppy-Disk, etc.), 
+					which holds the file(s), to the virtual machine.<br />
+					At this stage it is only possible to upload one file per container (CDROM, Floppy Disk, ...)
+				</p:panel>
+				<f:facet name="footer">
+					<div align="right">
+					<h:form style="margin: 6px 0;">
+					<p:commandButton ajax="false" disabled="false" style="margin-right: 3px;"
+						action="#{WF_M_1.navigateBack}" value="Back" 
+						icon="ui-icon-arrowthick-1-w"></p:commandButton>
+						
+					<p:commandButton id="nextButton" widgetVar="nextButton"
+						ajax="false"  action="#{WF_M_1.forward}" styleClass="forwardBtn" update="@all"
+						value="Next" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e" onclick="showLoadingAnimation()"/>
+					</h:form>
+					</div>
+				</f:facet>
+			</p:panelGrid>		
+		</ui:define>	
+	</ui:composition>
+</html>

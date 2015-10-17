@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwlcc="http://java.sun.com/jsf/composite/component">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_I_SW_start}" />
+	
+	<ui:define name="metadata">
+	<style>		
+		.forwardBtn {
+			width: 790px;
+			margin: 0 20px;
+		}
+	</style>
+	</ui:define>
+	
+	<ui:define name="content">
+	<p:panel header="Available Archives" style="width: 850px; margin: 0 auto 30px auto;">
+		<h:form>
+			<h4>You can edit an existing archive by selecting it.</h4>
+			<bwlcc:sw-archive-selector selectedSoftware="#{WF_I_SW_start.selectedSoftware}" onchange="$('.forwardBtn').click();"/>
+			
+			<br />
+			
+			<p:commandButton class="forwardBtn" action="#{WF_I_SW_start.forward}" value="Add new Archive" update="@form" />
+		</h:form>
+	</p:panel>
+	</ui:define>
+</ui:composition>
+</html>

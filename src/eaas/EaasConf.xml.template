@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<eaasConf> 
+    <bladeClusterPlugin>
+        <bladeConnection>
+            <node>
+                <address>http://1.2.3.23:8080/emucomp</address>
+                <nodespecs>
+                    <cpucores>4</cpucores>
+                    <memory>4096</memory>
+                    <disk>100</disk>
+                </nodespecs>
+            </node>
+        </bladeConnection>
+    </bladeClusterPlugin>
+      
+    <!--  
+    <googleCloudPlugin>
+        <googleConnection>
+            <accountId>xxx@developer.gserviceaccount.com</accountId>
+            <project>warm-access-87915</project>
+            <certificate>/home/bwfla/emucloud.p12</certificate>
+            <zone>us-central1-a</zone>
+            <machine>n1-highcpu-4</machine>
+            <osImage>https://www.googleapis.com/compute/v1/projects/fla/global/images/bwfla</osImage>
+        </googleConnection>
+    </googleCloudPlugin>
+    -->
+</eaasConf>

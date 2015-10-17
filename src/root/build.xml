@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="bwFLA Project Deployer" basedir=".">
+	<property environment="env"/>
+	<property file="build.properties"/>
+
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="${basedir}/../../ext/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<target name="-check-properties-existence">
+		<if>
+			<not><available file="${basedir}/build.properties"/></not>
+			<then>
+				<fail message="MISSING FILE: (please create from template) ${basedir}/build.properies" />
+			</then>
+		</if>
+	</target>
+
+
+
+
+
+					<!-- JBOSS SERVER RELATED GOALS -->
+	<target name="start" depends="-check-properties-existence">
+		<exec dir="${appserver.location}/bin" executable="./standalone.sh" >
+			<arg value="-Djava.io.tmpdir=${tmpdir.location}" />
+		</exec>
+	</target>
+
+
+	<target name="start:public" depends="-check-properties-existence">
+		<exec dir="${appserver.location}/bin" executable="./standalone.sh" >
+			<arg value="-b ${appserver.address}" />
+			<arg value="-Djava.io.tmpdir=${tmpdir.location}" />
+		</exec>
+	</target>
+
+
+
+
+
+					<!-- DERBY DATABASE RELATED GOALS -->
+<!--
+	<property name="derby.url" 	value="jdbc:derby:${derbydb.location}"/>
+	<property name="derby.impl"	value="org.apache.derby.jdbc.EmbeddedDriver"/>
+	<property name="derby.ij"	value="org.apache.derby.tools.ij"/>
+	
+	<path id="derby.drivers">
+	    <fileset dir="${basedir}/../../ext/database/drivers">
+	      <include name="*.jar"/>
+	    </fileset>
+	</path>
+
+
+	<target name="remove:db" depends="-check-properties-existence">
+		<delete dir="${derbydb.location}"/>
+	</target>
+
+
+	<target name="reinstall:db" depends="-check-properties-existence,remove:db">
+		<antcall target="-insert-bwfla-totem-schema"/>
+		<antcall target="-insert-bwfla-totem-data"/>
+		<antcall target="-insert-object-metadata"/>
+		<antcall target="-insert-shib-data"/>
+		<antcall target="-shutdown-derby"/>
+	</target>
+
+
+	<target name="-insert-bwfla-totem-schema">
+		<sql driver="${derby.impl}" url="${derby.url};create=true" userid="" password="" classpathref="derby.drivers">
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/schema.sql"/>
+		</sql>
+	</target>
+
+
+	<target name="-insert-bwfla-totem-data">
+		<sql driver="${derby.impl}" url="${derby.url};create=true" userid="" password="" classpathref="derby.drivers">
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/os.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/osversion.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/software.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/softwareversion.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/emulator.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/emulator_image_paths.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/systemenvironment.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/digitalobject.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/viewpath.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/library.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/libraryversion.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/component.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/lookup.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/hardware.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/hardwarearchitecturetype.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/osversion_has_hardwarearchitecturetype.sql"/>
+			<transaction src="${basedir}/../data/src/main/sql/bwfla_totem/softwareversion_has_osversion.sql"/>
+		</sql>
+	</target>   
+
+
+	<target name="-insert-object-metadata">
+		<sql driver="${derby.impl}" url="${derby.url};create=true" userid="" password="" classpathref="derby.drivers">
+			<transaction src="${basedir}/../data/src/main/sql/metadata/cdrom.sql" />
+			<transaction src="${basedir}/../data/src/main/sql/metadata/tib_data.sql" />
+		</sql>
+	</target>
+
+
+	<target name="-insert-shib-data">
+		<sql driver="${derby.impl}" url="${derby.url};create=true" userid="" password="" classpathref="derby.drivers">
+			<transaction src="${basedir}/../shibboleth/src/main/sql/shib-schema.sql"/>
+			<transaction src="${basedir}/../shibboleth/src/main/sql/shib-data.sql"/>
+		</sql>
+	</target>
+
+
+	<target name="-insert-machines">
+		<sql driver="${derby.impl}" url="${derby.url};create=true" userid="" password="" classpathref="derby.drivers">
+			<path>
+			    <fileset dir="${basedir}/../data/src/main/sql/machines">
+			      	<include name="*.sql"/>
+			    </fileset>
+			</path>
+		</sql>
+	</target>
+
+-->
+
+	<target name="-shutdown-derby">
+		<trycatch>
+			<try>
+				<sql driver="${derby.impl}" url="${derby.url};shutdown=true" userid="" password="" classpathref="derby.drivers">
+					<path/>
+				</sql>	
+			</try>
+			<catch>
+				<!-- NOCODE -->
+			</catch>
+		</trycatch> 
+	</target>
+
+</project>

@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">	
+	<ui:param name="beanName" value="#{WF_CONF_0}" />
+	
+	<ui:define name="metadata">
+		<style>
+			.confkey-label {
+				margin-right: 10px;
+				font-weight: bold;
+			}
+			
+			.confKeyTable {
+				border-spacing: 0px 9px;
+			}
+		</style>
+	</ui:define>
+
+	<ui:define name="content">
+		<h:form>
+			<p:panelGrid style="width: 650px; margin: 0 auto 30px auto;">  	
+				<f:facet name="header">
+					<p:row>
+						<p:column colspan="2">Configuration</p:column>
+					</p:row>
+				</f:facet>
+				
+				<p:row>
+					<p:column>
+						<h:dataTable styleClass="confKeyTable" var="key" value="#{WF_CONF_0.confKeyList}">
+						    <h:column>
+						        <p:outputLabel styleClass="confkey-label" value="#{key}" />
+						    </h:column>
+						    
+						    <h:column>
+						        <p:inputText value="#{WF_CONF_0.configPairs[key]}" size="65" />
+						    </h:column>
+						</h:dataTable>
+			        </p:column>
+			   	</p:row>
+			   	
+			   	<p:row>	
+			        <p:column colspan="2">
+			        	<p:panel header="Help" collapsed="true" toggleable="true" toggleTitle="Help">
+			        		Help / Information
+			        	</p:panel>
+			        </p:column>
+				</p:row>
+				
+				<f:facet name="footer">
+					<p:row>
+						<p:column colspan="2">
+							<div align="right">
+								<p:commandButton id="nextButton" widgetVar="nextButton" ajax="false" action="#{WF_CONF_0.forward}"
+								  value="Save" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e" />
+							</div>
+						</p:column>
+					</p:row>	
+				</f:facet>
+			</p:panelGrid>
+		</h:form>	
+	</ui:define>
+</ui:composition>
+</html>

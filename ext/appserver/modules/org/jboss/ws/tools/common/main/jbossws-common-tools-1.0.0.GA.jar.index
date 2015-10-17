@@ -1,0 +1,11 @@
+
+org/jboss/ws/tools/ant
+META-INF/maven
+org/jboss
+org/jboss/ws/tools/cmd
+META-INF/maven/org.jboss.ws/jbossws-common-tools
+META-INF/maven/org.jboss.ws
+org/jboss/ws
+org/jboss/ws/tools
+org
+META-INF

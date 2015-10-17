@@ -1,0 +1,80 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+  
+    <parent>
+        <artifactId>droid-parent</artifactId>
+        <groupId>uk.gov.nationalarchives</groupId>
+        <version>6.1.3</version>
+        <relativePath>../droid-parent</relativePath>
+    </parent>
+  
+    <artifactId>droid-core</artifactId>
+    <packaging>jar</packaging>
+
+    <name>droid-core</name>
+    
+    <scm>
+        <connection>scm:git:git@github.com:digital-preservation/droid.git</connection>
+        <developerConnection>scm:git:git@github.com:digital-preservation/droid.git</developerConnection>
+        <url>scm:git:git@github.com:digital-preservation/droid.git</url>
+      <tag>droid-6.1.3</tag>
+  </scm>
+  
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>basicstyles</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>checkstyle</goal>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <configLocation>/checkstyle-main.xml</configLocation>
+                    <failOnViolation>true</failOnViolation>
+                    <enableFilesSummary>true</enableFilesSummary>
+                    <suppressionsLocation>${basedir}/checkstyle/suppressions.xml</suppressionsLocation>
+                    <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>uk.gov.nationalarchives</groupId>
+                        <artifactId>droid-build-tools</artifactId>
+                        <version>6.1.3</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+  
+    <dependencies>
+  	<dependency>
+            <groupId>uk.gov.nationalarchives</groupId>
+            <artifactId>droid-core-interfaces</artifactId>
+            <version>${project.version}</version>
+  	</dependency>
+        <dependency>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+        </dependency>
+  	<dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+  	</dependency>
+  	<dependency>
+            <groupId>com.google.code.byteseek</groupId>
+            <artifactId>byteseek</artifactId>
+  	</dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <scope>test</scope>
+  	</dependency>
+  </dependencies>
+</project>

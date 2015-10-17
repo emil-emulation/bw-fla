@@ -1,0 +1,8 @@
+eclipse.preferences.version=1
+encoding//src/main/java/de/bwl/bwfla/common/interfaces/ImageArchiveWSRemote.java=UTF-8
+encoding//src/main/java/de/bwl/bwfla/common/interfaces/IwdMetaData.java=UTF-8
+encoding//src/main/java/de/bwl/bwfla/imagearchive/ImageArchiveWSService.java=UTF-8
+encoding//src/main/java/de/bwl/bwfla/imagearchive/ImageArchiveWSServiceLocator.java=UTF-8
+encoding//src/main/java/de/bwl/bwfla/imagearchive/ImageArchiveWSServiceSoapBindingStub.java=UTF-8
+encoding//src/main/resources=UTF-8
+encoding//src/test/resources=UTF-8

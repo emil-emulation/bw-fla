@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_CONF_1}" />
+	
+	<ui:define name="content">
+	<h:form id="wrappingForm">
+		<p:outputPanel id="fallbackPanel" rendered="#{WF_CONF_1.XML}">
+			<div style="overflow: hidden;">
+				<div style="float: left;">
+					<p:inputTextarea rows="15" cols="50" value="#{WF_CONF_1.newContent}" widgetVar="inputAreaNewVar" style="margin-right: 10px;overflow-x: scroll;" />
+				</div>
+				
+				<p:commandButton value="Copy Template" type="push" onclick="inputAreaNewVar.getJQ().val(inputAreaTemplateVar.getJQ().val());" style="float: left; margin-right: 10px;"/>
+				
+				<div>
+					<p:inputTextarea rows="15" cols="50" value="#{WF_CONF_1.selectedProperty.templateContent}" readonly="true" widgetVar="inputAreaTemplateVar" style="overflow-x: scroll;"/>
+				</div>
+			</div>
+			
+			<script>
+				$(function() {
+					inputAreaNewVar.getJQ().attr('wrap', 'off');
+					inputAreaTemplateVar.getJQ().attr('wrap', 'off');
+				});
+			</script>
+			
+			<br />		
+		</p:outputPanel>
+			
+		<p:outputPanel id="configuredPropertiesPanel" styleClass="configuredPropertiesPanelClass" rendered="#{not WF_CONF_1.XML}">
+			<style>
+				.smallButton {
+					height: 25px;
+				}
+				
+				.smallButton .ui-icon {
+					margin-top: -9px;
+				}
+				
+				.smallButton .ui-button-text {
+					padding: 0.2em 1em .4em 2.1em;
+				}
+				
+				.configuredPropertiesPanelClass td {
+					padding-right: 10px;
+				}
+				
+			</style>
+		
+			<table>	
+				<ui:repeat var="confProp" value="#{WF_CONF_1.configured_properties}">
+					<tr>
+						<td>
+							<b>#{confProp.a}: </b>
+						</td>
+						
+						<td>
+							<p:inputText value="#{confProp.b}" />	
+						</td>
+						
+						<td>
+							<p:commandButton styleClass="smallButton" icon="ui-icon-minus" value="Remove" update=":wrappingForm:configuredPropertiesPanel" actionListener="#{WF_CONF_1.removeProperty(confProp)}"/>	
+						</td>			
+					</tr>
+				</ui:repeat>
+					
+				<ui:repeat var="availProp" value="#{WF_CONF_1.available_properties}">
+					<tr>
+						<td>
+							<b>#{availProp.a}: </b>
+						</td>
+						
+						<td>
+							<i>Not configured yet</i>
+						</td>
+					
+						<td>
+							<p:commandButton styleClass="smallButton" icon="ui-icon-plus" value="Add" update=":wrappingForm:configuredPropertiesPanel" actionListener="#{WF_CONF_1.addProperty(availProp)}"/>
+						</td>
+					</tr>		
+				</ui:repeat>
+			</table>		
+		</p:outputPanel>
+		
+		<br />
+		
+		<p:commandButton value="Save Changes" action="#{WF_CONF_1.save}" />
+		<p:commandButton value="Discard Changes" action="forward" />
+		
+	</h:form>
+	</ui:define>
+</ui:composition>
+</html>

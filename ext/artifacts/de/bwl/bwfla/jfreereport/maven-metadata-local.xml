@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>de.bwl.bwfla</groupId>
+  <artifactId>jfreereport</artifactId>
+  <versioning>
+    <release>5</release>
+    <versions>
+      <version>5</version>
+    </versions>
+    <lastUpdated>20131106164953</lastUpdated>
+  </versioning>
+</metadata>

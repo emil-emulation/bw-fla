@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui" 
+	xmlns:bwl="http://bwfla.bwl.de/facelets" >
+
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:define name="content">				
+				<p:dialog header="Please choose the file you want to inject" widgetVar="uploadDialog" modal="true" width="750" 
+					resizable="false" draggable="false">
+					<h:form enctype="multipart/form-data">
+					    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_UM_1.handleFileUpload}" 
+					    	update=":uploadedFilesForm:uploadedFiles" mode="advanced" auto="true" oncomplete="uploadDialog.hide();"/>
+						<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
+					</h:form>
+				</p:dialog>
+				
+				<p:panel style="width: 850px; margin: 0 auto 30px auto;">
+					<font size="3">
+						On this page you have the opportunity to upload files, which will then be made accessible in the virtual machine. <br /><br />
+						This is done by attaching a Container (e.g.: a virtual CDROM, Floppy-Disk, etc.), which holds the File, to the virtual Machine.<br /><br />
+						
+						At this stage it is only possible to upload one file per Container (CDROM, Floppy Disk, ...)
+					</font>
+				</p:panel>
+				<p></p>
+				<h:form>
+					<div align="center">
+					<h:commandButton action="#{WF_UM_1.forward}" value="Proceed" />
+					</div>
+				</h:form>
+				<p></p>
+				<p/>
+				<p/>
+				<bwl:file-injection-panel/>
+				<p></p>				
+			<h:form>
+				<div align="center">
+				<h:commandButton action="#{WF_UM_1.forward}" value="Proceed" />
+				</div>
+			</h:form>
+		</ui:define>	
+	</ui:composition>
+</html>

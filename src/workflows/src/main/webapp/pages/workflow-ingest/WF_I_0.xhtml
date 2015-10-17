@@ -1,0 +1,124 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:func="http://example.com/functions"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:bwl="http://bwfla.bwl.de/facelets">
+
+<ui:composition template="/template/formTemplate.xhtml">
+	<ui:param name="beanName" value="#{WF_I_0}" />
+
+	<ui:define name="title">bwFLA Basic System Environments - View</ui:define>
+
+	<ui:define name="menu">
+		<ui:param name="beanName" value="#{WF_I_0}" />
+		<ui:include src="/template/menu.xhtml" />
+	</ui:define>
+	
+	<ui:define name="metadata">
+		<style>
+			#content {
+				margin-top: 0;
+			}
+			
+			.left-container {
+				display: inline-block;
+				margin-right: 30px;
+			}
+			
+			.right-container {
+				display: inline-block;
+				vertical-align: top;
+			}
+			
+			.tall-listbox {
+				width: 250px;
+			}
+			
+			.tall-listbox .ui-selectlistbox-listcontainer {
+				min-height: 250px;
+			}
+		</style>
+	</ui:define>
+
+	<ui:define name="content">
+		<span class="steplabel steplabelactive">1. Basic Artifact Properties</span>
+		<span class="steplabel">2. Test and Evaluation</span>
+		<span class="steplabel">3. Complete Ingest</span>
+
+		<br />
+		<br />
+		
+		<h:form>
+			<p:panel>
+				<f:facet name="header">Choose Object and Runtime Environment</f:facet>			
+							
+				<div class="left-container">
+					<p:outputLabel for="archives" value="Archive:" />
+					<p:selectOneListbox id="archives" styleClass="tall-listbox" value="#{WF_I_0.chosenArchive}"
+					  filter="true" filterMatchMode="contains" required="false">
+			            <f:selectItems value="#{WF_I_0.archives}" />
+			            <p:ajax event="change" update="isos" process="@this" />
+			        </p:selectOneListbox>
+		        </div>
+		        
+		        <div class="right-container">
+			        <p:outputLabel for="isos" value="Digital Object:" />
+					<p:selectOneListbox id="isos" styleClass="tall-listbox" value="#{WF_I_0.chosenObject}"
+					  filter="true" filterMatchMode="contains" required="false">
+			            <f:selectItems value="#{WF_I_0.isos}" />
+			        </p:selectOneListbox>
+		        </div>
+		        
+		        <div>
+		          <p:outputLabel for="imageUrl">URL</p:outputLabel>
+                  <p:inputText id="imageUrl" value="#{beanName.externalImageUrl}" />
+                  <br />
+                  <p:outputLabel for="imageCOW" value="Copy on Write" />
+                  <p:selectBooleanCheckbox id="imageCOW"
+                      value="#{beanName.externalImageCOW}">
+                    <p:ajax event="change" update="@this" />
+                  </p:selectBooleanCheckbox>
+		        </div>
+		        
+		        <br /><br />
+				
+				<p:panel header="Advanced Options" toggleable="true" collapsed="true" style="width: 675px;">
+					<p:outputLabel value="Emulator and Environment:" /> <br />
+					
+					<div class="left-container">
+						<p:selectOneListbox id="emulator" value="#{WF_I_0.selectedBean}" styleClass="tall-listbox">
+							<f:selectItems value="#{WF_I_0.beanList}" />
+							<p:ajax event="change" update="env" listener="#{WF_I_0.loadEnvList}"
+							  onstart="showLoadingAnimation();" oncomplete="hideLoadingAnimation();" />
+						</p:selectOneListbox>
+					</div>
+					
+					<div class="right-container">
+						<p:selectOneListbox id="env" value="#{WF_I_0.selectedEnv}" styleClass="tall-listbox">
+							<f:selectItems value="#{WF_I_0.environmentList}" var="env"
+							  itemLabel="#{env.description.title}" itemValue="#{env.id}" />
+							<f:selectItems value="#{WF_I_0.derivatesList}" var="env"
+							  itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+							<f:selectItems value="#{WF_I_0.systemsList}" var="env"
+							  itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
+						</p:selectOneListbox>
+					</div>
+				</p:panel>
+	
+				<f:facet name="footer">
+					<div align="right">
+						<p:commandButton id="nextButton" onclick="showLoadingAnimation()" widgetVar="nextButton"
+						  ajax="false" action="#{WF_I_0.navigate}" value="Test and Evaluation"
+						  style="margin-right:10px;" icon="ui-icon-circle-triangle-e" />
+					</div>
+				</f:facet>
+			</p:panel>
+		</h:form>
+	</ui:define>
+</ui:composition>
+
+</html>

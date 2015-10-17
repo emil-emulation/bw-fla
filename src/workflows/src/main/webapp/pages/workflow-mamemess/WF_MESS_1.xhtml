@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwl="http://bwfla.bwl.de/facelets" >
+	
+	<ui:define name="title">
+			bwFLA Basic System Environments - Upload File(s)
+	</ui:define>
+	
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_MESS_1}" />
+		
+		<ui:define name="content">
+				<style type="text/css">
+					.ui-fileupload 
+					{
+						width: 700px;
+					}
+				</style>
+				
+				<p:dialog header="Please choose the file you want to inject" widgetVar="uploadDialog" modal="true" width="750" resizable="false" draggable="false">
+					<h:form enctype="multipart/form-data">
+					    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_MESS_1.handleFileUpload}" 
+					    	update=":uploadedFilesForm:uploadedFiles" 
+					    	mode="advanced" auto="true" oncomplete="uploadDialog.hide();"/>
+						<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
+					</h:form>
+				</p:dialog>
+				
+				<p:panelGrid style="width: 850px; margin: 0 auto 30px auto;" columns="1">
+					<f:facet name="header">Inject files into emulated environment (optional)</f:facet>
+					<bwl:file-injection-panel/>
+					<p:panel header="Help" collapsed="true" toggleable="true" toggleTitle="Help">
+						On this page you have the opportunity to upload files, which will 
+						then be made accessible in the virtual machine. <br />
+						This is done by attaching a container (e.g.: a virtual CDROM, Floppy-Disk, etc.), 
+						which holds the file(s), to the virtual machine.<br />
+						At this stage it is only possible to upload one file per container (CDROM, Floppy Disk, ...)
+					</p:panel>
+					<f:facet name="footer">
+						<div align="right">
+						<h:form>
+						<p:commandButton ajax="false" disabled="false"
+							action="#{WF_MESS_1.navigateBack}" value="Back" 
+							icon="ui-icon-arrowthick-1-w"></p:commandButton>
+						<p:commandButton id="nextButton" widgetVar="nextButton"
+							ajax="false"  action="#{WF_MESS_1.forward}"
+							value="Next" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e"/>
+						</h:form>
+						</div>
+					</f:facet>
+				</p:panelGrid>
+					
+							
+		</ui:define>	
+	</ui:composition>
+</html>

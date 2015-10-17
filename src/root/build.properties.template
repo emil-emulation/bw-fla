@@ -1,0 +1,16 @@
+######## OFTEN CUSTOMIZED OPTIONS #########
+# ip/host binding for this server
+appserver.address=localhost
+
+# location of the JWM temporary directory
+tmpdir.location=/tmp
+###########################################
+
+
+######## OFTEN UNTOUCHED OPTIONS ##########
+# location of the Jboss AS
+appserver.location=${basedir}/../../ext/appserver
+
+# location of the bwFLA derby database
+derbydb.location=${basedir}/../../ext/database/bwfla
+###########################################

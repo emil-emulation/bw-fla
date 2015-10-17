@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>modified the path</comment>
+    <entry key="amiga">http://132.230.4.15:8080/eaascluster-ejb/AmigaBeanWSService/AmigaBeanWSProxy?wsdl</entry>
+    <entry key="basiliskii">http://132.230.4.15:8080/eaascluster-ejb/BasiliskIIBeanWSService/BasiliskIIBeanWSProxy?wsdl</entry>
+    <entry key="dosbox">http://132.230.4.15:8080/eaascluster-ejb/DosBoxBeanWSService/DosBoxBeanWSProxy?wsdl</entry>
+    <entry key="qemu">http://132.230.4.15:8080/eaascluster-ejb/QemuBeanWSService/QemuBeanWSProxy?wsdl</entry>
+    <entry key="virtualbox">http://132.230.4.15:8080/eaascluster-ejb/VirtualBoxBeanWSService/VirtualBoxBeanWSProxy?wsdl</entry>
+    <entry key="mame">http://132.230.4.15:8080/emucomp-ejb/MameBeanWS?wsdl</entry>
+    <entry key="sheepshaver">http://132.230.4.15:8080/eaascluster-ejb/SheepShaverBeanWSService/SheepShaverBeanWSProxy?wsdl</entry>
+    <entry key="mess">http://132.230.4.15:8080/eaascluster-ejb/MessBeanWSService/MessBeanWSProxy?wsdl</entry>
+
+    <entry key="objDirs">/mnt/data/sw-archive/digital-objects;/mnt/data/sw-archive/transmediale-isos-new</entry>
+    <entry key="bwlfa_objects_metaDataDir">/mnt/data/meta-data/digital-objects/</entry>
+    <entry key="bwfla_objects_isoDir">/mnt/data/sw-archive/digital-objects/</entry>
+    <entry key="hfg_objects_metaDataDir">/mnt/data/meta-data/transmediale/</entry>
+    <entry key="hfg_objects_isoDir">/mnt/data/sw-archive-old/transmediale-isos-new/</entry>
+    <entry key="bwfla_systems_metaDataDir">/mnt/data/meta-data/sysenv/</entry>
+
+    <entry key="imageArchiveHost">132.230.4.15:8080</entry>
+    <entry key="image_folder_path">$userdir/uploadedImages/</entry>
+    <entry key="swpackage-dir">/home/developer/Desktop/dummy2/</entry>
+    <entry key="incoming-dir">/home/developer/Desktop/dummy/</entry>
+    <entry key="workflows.downloadDir">/tmp/</entry>
+    <entry key="embedGW">132.230.4.15:8080</entry>
+    <entry key="serverURL">http://localhost:8080</entry>
+</properties>

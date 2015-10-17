@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html" 
+	xmlns:f="http://java.sun.com/jsf/core" 
+	xmlns:p="http://primefaces.org/ui" >
+
+	<ui:composition template="/template/formTemplate.xhtml">	
+		<ui:define name="content">
+			<p:panel styleClass="infotextPanel">
+				<font>
+					Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
+					<br /> <br />
+					
+					At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+				</font>
+			</p:panel>
+		
+			<p:panel header="Virtual Machine Viewer:" style="margin: 0 auto; width: 825px">
+				<applet archive="VncViewer.jar" code="VncViewer.class" width="800" height="600">
+					<param name="HOST" value="${WF_SP_3.appletHost}" />
+					<param name="PORT" value="${WF_SP_3.appletPort}" />
+				</applet>
+			</p:panel>
+		</ui:define>
+	</ui:composition>
+</html> 

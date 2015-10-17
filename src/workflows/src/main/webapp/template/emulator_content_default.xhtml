@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html   xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:a4j="http://richfaces.org/a4j"
+      	xmlns:rich="http://richfaces.org/rich"
+        xmlns:p="http://primefaces.org/ui" 
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:c="http://java.sun.com/jsp/jstl/core"
+        xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+        xmlns:bwl="http://bwfla.bwl.de/facelets">
+
+    <ui:composition>
+    	<h:outputScript 	target="head" library="js" 	name="bwfla.embed.js" />
+		<h:outputScript 	target="head" library="js" 	name="screenfull.min.js"/>
+		<h:outputStylesheet target="body" library="css" name="keyboard.css" />
+    
+    	<h:form>
+    		<p:remoteCommand name="takeScreenshot" actionListener="#{beanName['takeScreenshot']}" />
+
+    		<h:outputStylesheet rendered="#{!beanName['autostart']}">
+				.startEmulationButton, faceb.oldpcimage
+				{
+					display: block; margin: auto;
+				}
+					
+	            .startEmulationButton .ui-button-text 
+	            {
+	            	padding: .4em 20em;
+	            }
+        	</h:outputStylesheet>
+    		
+    		<h:outputStylesheet rendered="#{beanName['autostart']}">
+				.startEmulationButton
+				{
+					display: none;
+				}
+        	</h:outputStylesheet>
+        	
+    		<p:remoteCommand name="remoteCommandStart" autoRun="#{beanName['autostart']}" actionListener="#{beanName['start']}" />
+    		<p:commandButton styleClass="startEmulationButton" type="button" widgetVar="startEmulationButtonVar" value="Start Emulation" onclick="remoteCommandStart()" />
+    		<a4j:poll id="connectPoll" ajaxSingle="true" render="@this monitorPoll :appletContainer" interval="200" actionListener="#{beanName['monitorState']}" enabled="#{!beanName['emulatorReady']}"/>
+    		<a4j:poll id="monitorPoll" ajaxSingle="true" interval="3000" actionListener="#{beanName['monitorState']}" enabled="#{beanName['emulatorReady']}" />
+     	</h:form>
+     	     	
+     	<h:form id="appletContainer">
+     		<a4j:region  rendered="#{beanName['emulatorReady']}" selfRendered="false">
+		    	<div id="fullScreenContainer" style="display: table; margin: auto;">
+					<div id="appletInnerContainer" style="display: table-cell; vertical-align: middle;">
+						<iframe id="bwfla-iframe" frameborder="0" width="100%" height="100%" src="#{beanName['controlUrl']}" 
+						allowfullscreen="true" seamless="seamless"/>
+					
+						<h:outputScript>											
+							var iframe = document.getElementById("bwfla-iframe");
+							BWFLA.setupIFrameHandling(iframe);
+	
+							$('.emulator-menu .fullscreen').click
+							(
+								function()
+								{
+									iframe.contentWindow.postMessage('fullScreenReq','*');
+									console.log("click");
+								}
+							);
+	
+							$('.emulator-menu .keyboard').click
+							(
+								function()
+								{
+									if ($("#keyboard-wrapper:visible").size() > 0) 
+									{
+										$("#keyboard-wrapper").hide();
+										$('.emulator-menu .keyboard').html('Show Keyboard');
+									} 
+									else
+									{
+										$("#keyboard-wrapper").show();
+										$('.emulator-menu .keyboard').html('Hide Keyboard');
+									}
+								}
+							);
+		
+							function resizeTimer()
+							{													
+								if ($(".emulator-menu:visible").size() > 0) 
+								{
+									$('.emulator-menu').width($('#appletInnerContainer').width() - 10);	
+									$('#appletInnerContainer').css('margin-top', $('.emulator-menu').height());
+									var offset = $('#appletInnerContainer').offset();
+									$('.emulator-menu').offset({ top: offset.top - $('.emulator-menu').height(), left: offset.left});
+								} 
+								else 
+								{
+									$('#appletInnerContainer').css('margin-top', 'auto');
+								}					
+	
+								if (screenfull) 
+								{
+									if (screenfull.isFullscreen) 
+										$('.emulator-menu').hide();
+									else 
+										$('.emulator-menu').show();
+								}
+	
+								setTimeout('resizeTimer()', 50);
+							}
+	
+							resizeTimer();
+						</h:outputScript>
+					</div>
+				</div>
+				
+				<div id="keyboard-wrapper" style="display: none;"/>
+			</a4j:region>
+	    </h:form>
+
+    </ui:composition>
+</html>

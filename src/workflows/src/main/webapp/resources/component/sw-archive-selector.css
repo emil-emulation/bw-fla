@@ -1,0 +1,19 @@
+.software-wrapper {
+	padding: 6px 10px;
+}
+
+.software-name {
+	font-weight: bold;
+}
+
+.software-description {
+	color: rgb(123, 123, 123);
+}
+
+.ui-state-highlight .archive-description {
+    color: #C6C6C6;
+}
+
+.software-selector-selectbox .ui-selectlistbox-filter.ui-inputfield {
+	padding-right: 12.7%;
+}

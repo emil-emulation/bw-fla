@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_REC_0}" />
+	
+		<ui:define name="title">
+			bwFLA Session Recording
+		</ui:define>
+		<ui:define name="content">
+			<style type="text/css">
+				.listbox {
+					height: 250px;
+				}
+			</style>
+			
+			<h:form>
+				<p:panel id="image-selection" header="Emulator / Image Choice" style="width: 700px; margin: auto;">
+					<div style="margin-top: 5px;">
+						<p:selectOneListbox id="emulator" value="#{WF_REC_0.selectedBean}" styleClass="listbox"
+								style="width: 250px; margin-right: 5px; float: left;" required="true" requiredMessage="Please select an Emulator to proceed">
+							<f:selectItems value="#{WF_REC_0.emulatorList}"/>	       	
+							<p:ajax event="change" update="os" listener="#{WF_REC_0.loadAvailableImages()}"/>
+						</p:selectOneListbox>
+						<p:selectOneListbox id="os" value="#{WF_REC_0.selectedEnv}" styleClass="listbox"
+								style="width: auto;" required="true" requiredMessage="Please select an OS image to proceed">
+							<f:selectItems value="#{WF_REC_0.environmentList}" 
+								var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}"/>
+						</p:selectOneListbox>
+					</div>
+					
+					<div style="margin-top: 5px;">
+						<p:message for="emulator"/>
+						<p:message for="os"/>
+					</div>
+					
+					<p:panel header="Help" collapsed="true" toggleable="true" style="margin-top: 10px;">
+						Help / Information
+					</p:panel>
+
+					<f:facet name="footer">
+						<div style="text-align: right;">
+							<p:commandButton id="nextButton" widgetVar="nextButton" value="Next" update="image-selection" 
+									action="#{WF_REC_0.forward}" icon="ui-icon-arrowthick-1-e"/>
+						</div>
+					</f:facet>
+					
+				</p:panel>
+			</h:form>		
+		</ui:define>
+	</ui:composition>
+</html>

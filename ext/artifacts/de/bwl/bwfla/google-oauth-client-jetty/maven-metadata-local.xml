@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>de.bwl.bwfla</groupId>
+  <artifactId>google-oauth-client-jetty</artifactId>
+  <versioning>
+    <release>1.11.0-beta</release>
+    <versions>
+      <version>1.20.0</version>
+      <version>1.11.0-beta</version>
+    </versions>
+    <lastUpdated>20150326152819</lastUpdated>
+  </versioning>
+</metadata>
