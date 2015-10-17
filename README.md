@@ -1,6 +1,3 @@
-# bw-fla
-bw-fla EaaS framework
-
 ## Prerequisites and Preparation
 + Java 7
 + Apache Maven > 3.x
