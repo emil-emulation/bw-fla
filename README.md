@@ -30,5 +30,7 @@ ant start        // choose this to run on a "localhost"
 ant start:public // choose this to run on an IP defined in "${BW-FLA}/src/root/build.properties" 
 ```
 
-
+## Runtime Configuration
+Most modules require a runtime configuration in `~/.bwFLA`. In the src directories of each module there is 
+an template to be edited and copied to `~/.bwFLA` (without the template suffix!).
 
