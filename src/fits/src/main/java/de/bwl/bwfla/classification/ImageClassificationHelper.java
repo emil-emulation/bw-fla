@@ -16,24 +16,27 @@
  * along with the Emulation-as-a-Software framework.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package de.bwl.bwfla.classification;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.bwl.bwfla.common.datatypes.FileCollection;
+import de.bwl.bwfla.common.datatypes.FileCollectionEntry;
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.EmulatorUtils;
-import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.common.utils.ProcessRunner;
+import de.bwl.bwfla.common.utils.EmulatorUtils.XmountOutputFormat;
+import de.bwl.bwfla.common.utils.XmountOptions;
 import edu.harvard.hul.ois.fits.FitsMetadataElement;
 import edu.harvard.hul.ois.fits.FitsOutput;
 
@@ -105,41 +108,19 @@ public class ImageClassificationHelper {
 
 	private static FileTypeHistogram getHfsHistogram(Path isopath)
 	{
+		File tempDir = null;
 		try { 
-			ProcessRunner process = new ProcessRunner();
-			File tempDir = Files.createTempDirectory("hfs-mount-").toFile();
-
-			process.setCommand("sudo");
-			process.addArgument("/bin/mount");
-			process.addArgument("-t");
-			process.addArgValue("hfs");
-			process.addArgument(isopath.toString());
-			process.addArgument(tempDir.getAbsolutePath());
-			if(!process.execute())
-			{
-				log.error("mount failed");
-				FileUtils.deleteDirectory(tempDir);
-				return null;
-			}
+			tempDir = EmulatorUtils.mount(isopath, "hfs");
 
 			FitsClassifier classifier = new FitsClassifier();
 			classifier.classify(tempDir.toPath(), false);
-
-			process.setCommand("sudo");
-			process.addArgument("/bin/umount");
-			process.addArgument(tempDir.getAbsolutePath());
-			if(!process.execute())
-			{
-				log.debug("unmounting " + tempDir.getAbsolutePath() + "failed");
-			}
 
 			FileTypeHistogram histogram = new FileTypeHistogram(256);
 			histogram.build(classifier.getResults());
 			histogram.print(true);
 			histogram.dump(Files.createTempFile("fits-report-hfs-", ".txt"));
 			
-			FileUtils.deleteDirectory(tempDir);
-
+			EmulatorUtils.unmount(tempDir);
 			return histogram;
 		}
 		catch(Exception e)
@@ -150,37 +131,25 @@ public class ImageClassificationHelper {
 
 	private static FileTypeHistogram getIsoHistogram(Path isopath)
 	{
-		try {
-			File tempDir = Files.createTempDirectory("iso-mount-").toFile();
-
-			if(!EmulatorUtils.mountUdfFile(isopath, tempDir.toPath()))
-			{
-				FileUtils.deleteDirectory(tempDir);
-				return null;
-			}
+		log.info("getIsoHistogram");
+		Path tempDir = null;
+	    try {
+			tempDir = EmulatorUtils.mountUdfFile(isopath);
 			FitsClassifier classifier = new FitsClassifier();
-			classifier.classify(tempDir.toPath(), false);
+			classifier.classify(tempDir, false);
 
 			FileTypeHistogram histogram = new FileTypeHistogram(256);
 			histogram.build(classifier.getResults());
 			histogram.print(true);
 			histogram.dump(Files.createTempFile("fits-report-iso-", ".txt"));
 			
-			ProcessRunner process = new ProcessRunner();
-			process.setCommand("fusermount");
-			process.addArguments("-u", "-z");
-			process.addArgument(tempDir.toString());
-			if(!process.execute())
-			{
-				log.debug("unmounting " + tempDir.getAbsolutePath() + " failed");
-			}
-			
-			FileUtils.deleteDirectory(tempDir);
+			EmulatorUtils.unmountFuse(tempDir.toFile());
 			
 			return histogram;
-		}
-		catch(Exception e)
+	    }
+	    catch(Exception e)
 		{
+	    	e.printStackTrace();
 			return null;
 		}
 	}
@@ -277,7 +246,45 @@ public class ImageClassificationHelper {
 		return getIsoHistogram(isopath);
 	}
 	
-	public static List<EmuEnvType> classify(Path isopath)
+	public static List<EmuEnvType> classify(String ref)
+	{
+		List<EmuEnvType> result = null;
+		File tempDir = null;
+		Path path = null;
+		try {
+			tempDir = Files.createTempDirectory("xmount-mount-").toFile();
+			XmountOptions xmountOpts = new XmountOptions();
+			xmountOpts.setReadonly(true);
+			path = EmulatorUtils.xmount(ref, tempDir.toPath(), xmountOpts);
+		} catch (IllegalArgumentException | IOException
+				| BWFLAException e) {
+			try {
+			    if (tempDir != null)
+			        Files.deleteIfExists(tempDir.toPath());
+			} catch (IOException e1) {}
+			
+		}
+		
+		result = ImageClassificationHelper.classify(path);
+		
+		try {
+			EmulatorUtils.unmountFuse(tempDir);
+		} catch (BWFLAException | IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public static List<EmuEnvType> classify(FileCollection fc)
+	{
+		if(fc == null || fc.files.size() == 0)
+			return null;
+		
+		FileCollectionEntry fce = fc.files.get(0);
+		return classify(fce.getUrl());
+	}
+	
+	private static List<EmuEnvType> classify(Path isopath)
 	{
 		List<EmuEnvType> result = new ArrayList<EmuEnvType>();
 		List<EmuEnvType> hfsResult = null, isoResult = null; 
@@ -355,4 +362,72 @@ public class ImageClassificationHelper {
 		}
 		return autodetectedBaseimageId;
 	}
+	
+//	public void characterize() {
+//		if (chosenArchive == null)
+//			return;
+//
+//		if (chosenObject != null) {
+//			Path path = null; // chosenArchive.getFileReference(chosenObject).toPath();
+//			List<EmuEnvType> result = ImageClassificationHelper.classify(path);
+//
+//			String resStr = "";
+//			for (EmuEnvType t : result)
+//				resStr += t + " ";
+//
+//			log.info(chosenObject + " : " + resStr);
+//
+//		} else {
+//
+//			String csv = "";
+//			Map<String, Integer> envs = new HashMap<String, Integer>();
+//			FileTypeHistogram h = new FileTypeHistogram(1024);
+//			for (String isoid : isos) {
+//				Path path = null; // chosenArchive.getFileReference(isoid).toPath();
+//				long startTime = System.currentTimeMillis();
+//				List<EmuEnvType> result = new ArrayList<EmuEnvType>();// ImageClassificationHelper.classify(path);
+//				long duration = System.currentTimeMillis() - startTime;
+//				String resStr = "";
+//				for (EmuEnvType t : result) {
+//					resStr += t + " ";
+//					if (envs.containsKey(t.name()))
+//						envs.put(t.name(), new Integer(envs.get(t.name())
+//								.intValue() + 1));
+//					else
+//						envs.put(t.name(), new Integer(1));
+//				}
+//				csv += isoid + ";" + resStr + ";" + duration / 1000.0 + "\n";
+//				// log.info(chosenObject + " : " + resStr);
+//
+//				h.append(ImageClassificationHelper.classifyHist(path));
+//			}
+//
+//			for (Map.Entry<String, Integer> entry : envs.entrySet())
+//				log.info(entry.getKey() + " " + entry.getValue());
+//
+//			log.info("");
+//
+//			List<Pair<String, Integer>> puidl = h.getOrderedPUIDList();
+//			for (Pair<String, Integer> p : puidl)
+//				log.info(p.getA() + " " + p.getB());
+//
+//			log.info("");
+//
+//			Path outpath = new File("/tmp/" + chosenArchive + ".csv").toPath();
+//			try {
+//				BufferedWriter writer = Files.newBufferedWriter(outpath,
+//						StandardCharsets.UTF_8);
+//				writer.write(csv);
+//				writer.flush();
+//				writer.close();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//
+//			log.info(csv);
+//		}
+//
+//	}
+
 }

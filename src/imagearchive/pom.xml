@@ -9,7 +9,7 @@
   <artifactId>imagearchive</artifactId>
   <name>imagearchive</name>
   <description>An EJB project representing a WS front-end for the image archive.</description>
-  <packaging>ejb</packaging>
+  <packaging>war</packaging>
   
   <dependencies>
 		<dependency>

@@ -21,22 +21,19 @@ package de.bwl.bwfla.imagearchive;
 
 import java.io.File;
 
-public class ImageArchiveConfig {
-
+public class ImageArchiveConfig 
+{
+	public final File imagePath;
+	public final File metaDataPath;
+	public final File exportPath;
+	public final File incomingPath;
+	public final File recordingsPath;
+	public final File templatesPath;
 	
+	public final String nbdPrefix;
+	public final String httpPrefix;	
 	
-	protected File imagePath = null;
-	protected File metaDataPath = null;
-	protected File exportPath = null;
-	protected File incomingPath = null;
-	protected File recordingsPath = null;
-	protected File templatesPath = null;
-	
-	protected String nbdPrefix = null;
-	protected String httpPrefix = null;	
-	
-	protected final static String IA_URI_SCHEME = "imagearchive";
-	
+	public final static String IA_URI_SCHEME = "imagearchive";
 	public enum ImageType {base, user, derivate, system, netenv};
 	
 	public ImageArchiveConfig(String base, String nbdExport, String httpExport)

@@ -54,6 +54,10 @@ public class EmucompSingleton
 
 	public static boolean validate(EmucompConf conf)
 	{
+	    if (conf.controlUrlAddressHttp == null ||
+	            conf.controlUrlAddressHttp.isEmpty())
+	        return false;
+
 		// TODO: here perform validation (if any)
 		return true;
 	}

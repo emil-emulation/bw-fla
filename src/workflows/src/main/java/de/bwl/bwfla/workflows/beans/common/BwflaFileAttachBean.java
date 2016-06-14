@@ -164,6 +164,10 @@ public abstract class BwflaFileAttachBean extends BwflaFormBean
 
 	public void removeUploadedFile()
 	{
+	    if (this.selectedFile == null) {
+	        UINotify.info("You have to select an item to remove it.");
+	        return;
+	    }
 		String dev = this.selectedFile.getA();
 		List<File> files = uploadedFiles.get(dev);
 

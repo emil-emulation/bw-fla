@@ -20,6 +20,7 @@
 package de.bwl.bwfla.objectarchive.conf;
 
 import javax.xml.bind.annotation.XmlRootElement;
+
 import de.bwl.bwfla.common.utils.config.Configuration;
 
 
@@ -28,6 +29,6 @@ import de.bwl.bwfla.common.utils.config.Configuration;
 public class ObjectArchiveConf extends Configuration
 {
 	private static final long	serialVersionUID	= 6606429789323051996L;
-
-	// TODO: here add global property fields/objects
+	public String				objDir;
+	public String				httpExport;
 }

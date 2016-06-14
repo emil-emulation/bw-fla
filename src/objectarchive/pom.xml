@@ -9,7 +9,7 @@
   <artifactId>objectarchive</artifactId>
   <name>objectarchive</name>
   <description>An EJB project representing a WS front-end for the object archive.</description>
-  <packaging>ejb</packaging>
+  <packaging>war</packaging>
   
   <dependencies>
 		<dependency>

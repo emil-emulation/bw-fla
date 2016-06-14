@@ -25,6 +25,7 @@ public class Session
 	private final String sessionName;
 	private final NetworkGroup components;
 	private final long creationTime;
+	private long updateTime;
 	private String clientId;
 	public String state;
 	
@@ -33,6 +34,7 @@ public class Session
 		this.sessionName = sessionName;
 		this.components = components;
 		this.creationTime = System.currentTimeMillis();
+		this.updateTime = creationTime;
 	}
 	
 	public String getSessionId() {
@@ -76,5 +78,15 @@ public class Session
 	{
 		long time = System.currentTimeMillis() - creationTime;
 		return (time / 1000);
+	}
+
+	public long getUpdateTimestamp()
+	{
+		return updateTime;
+	}
+
+	public void setUpdateTime()
+	{
+		this.updateTime = System.currentTimeMillis();
 	}
 }

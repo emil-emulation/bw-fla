@@ -58,23 +58,30 @@ public class MessBean extends EmulatorBean
 
 	@Override
 	public boolean addDrive(Drive drive) {
-
-		if (drive == null || this.lookupResource(drive.getData()) == null) {
-			LOG.warning("Drive doesn't contain an image, attach canceled.");
-			return false;
-		}
+		if (drive == null || (drive.getData() == null)) {
+            LOG.warning("Drive doesn't contain an image, attach canceled.");
+            return false;
+        }
+        
+        Path imagePath = null;
+        try {
+            imagePath = Paths.get(this.lookupResource(drive.getData(), this.getImageFormatForDriveType(drive.getType())));
+        } catch (Exception e) {
+            LOG.warning("Drive doesn't reference a valid binding, attach cancelled.");
+            return false;
+        }
 
 		switch (drive.getType()) {
 		case FLOPPY:
 			runner.addArgument("-flop");
-			runner.addArgument(Paths.get(this.lookupResource(drive.getData())).getFileName().toString());
+			runner.addArgument(imagePath.getFileName().toString());
 			return true;
 
 		case DISK:
 			runner.addArgument("-rompath");
 			runner.addArgument(tempDir.getAbsolutePath());
 			
-			final Path filepath = Paths.get(this.lookupResource(drive.getData()));
+			final Path filepath = imagePath;
 			final String filename = filepath.getFileName().toString();
 			final int i = filename.indexOf(".zip");
 			runner.addArgument(filename.substring(0, i));
@@ -90,7 +97,7 @@ public class MessBean extends EmulatorBean
 
 		case CDROM:
 			runner.addArgument("-cdrom");
-			runner.addArgument(Paths.get(this.lookupResource(drive.getData())).getFileName().toString());
+			runner.addArgument(imagePath.getFileName().toString());
 			return false;
 
 		default:

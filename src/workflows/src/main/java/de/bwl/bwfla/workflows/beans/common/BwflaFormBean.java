@@ -21,12 +21,20 @@ package de.bwl.bwfla.workflows.beans.common;
 
 import java.io.Serializable;
 import java.util.logging.Logger;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
+
 import org.apache.myfaces.extensions.cdi.core.api.scope.conversation.WindowContext;
+
+import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
+import de.bwl.bwfla.common.datatypes.Html5Options;
+import de.bwl.bwfla.common.datatypes.InputOptions;
+import de.bwl.bwfla.common.datatypes.UiOptions;
 import de.bwl.bwfla.workflows.beans.common.WorkflowResources.ResourceManager;
+import de.bwl.bwfla.workflows.component.UserPreferenceDialog;
 
 
 
@@ -47,7 +55,8 @@ public abstract class BwflaFormBean implements Serializable
 	@Inject
 	protected WorkflowResources resources; 
 	
-	protected ResourceManager resourceManager; 
+	protected ResourceManager resourceManager;
+	protected UserPreferencesBean userPrefs = null; 
 	
 	public String getWindowId()
 	{
@@ -81,4 +90,27 @@ public abstract class BwflaFormBean implements Serializable
 	public void cleanup() { }
 	
 	abstract public String forward();
+	
+	public void setUserPreferences(EmulationEnvironment env)
+	{
+		if(env.getUiOptions().getHtml5() == null)
+		{
+			UiOptions o = env.getUiOptions();
+			o.setHtml5(new Html5Options());
+		}
+		if(userPrefs.isEnableCRTEmulationCheckbox())
+			env.getUiOptions().getHtml5().setCrt("yes");
+		
+		InputOptions options = env.getUiOptions().getInput();
+		options.setClientKbdLayout(userPrefs.getKeyboardLayout());
+		options.setClientKbdModel(userPrefs.getKeyboardModel());
+	}
+	
+	public boolean isDidUserSetPrefs() {
+		//return didUserSetPrefs;
+		if((userPrefs = UserPreferenceDialog.getUserPreferences()) != null)
+			return true;
+
+		return false;
+	}
 }

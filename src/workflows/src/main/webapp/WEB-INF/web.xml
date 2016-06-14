@@ -49,10 +49,6 @@
   <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
   <load-on-startup>1</load-on-startup>
  </servlet>
- <servlet>
-  <servlet-name>Tunnel</servlet-name>
-  <servlet-class>de.bwl.bwfla.workflows.servlets.BWFLAGuacamoleTunnelServlet</servlet-class>
- </servlet>
  <servlet-mapping>
   <servlet-name>imageServlet</servlet-name>
   <url-pattern>/image/*</url-pattern>
@@ -61,18 +57,6 @@
   <servlet-name>Faces Servlet</servlet-name>
   <url-pattern>/faces/*</url-pattern>
  </servlet-mapping>
- <servlet-mapping>
-  <servlet-name>Tunnel</servlet-name>
-  <url-pattern>/tunnel</url-pattern>
- </servlet-mapping>
- <mime-mapping>
-  <extension>mp3</extension>
-  <mime-type>audio/mpeg</mime-type>
- </mime-mapping>
- <mime-mapping>
-  <extension>ogg</extension>
-  <mime-type>audio/ogg</mime-type>
- </mime-mapping>
  
   <mime-mapping>  
     <extension>otf</extension>  
@@ -86,5 +70,5 @@
  <session-config>
    <tracking-mode>URL</tracking-mode>
  </session-config>
- 
+
 </web-app>

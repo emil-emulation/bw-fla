@@ -21,7 +21,6 @@ package de.bwl.bwfla.workflows.catalogdata;
 
 
 import java.io.Serializable;
-
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.workflows.beans.common.RemoteEmulatorHelper;
 

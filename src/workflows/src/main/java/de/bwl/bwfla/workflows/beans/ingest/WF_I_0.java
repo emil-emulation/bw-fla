@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,14 +38,21 @@ import java.util.Map;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+import javax.xml.bind.JAXBException;
 
 import com.google.common.base.Strings;
 
 import de.bwl.bwfla.classification.FileTypeHistogram;
 import de.bwl.bwfla.classification.ImageClassificationHelper;
 import de.bwl.bwfla.classification.ImageClassificationHelper.EmuEnvType;
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
 import de.bwl.bwfla.common.datatypes.Environment;
+import de.bwl.bwfla.common.datatypes.FileCollection;
+import de.bwl.bwfla.common.datatypes.FileCollectionEntry;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
+import de.bwl.bwfla.common.utils.EmulatorUtils;
+import de.bwl.bwfla.common.utils.EmulatorUtils.XmountOutputFormat;
+import de.bwl.bwfla.common.utils.ObjectArchiveHelper;
 import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
@@ -57,9 +65,6 @@ import de.bwl.bwfla.workflows.catalogdata.MetaDataFacade;
 import de.bwl.bwfla.workflows.catalogdata.ObjectEnvironmentDescription;
 import de.bwl.bwfla.workflows.catalogdata.ObjectEvaluationDescription;
 import de.bwl.bwfla.workflows.conf.WorkflowSingleton;
-import de.bwl.bwfla.workflows.objectarchive.DigitalObjectArchive;
-import de.bwl.bwfla.workflows.objectarchive.DigitalObjectArchiveFactory;
-
 
 @ManagedBean
 @ViewScoped
@@ -74,9 +79,10 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 	private List<String> archivesList = new ArrayList<String>();
 
 	private String chosenObject = null;
-	private DigitalObjectArchive chosenArchive = null;
+	private String chosenArchive = null;
 
 	private SystemEnvironmentHelper envHelper = null;
+	private ObjectArchiveHelper objHelper = null;
 	private WF_I_data.Storage storage;
 
 	private List<String> beanList;
@@ -86,27 +92,38 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 	List<Environment> derivates = new ArrayList<Environment>();
 	List<Environment> systems = new ArrayList<Environment>();
 	private String selectedEnv; // by uuid
+	private boolean requirePrefs = false;
 
 	// TODO: this method almost should be moved to the WF_I_API bean
 	private boolean configureBean()
 	{
-		String archiveDir = WorkflowSingleton.CONF.objDir;
 		String metaDataDir = WorkflowSingleton.CONF.metaDir;
-		String imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
-		if(archiveDir == null || metaDataDir == null || imageArchiveHost == null)
+		if(metaDataDir == null)
 		{
 			log.info("properties are invalid: missing isodir and metadata dir");
-			panic("please fix bwfla_workflows.xml");
+			panic("Workflow is not configured");
 			return false;
 		}
 
 		envHelper = WorkflowSingleton.envHelper;
-		wfData.getStorage().objectArchives = DigitalObjectArchiveFactory.createFromJson(new File(archiveDir));
+		objHelper = WorkflowSingleton.objHelper;
 
 		archivesList.add("---");
-		for (DigitalObjectArchive a : wfData.getStorage().objectArchives) {
-			archivesList.add(a.getName());
+		try {
+			if(objHelper == null)
+			{
+				panic("obj Archive not available");
+			}
+			List<String> a = objHelper.getArchives();
+			if(a == null)
+			{
+				panic("no archives found");
+			}
+			archivesList.addAll(a);
+		} catch (BWFLAException e) {
+			panic("Workflow configuration issue: ", e);
 		}
+
 
 		wfData.getStorage().mdArchive = new MetaDataFacade(metaDataDir);
 		if (wfData.getStorage().mdArchive == null)
@@ -143,7 +160,7 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 		} catch (BWFLAException e) {
 			panic(e.getMessage());
 		}
-		
+
 		this.setEnvironmentList(beanEnvironments);
 	}
 
@@ -185,110 +202,81 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 
 		isos.clear();
 		if (chosenArchive != null) {
-			isos = chosenArchive.getObjectList();
-			log.info("found " + isos.size() + " isos");
-			List<String> uniqueList = new ArrayList<String>(
-					new HashSet<String>(isos));
-			java.util.Collections.sort(uniqueList);
-			isos = uniqueList;
+			try {
+				isos = objHelper.getObjectList(chosenArchive);
+			} catch (BWFLAException e) {
+				panic("objArchive not working: ", e);
+			}
 		}
 		reloadConfigFromJson();
 		storage.oldThumbnail = wfData.getStorage().mdArchive
 				.thumbURL(chosenObject);
 	}
 
-	public void characterize() {
-		if (chosenArchive == null)
-			return;
-
-		if (chosenObject != null) {
-			Path path = chosenArchive.getFileReference(chosenObject).toPath();
-			List<EmuEnvType> result = ImageClassificationHelper.classify(path);
-
-			String resStr = "";
-			for (EmuEnvType t : result)
-				resStr += t + " ";
-
-			log.info(chosenObject + " : " + resStr);
-
-		} else {
-
-			String csv = "";
-			Map<String, Integer> envs = new HashMap<String, Integer>();
-			FileTypeHistogram h = new FileTypeHistogram(1024);
-			for (String isoid : isos) {
-				Path path = chosenArchive.getFileReference(isoid).toPath();
-				long startTime = System.currentTimeMillis();
-				List<EmuEnvType> result = new ArrayList<EmuEnvType>();// ImageClassificationHelper.classify(path);
-				long duration = System.currentTimeMillis() - startTime;
-				String resStr = "";
-				for (EmuEnvType t : result) {
-					resStr += t + " ";
-					if (envs.containsKey(t.name()))
-						envs.put(t.name(), new Integer(envs.get(t.name())
-								.intValue() + 1));
-					else
-						envs.put(t.name(), new Integer(1));
-				}
-				csv += isoid + ";" + resStr + ";" + duration / 1000.0 + "\n";
-				// log.info(chosenObject + " : " + resStr);
-
-				h.append(ImageClassificationHelper.classifyHist(path));
-			}
-
-			for (Map.Entry<String, Integer> entry : envs.entrySet())
-				log.info(entry.getKey() + " " + entry.getValue());
-
-			log.info("");
-
-			List<Pair<String, Integer>> puidl = h.getOrderedPUIDList();
-			for (Pair<String, Integer> p : puidl)
-				log.info(p.getA() + " " + p.getB());
-
-			log.info("");
-
-			Path outpath = new File("/tmp/" + chosenArchive + ".csv").toPath();
-			try {
-				BufferedWriter writer = Files.newBufferedWriter(outpath,
-						StandardCharsets.UTF_8);
-				writer.write(csv);
-				writer.flush();
-				writer.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			log.info(csv);
-		}
-
-	}
-
 	public String navigate() throws MalformedURLException, URISyntaxException {
 		ObjectEvaluationDescription d = null;
-		
+
 		if (!Strings.isNullOrEmpty(this.storage.externalImageUrl)) {
 			if (Strings.isNullOrEmpty(selectedEnv)) {
-				UINotify.warn("Cannot characterize remote images. Please choose a render environment yourself.");
-			} else {
-				d = new ObjectEvaluationDescription(envHelper, selectedEnv,
-						"iso", this.storage.externalImageUrl);
-			}
-		} else {
-			if (Strings.isNullOrEmpty(selectedEnv)) {
-				UINotify.info("No Environment selected! Trying autodetect.");
-
-				Path path = chosenArchive.getFileReference(chosenObject)
-						.toPath();
 				List<EmuEnvType> result = ImageClassificationHelper
-						.classify(path);
+						.classify(this.storage.externalImageUrl);
 
 				String resStr = "";
 				for (EmuEnvType t : result)
 					resStr += t + " ";
 
 				log.info(chosenObject + " : " + resStr);
-				
+
+				if(result.size() > 1)
+				{
+					UINotify.info("found multiple matching environments: " + resStr);
+				}
+
+				String autodetectedBaseimageId = ImageClassificationHelper
+						.getEnvironmentForEmuEnvType(result);
+
+				if (autodetectedBaseimageId != null) {
+					selectedEnv = autodetectedBaseimageId;
+				}
+			}
+
+			if(Strings.isNullOrEmpty(selectedEnv))
+			{ 
+				UINotify.error("Could not autodetect a suitable environment for object. Please choose one yourself.");
+				return "";
+			}
+			d = new ObjectEvaluationDescription(envHelper, selectedEnv, 
+					null, null, this.storage.externalImageUrl, DriveType.CDROM);
+		} else {
+			DriveType type = null;
+			if (chosenArchive == null || Strings.isNullOrEmpty(chosenObject)) {
+				UINotify.warn("You have to select an archive and object or provide an object URL!");
+				return "";
+			}
+
+			FileCollection fc = null;
+			try {
+				fc = objHelper.getObjectReference(chosenArchive, chosenObject);
+			} catch (BWFLAException e) {
+				UINotify.warn("failed loading object information: " + e.getMessage());
+				return "";
+			}
+
+			FileCollectionEntry fce = fc.files.get(0);
+			type = fce.getType();
+
+			if (Strings.isNullOrEmpty(selectedEnv)) {
+				UINotify.info("No Environment selected! Trying autodetect.");
+
+				List<EmuEnvType> result = ImageClassificationHelper
+						.classify(fc);
+
+				String resStr = "";
+				for (EmuEnvType t : result)
+					resStr += t + " ";
+
+				log.info(chosenObject + " : " + resStr);
+
 				if(result.size() > 1)
 				{
 					UINotify.info("found multiple matching environments: " + resStr);
@@ -306,17 +294,11 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 			}
 
 			log.info("using environment " + selectedEnv + " for object "
-					+ chosenObject);
-			
-			if(chosenArchive == null)
-			{
-				UINotify.warn("please choose an archive");
-				return "";
-			}
-			
+					+ chosenObject + " type " + type );
+
 			d = new ObjectEvaluationDescription(
-					envHelper, selectedEnv, chosenObject,
-					chosenArchive.getObjectReference(chosenObject));
+					envHelper, selectedEnv, WorkflowSingleton.CONF.objectArchive, chosenArchive, chosenObject, type);
+			// chosenArchive.getObjectReference(chosenObject));
 		}
 
 
@@ -333,10 +315,20 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 			log.severe("could not create emulator helper");
 			return "";
 		}
-		storage.emuHelper.initialize();
-		if (wfData.getStorage().emuHelper.isOutOfResources())
-			panic("please try later, no free resources found");
 
+		if(storage.emuHelper.requiresUserPrefs())
+		{
+			System.out.println("requires userprefs");
+			requirePrefs = true;
+			if(!this.isDidUserSetPrefs())
+			{
+				return "";
+			}
+			
+			setUserPreferences(storage.emuHelper.getEmulationEnvironment());
+		}
+		
+		storage.emuHelper.initialize();
 		this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP,
 				storage.emuHelper);
 
@@ -360,21 +352,15 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 
 	public String getChosenArchive() {
 		if (chosenArchive != null)
-			return chosenArchive.getName();
+			return chosenArchive;
 		return null;
 	}
 
 	public void setChosenArchive(String a) {
 		this.chosenObject = null;
-		this.chosenArchive = null;
 		this.isos.clear();
-		for (DigitalObjectArchive archive : wfData.getStorage().objectArchives) {
-			if (!archive.getName().equals(a))
-				continue;
-
-			this.chosenArchive = archive;
-			reloadData();
-		}
+		this.chosenArchive = a;
+		reloadData();
 	}
 
 	public String getChosenObject() {
@@ -486,4 +472,9 @@ public class WF_I_0 extends BwflaFormBean implements Serializable {
 		this.wfData.getStorage().externalImageCOW = cow;
 	}
 
+	public boolean isRequirePrefs()
+	{
+		return requirePrefs;
+	}
+	
 }

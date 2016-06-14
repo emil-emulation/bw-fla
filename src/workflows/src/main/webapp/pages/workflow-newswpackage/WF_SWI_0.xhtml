@@ -74,7 +74,7 @@
 					  
 								<p:column><span>#{hw.name}</span></p:column>
 							</p:selectOneMenu>								
-							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="addHWDlg.show();"></p:commandButton>
+							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="PF('addHWDlg').show();"></p:commandButton>
 							
 							<p:outputLabel for="os" value="Operating System:" />
 							<p:selectOneMenu id="os" value="#{WF_SWI_0.newSWBean.os}" converter="#{OsConverter}" panelStyle="width:150px" effect="fade" var="o" style="width:279px" filter="true" filterMatchMode="startsWith">
@@ -82,7 +82,7 @@
 					  
 								<p:column><span>#{o.name}</span></p:column>
 							</p:selectOneMenu>								
-							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="addOsDlg.show();"></p:commandButton>
+							<p:commandButton styleClass="plusbutton" value="+" type="button" onclick="PF('addOsDlg').show();"></p:commandButton>
 							
 							<p:outputLabel for="swdescription" styleClass="swdescription-label" value="Description:" /> 
 							<p:inputTextarea id="swdescription" value="#{WF_SWI_0.newSWBean.description}" />  
@@ -122,7 +122,7 @@
 									<img style="position: absolute; margin: auto; top: 0; left: 0; right: 0; bottom: 0; max-height: 120px;max-width: 120px;" src="#{WF_SWI_0.thumbnail_url}" />
 								</div>
 							</p:outputPanel>
-							<p:commandButton styleClass="uploadbutton" value="Upload Thumbnail" type="button" onclick="addThumbnailDlg.show();"></p:commandButton>
+							<p:commandButton styleClass="uploadbutton" value="Upload Thumbnail" type="button" onclick="PF('addThumbnailDlg').show();"></p:commandButton>
 							
 							<p:outputLabel for="files" value="Files:" />
 							<p:dataTable id="files" styleClass="dt_files" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}" var="f" value="#{WF_SWI_0.addFilesModel}" paginator="true" rows="10" selection="#{WF_SWI_0.newSWBean.files}" lazy="true" paginatorPosition="bottom">					
@@ -223,7 +223,7 @@
 					<p:message for="architectureplatform" />			   
 				</p:panelGrid>				   
 				   
-				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewHardware}" update="@form :newswform:hardware" oncomplete="if(!args.validationFailed) {addHWDlg.hide();}"/>
+				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewHardware}" update="@form :newswform:hardware" oncomplete="if(!args.validationFailed) {PF('addHWDlg').hide();}"/>
 			</h:form>
 		</p:dialog>
 		
@@ -272,7 +272,7 @@
 					<p:message for="versiondate" />			   
 				</p:panelGrid>				   
 				   
-				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewOs}" update="@form :newswform:os" oncomplete="if(!args.validationFailed) {addOsDlg.hide();}"/>
+				<p:commandButton style="float: right; margin: 5px 75px 13px 12px;" value="Submit" actionListener="#{WF_SWI_0.addNewOs}" update="@form :newswform:os" oncomplete="if(!args.validationFailed) {PF('addOsDlg').hide();}"/>
 			</h:form>
 		</p:dialog>
 		
@@ -280,7 +280,7 @@
 		<p:dialog id="addThumbnailDialog" header="Upload Thumbnail Image" widgetVar="addThumbnailDlg" modal="true" draggable="false" width="550">  
 			<h:form enctype="multipart/form-data">
 			    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_SWI_0.handleFileUpload}" update=":newswform:thumbnail" 
-			    	mode="advanced" auto="true" oncomplete="addThumbnailDlg.hide();" allowTypes="/(\.|\/)(jpeg|png)$/" />
+			    	mode="advanced" auto="true" oncomplete="PF('addThumbnailDlg').hide();" allowTypes="/(\.|\/)(jpeg|png)$/" />
 			</h:form>                   
 		</p:dialog>
 	</ui:define>

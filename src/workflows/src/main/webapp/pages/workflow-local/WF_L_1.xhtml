@@ -9,27 +9,25 @@
 	xmlns:func="http://example.com/functions" 
 	xmlns:fn="http://java.sun.com/jsp/jstl/functions">
 
-<ui:composition template="/template/formTemplateAlternate.xhtml">
+<ui:composition template="/template/emil-local-template.xhtml">
 	<ui:param name="beanName" value="#{WF_L_1}" />
-	<ui:define name="title">bwFLA Demo-Server</ui:define>
+	<ui:define name="title">EMIL Local-Workflow</ui:define>
 	<ui:define name="content">
 		<div class="page-index">
-			<div style="width: 750px; margin: auto auto; text-align: center;">
-	    		<img style="margin: auto auto 40px; width=100%;" src="#{resource['images:emil-logo.png']}"/>
-	    		<div class="tagline" style="margin-bottom: 1em;">This server shows <strong>demo access-workflow</strong> to illustrate use cases for a local emulation service</div>
-	    		<div style="margin-bottom: 40px;">(Press <i>Ctrl+Alt+F</i> to toggle fullscreen-mode)</div>
-	    		<ui:include src="/template/emulator_content_default.xhtml">
-					<ui:param name="beanName" value="#{WF_L_1}"/>
-					<ui:param name="disablePositionHack" value="#{true}"/>
-					<ui:param name="enableFullscreenSupport" value="#{false}"/>
-				</ui:include>
-		    	<h:form>
-					<h:commandLink id="goto-home" action="#{WF_L_1.forward}" class="button-big" style="width: 350px; margin: 30px auto; float: none;">
-						<strong>Stop and Proceed</strong>
-						<div class="caption">Stop the emulator and <br/> return to selection page.</div>
-					</h:commandLink>
-				</h:form>
-			</div>
+	    	<img class="logo" src="#{resource['images:emil-logo.png']}"/>
+	    	<div class="tagline" style="margin-bottom: 1em;">This server shows <strong>demo access-workflow</strong> to illustrate use cases for a local emulation service</div>
+	    	<div class="tagline" style="margin-bottom: 40px;">(Press <i>Ctrl+Alt+F</i> to toggle fullscreen-mode)</div>
+	    	<ui:include src="/template/emulator_content_default.xhtml">
+				<ui:param name="beanName" value="#{WF_L_1}"/>
+				<ui:param name="disablePositionHack" value="#{true}"/>
+				<ui:param name="enableFullscreenSupport" value="#{false}"/>
+			</ui:include>
+		   	<h:form>
+				<h:commandLink id="goto-home" action="#{WF_L_1.forward}" class="button-big">
+					<strong>Stop and Proceed</strong>
+					<div class="caption">Stop the emulator and <br/> return to selection page.</div>
+				</h:commandLink>
+			</h:form>
 		</div>
 	</ui:define>
 </ui:composition>

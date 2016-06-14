@@ -55,4 +55,10 @@ public final class FlagSet
 	{
 		flags = 0;
 	}
+	
+	/** Returns the underlying value. */
+	public int value()
+	{
+		return flags;
+	}
 }

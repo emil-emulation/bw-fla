@@ -34,15 +34,17 @@
 				<h:form enctype="multipart/form-data">
 					<p:remoteCommand actionListener="#{beanName['restartTimer']}" name="remoteCommandRestartTimer" />
 				
-				    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_M_1.handleFileUpload}" update=":injectAccordion:injectAccordionDirectTab" mode="advanced" auto="true" oncomplete="PF('uploadDialog').hide();remoteCommandRestartTimer()"/>
-					<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
+				    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_M_1.handleFileUpload}" 
+					update=":injectAccordion" mode="advanced" auto="true" 
+					oncomplete="PF('uploadDialog').hide();remoteCommandRestartTimer()"/>
+				    <p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
 				</h:form>
 			</p:dialog>
 			
 			<p:panelGrid style="width: 850px; margin: 0 auto 30px auto;" columns="1">
 				<f:facet name="header">Inject files into emulated environment (optional)</f:facet>
 				
-				<p:accordionPanel id="injectAccordion">
+				<p:accordionPanel id="injectAccordion" activeIndex="null">
 			        <p:tab title="Directly inject files" id="injectAccordionDirectTab">
 			            <bwl:file-injection-panel/>
 			        </p:tab>

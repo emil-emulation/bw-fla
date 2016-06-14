@@ -17,10 +17,10 @@
 			</p:panel>
 		
 			<h:form id ="uploadForm">
-				<p:remoteCommand name="onload" action="#{WF_SP_2.watchUpload}" update="uploadForm" onstart="pbAjax.start();" />
+				<p:remoteCommand name="onload" action="#{WF_SP_2.watchUpload}" update="uploadForm" onstart="PF('pbAjax').start();" />
 			
 				<p:progressBar id="progressBar" widgetVar="pbAjax" ajax="true" value="#{WF_SP_2.completed}" interval="1000" onCompleteUpdate="uploadForm">
-        			<p:ajax event="complete" listener="#{WF_SP_2.startEmulation}" oncomplete="poll.start();"/>
+        			<p:ajax event="complete" listener="#{WF_SP_2.startEmulation}" oncomplete="PF('poll').start();"/>
      			</p:progressBar>
 
 				<p:poll widgetVar="poll" interval="1" update="next" /> 

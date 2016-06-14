@@ -21,13 +21,21 @@ package de.bwl.bwfla.workflows.beans.record;
 
 import java.io.Serializable;
 import java.util.UUID;
+
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.MetadataTag;
+import de.bwl.bwfla.common.services.handle.HandleService;
+import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
+import de.bwl.bwfla.workflows.beans.common.CitationUrlHelper;
 import de.bwl.bwfla.workflows.beans.common.RemoteSessionRecorder;
+import de.bwl.bwfla.workflows.beans.common.UINotify;
 import de.bwl.bwfla.workflows.beans.common.WorkflowResources;
+import de.bwl.bwfla.workflows.catalogdata.SystemEnvironmentDescription;
+import de.bwl.bwfla.workflows.conf.WorkflowSingleton;
 
 
 @ManagedBean
@@ -41,6 +49,7 @@ public class WF_REC_3 extends BwflaFormBean implements Serializable
 	private RemoteSessionRecorder recorder;
 	private String title;
 	private String description;
+	private boolean citationEnabled;
 
 	
 	@Override
@@ -48,6 +57,11 @@ public class WF_REC_3 extends BwflaFormBean implements Serializable
 	{
 		super.initialize();
 		this.recorder = wfdata.getRemoteSessionRecorder();
+		this.title = null;
+		this.description = null;
+		this.citationEnabled = false;
+		
+		wfdata.setCitationLink(null);
 	}
 
 	@Override
@@ -72,6 +86,11 @@ public class WF_REC_3 extends BwflaFormBean implements Serializable
 		
 		log.info("Save trace-file to image-archive");
 		wfdata.getSystemEnvironmentHelper().addRecording(wfdata.getEmulatorEnvId(), id, trace);
+		
+		if (this.isCitationEnabled()) {
+			String link = this.createHandleLink(id, "traceid=" + id);
+			wfdata.setCitationLink(link);
+		}
 		
 		// Construct the next page's URL
 		return WF_REC_Data.getPageUrl(4, true);
@@ -124,6 +143,16 @@ public class WF_REC_3 extends BwflaFormBean implements Serializable
 		description = desc;
 	}
 	
+	public boolean isCitationEnabled()
+	{
+		return citationEnabled;
+	}
+	
+	public void setCitationEnabled(boolean enable)
+	{
+		this.citationEnabled = enable;
+	}
+	
 	@Override
 	public void cleanup()
 	{
@@ -131,5 +160,37 @@ public class WF_REC_3 extends BwflaFormBean implements Serializable
 		super.cleanup();
 	}
 
+	
+	private String createHandleLink(String id, String params)
+	{
+		if (id == null || id.isEmpty())
+			throw new IllegalArgumentException("Handle's ID not specified correctly!");
+
+		final String embedgw = WorkflowSingleton.CONF.embedGw;
+		if (embedgw == null) {
+			String message = "Gateway for embedded URLs not configured";
+			UINotify.error(message);
+			log.info(message);
+			return null;
+		}
+
+		final SystemEnvironmentHelper envhelper = wfdata.getSystemEnvironmentHelper();
+		final String envid = wfdata.getEmulatorEnvId();
+		final SystemEnvironmentDescription envdesc = new SystemEnvironmentDescription(envhelper, envid);
+		String url = embedgw + CitationUrlHelper.urlString(envdesc);
+		if (params != null && !params.isEmpty())
+			url +=  "&" + params;
+		
+		if (!HandleService.createUrlHandle("11270/" + id, url)) {
+			String message = "Registration of a new Handle-Link failed!";
+			log.severe(message);
+			return message;
+		}
+			
+		String handle = "http://hdl.handle.net/11270/" + id;
+		log.info("Created handle: " + handle);
+		return handle;
+	}
+	
 	private static final long serialVersionUID = 1026749915518843895L;
 }

@@ -1,7 +1,6 @@
 package edu.kit.scc.webreg.dao;
 
 import java.util.List;
-
 import edu.kit.scc.webreg.entity.ImageEntity;
 import edu.kit.scc.webreg.entity.RoleEntity;
 import edu.kit.scc.webreg.entity.ServiceEntity;

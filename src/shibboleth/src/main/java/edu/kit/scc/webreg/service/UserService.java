@@ -2,7 +2,6 @@ package edu.kit.scc.webreg.service;
 
 import java.util.List;
 import java.util.Map;
-
 import edu.kit.scc.webreg.entity.RoleEntity;
 import edu.kit.scc.webreg.entity.UserEntity;
 import edu.kit.scc.webreg.exc.RegisterException;

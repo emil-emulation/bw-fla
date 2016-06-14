@@ -87,10 +87,12 @@
 		<module>../emucomp</module>
 		<module>../imagearchive</module>
         <module>../objectarchive</module>
+        <module>../softwarearchive</module>
 		<module>../workflows</module>
-	<!--	<module>../shibboleth</module> -->
 		<module>../eaas</module>
 		<module>../fits</module>
+		<module>../emil</module>
+		<!-- <module>../shibboleth</module> -->
 	</modules>
 
 	<dependencyManagement>
@@ -105,11 +107,17 @@
 				<groupId>de.bwl.bwfla</groupId>
 				<artifactId>imagearchive</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
-				<type>ejb</type>
+				<type>war</type>
 			</dependency>
             <dependency>
 				<groupId>de.bwl.bwfla</groupId>
 				<artifactId>objectarchive</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+				<type>war</type>
+			</dependency>
+            <dependency>
+				<groupId>de.bwl.bwfla</groupId>
+				<artifactId>softwarearchive</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 				<type>ejb</type>
 			</dependency>
@@ -138,6 +146,12 @@
 				<artifactId>eaas</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 				<type>ejb</type>
+			</dependency>
+			<dependency>
+				<groupId>de.bwl.bwfla</groupId>
+				<artifactId>emil</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+				<type>war</type>
 			</dependency>
 			<dependency>
 				<groupId>de.bwl.bwfla</groupId>

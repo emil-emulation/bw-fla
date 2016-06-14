@@ -20,6 +20,7 @@
 package de.bwl.bwfla.workflows.beans.record;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.bean.ManagedBean;
@@ -44,7 +45,10 @@ public class WF_REC_0 extends BwflaFormBean implements Serializable
 	
 	// Member fields
 	private List<String> emulators;
-	private List<Environment> environments;
+//	private List<Environment> environments;
+	List<Environment> beanEnvironments = new ArrayList<Environment>();
+	List<Environment> derivates = new ArrayList<Environment>();
+	List<Environment> systems = new ArrayList<Environment>();
 	
 	private String selectedBean;
 	private String selectedEnv;
@@ -53,12 +57,6 @@ public class WF_REC_0 extends BwflaFormBean implements Serializable
 
 	private boolean configureBean()
 	{	
-		String imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
-		if(imageArchiveHost == null)
-		{
-			log.info("imageArchiveHost property not set");
-			return false;
-		}
 		envHelper = WorkflowSingleton.envHelper;
 		return true;
 	}
@@ -74,10 +72,14 @@ public class WF_REC_0 extends BwflaFormBean implements Serializable
 	/** Load available image names for selected emulator. */
 	public void loadAvailableImages() {
 			try {
-				this.setEnvironmentList(envHelper.getBaseImagesByBean(selectedBean));
+				beanEnvironments = envHelper.getBaseImagesByBean(selectedBean);
+				derivates = envHelper.getDerivateImagesByBean(selectedBean);
+				systems = envHelper.getSystemImagesByBean(selectedBean);
+				
 			} catch (BWFLAException e) {
 				panic(e.getMessage());
 			}
+		//	this.setEnvironmentList(this.beanEnvironments);
 	}
 
 	/** Returns the list of all available emulators. */
@@ -107,12 +109,28 @@ public class WF_REC_0 extends BwflaFormBean implements Serializable
 
 	/** Returns the list of environments. */
 	public List<Environment> getEnvironmentList() {
-		return environments;
+		return beanEnvironments;
+	}
+	
+	public List<Environment> getDerivatesList() {
+		return derivates;
+	}
+	
+	public List<Environment> getSystemsList() {
+		return systems;
 	}
 
 	/** Set the environment list. */
 	public void setEnvironmentList(List<Environment> envlist) {
-		environments = envlist;
+		beanEnvironments = envlist;
+	}
+	
+	public void setDerivatesList(List<Environment> environmentList) {
+		this.derivates = environmentList;
+	}
+	
+	public void setSystemsList(List<Environment> environmentList) {
+		this.systems = environmentList;
 	}
 
 	public String getSelectedEnv() {
@@ -137,9 +155,6 @@ public class WF_REC_0 extends BwflaFormBean implements Serializable
 		
 		RemoteEmulatorHelper emuHelper = new RemoteEmulatorHelper(env);
 		emuHelper.initialize();
-		if(emuHelper.isOutOfResources())
-			panic("please try later, no free resources found");
-		
 		this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, emuHelper);
 		
 		wfdata.setSystemEnvironmentHelper(envHelper);

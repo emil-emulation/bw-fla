@@ -29,12 +29,17 @@ import javax.xml.bind.annotation.XmlValue;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "emulatorSpec", namespace = "http://bwfla.bwl.de/common/datatypes", propOrder = {
-    "machine"
+    "machine", "architecture",
 })
-public class EmulatorSpec {
-
-    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
+public class EmulatorSpec 
+{
+	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
     protected EmulatorSpec.Machine machine;
+	
+	// optional for now
+    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes", required=false)
+    protected EmulatorSpec.Architecture architecture = null;
+    
     @XmlAttribute(name = "bean", required = true)
     protected String bean;
     @XmlAttribute(name = "version")
@@ -65,6 +70,32 @@ public class EmulatorSpec {
     }
 
 
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlType(name = "", propOrder = {"id", "name"})
+    public static class Architecture {
+    	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
+    	protected String id;
+    	
+    	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
+    	protected String name;
+    	
+    	public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+    }
+    
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "")
     public static class Machine {

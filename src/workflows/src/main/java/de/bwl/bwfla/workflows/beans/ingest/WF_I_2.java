@@ -77,11 +77,10 @@ public class WF_I_2 extends BwflaEmulatorViewBean
 	@Override
 	public void initialize() 
 	{
-		super.initialize();
 		storage = wfData.getStorage();
 		emuHelper = storage.emuHelper;
-		
-		imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
+		imageArchiveHost = WorkflowSingleton.CONF.imageArchive;
+		super.initialize();
 	}
 	
 	public String getPictureURL()

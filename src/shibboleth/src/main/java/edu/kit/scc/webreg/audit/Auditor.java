@@ -2,7 +2,6 @@ package edu.kit.scc.webreg.audit;
 
 import java.util.Date;
 import java.util.HashSet;
-
 import edu.kit.scc.webreg.dao.AuditDetailDao;
 import edu.kit.scc.webreg.dao.AuditEntryDao;
 import edu.kit.scc.webreg.entity.AuditDetailEntity;

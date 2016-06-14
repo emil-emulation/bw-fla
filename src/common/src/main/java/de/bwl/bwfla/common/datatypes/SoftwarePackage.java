@@ -19,25 +19,46 @@
 
 package de.bwl.bwfla.common.datatypes;
 
-import java.io.File;
-import java.util.ArrayList;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Date;
-import java.util.List;
 
-public class SoftwarePackage {
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.transform.stream.StreamSource;
+
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "softwarePackage", namespace="http://bwfla.bwl.de/common/datatypes",
+	propOrder = { "name", "description", "releaseDate", "infoSource", "location",
+	              "licence", "numSeats", "language", "documentation", "archive", "objectId" })
+@XmlRootElement(namespace = "http://bwfla.bwl.de/common/datatypes")
+public class SoftwarePackage
+{
+	@XmlElement(required = true)
 	private String name;
+	
 	private String description;
 	private Date releaseDate;
 	private String infoSource;
 	private String location;
 	private String licence;
+	private int numSeats;
 	private String language;
 	private String documentation;
-	private List<File> files = new ArrayList<File>();
-
-	private long hardwareid;
-	private long osid;
-	private String thumbnailFilepath;
+	
+	@XmlElement(required = true)
+	private String archive;
+	
+	@XmlElement(required = true)
+	private String objectId;
 
 	public String getName() {
 		return name;
@@ -62,6 +83,10 @@ public class SoftwarePackage {
 	public String getLicence() {
 		return licence;
 	}
+	
+	public int getNumSeats() {
+		return numSeats;
+	}
 
 	public String getLanguage() {
 		return language;
@@ -71,20 +96,12 @@ public class SoftwarePackage {
 		return documentation;
 	}
 
-	public List<File> getFiles() {
-		return files;
+	public String getArchive() {
+		return archive;
 	}
-
-	public long getHardwareid() {
-		return hardwareid;
-	}
-
-	public long getOsid() {
-		return osid;
-	}
-
-	public String getThumbnailFilepath() {
-		return thumbnailFilepath;
+	
+	public String getObjectId() {
+		return objectId;
 	}
 
 	public void setName(String name) {
@@ -111,6 +128,10 @@ public class SoftwarePackage {
 		this.licence = licence;
 	}
 
+	public void setNumSeats(int numSeats) {
+		this.numSeats = numSeats;
+	}
+	
 	public void setLanguage(String language) {
 		this.language = language;
 	}
@@ -119,19 +140,36 @@ public class SoftwarePackage {
 		this.documentation = documentation;
 	}
 
-	public void setFiles(List<File> files) {
-		this.files = files;
+	public void setArchive(String archive) {
+		this.archive = archive;
 	}
-
-	public void setHardwareid(long hardwareid) {
-		this.hardwareid = hardwareid;
+	
+	public void setObjectId(String id) {
+		this.objectId = id;
 	}
-
-	public void setOsid(long osid) {
-		this.osid = osid;
-	}
-
-	public void setThumbnailFilepath(String thumbnailFilepath) {
-		this.thumbnailFilepath = thumbnailFilepath;
-	}
+	
+	public String value() throws JAXBException {
+    	JAXBContext jc = JAXBContext.newInstance(this.getClass());
+    	Marshaller marshaller = jc.createMarshaller();
+    	StringWriter writer = new StringWriter();
+    	marshaller.marshal(this, writer);
+    	return writer.toString();
+    }
+	
+	public static SoftwarePackage fromValue(String data)
+    {
+		return SoftwarePackage.fromValue(new StringReader(data));
+    }
+	
+	public static SoftwarePackage fromValue(Reader reader)
+    {
+		try {
+			JAXBContext jc = JAXBContext.newInstance(SoftwarePackage.class);
+			Unmarshaller unmarshaller = jc.createUnmarshaller();
+			StreamSource stream = new StreamSource(reader);
+			return (SoftwarePackage) unmarshaller.unmarshal(stream);
+		} catch (Throwable t) {
+			throw new IllegalArgumentException("passed 'data' metadata cannot be parsed by 'JAX-B', check input contents");
+		}
+    }
 }

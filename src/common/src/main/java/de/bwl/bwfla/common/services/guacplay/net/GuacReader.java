@@ -40,6 +40,8 @@ public class GuacReader extends ReaderGuacamoleReader implements IGuacReader
 	
 	private final IGuacInterceptor interceptor;
 	private final CharArrayWrapper wrapper;
+	private long numBytesRead;
+	private long numMsgsRead;
 	
 	
 	/** Constructor */
@@ -54,6 +56,20 @@ public class GuacReader extends ReaderGuacamoleReader implements IGuacReader
 		super(input);
 		this.interceptor = interceptor;
 		this.wrapper = (interceptor != null) ? new CharArrayWrapper() : null;
+		this.numBytesRead = 0L;
+		this.numMsgsRead = 0L;
+	}
+	
+	/** Returns the number of messages read by this reader. */
+	public long getNumMsgsRead()
+	{
+		return numMsgsRead;
+	}
+
+	/** Returns the number of bytes read by this reader. */
+	public long getNumBytesRead()
+	{
+		return numBytesRead;
 	}
 	
 	@Override
@@ -84,6 +100,9 @@ public class GuacReader extends ReaderGuacamoleReader implements IGuacReader
 				// Write it directly into the output 
 				output.write(data, 0, data.length);
 			}
+			
+			numBytesRead += data.length;
+			++numMsgsRead;
 		}
 		catch (Exception exception) {
 			// Something is broken, rethrow
@@ -101,9 +120,14 @@ public class GuacReader extends ReaderGuacamoleReader implements IGuacReader
 		try {
 			// Read the data or block
 			char[] data = super.read();
+			if (data == null)
+				return null;
+
+			numBytesRead += data.length;
+			++numMsgsRead;
 
 			// Pass the data through the interceptor
-			if ((interceptor != null) && (data != null)) {
+			if (interceptor != null) {
 				wrapper.set(data, 0, data.length);
 				if (interceptor.onServerMessage(wrapper))
 					data = wrapper.toCharArray();

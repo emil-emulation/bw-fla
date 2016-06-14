@@ -2,18 +2,10 @@ var BWFLA = BWFLA || {};
 
 // Setup client-side handling of the embedded iframe
 BWFLA.setupIFrameHandling = function(iframe)
-{
-	var getLocation = function(href) 
-	{
-	    var l = document.createElement("a");
-	    l.href = href;
-	    return l;
-	};
-	
+{	
 	function onMessageReceived(message) 
 	{
-		var iFrameLocation = getLocation(iframe.src);
-		if (message.origin !== iFrameLocation.origin)
+		if (message.origin !== iframe.src.match(/^.+\:\/\/[^\/]+/)[0])
 			return;
 
 		var event = null;

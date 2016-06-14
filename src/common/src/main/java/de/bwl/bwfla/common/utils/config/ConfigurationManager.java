@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBContext;
@@ -49,22 +51,40 @@ public class ConfigurationManager
 	}
 	
 	@SuppressWarnings("unchecked")
-	synchronized public static <C extends Configuration> C load(Class<C> confClass)
+	synchronized public static <C> C load(Class<C> confClass, InputStream is)
 	{
 		try
 		{
 			JAXBContext context = JAXBContext.newInstance(confClass);
 			Unmarshaller unmarshaller = context.createUnmarshaller();
-			
-			try(InputStream is = new FileInputStream(getConfFilePath(confClass)))
-			{
-				return (C) unmarshaller.unmarshal(is);
-			}
+			return (C) unmarshaller.unmarshal(is);
 		}
 		catch(Exception e) 
 		{
 			LOG.severe("failed unmarshalling configuration file " + e.getMessage());
 			e.printStackTrace();
+			return null;
+		}
+	}
+	
+
+	synchronized public static <C extends Configuration> C load(Class<C> confClass)
+	{
+		try
+		{
+			String fPath = getConfFilePath(confClass);
+			if (fPath == null || !Files.exists(Paths.get(fPath))) {
+				String name = confClass.getSimpleName();
+				LOG.warning("Configuration file for " + name + " (" + fPath + ") is missing, using defaults.");
+				return confClass.newInstance();
+			}
+			
+			InputStream is = new FileInputStream(fPath);
+			return load(confClass, is);
+		}
+		catch(Exception e1)
+		{ 
+			LOG.severe(e1.getMessage());
 			return null;
 		}
 	}

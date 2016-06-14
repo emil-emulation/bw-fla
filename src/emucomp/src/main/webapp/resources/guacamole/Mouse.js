@@ -143,19 +143,25 @@ Guacamole.Mouse = function(element) {
             return;
         }
 
-        // PointerLock: are relative mouse coordinates arriving?
-        if (element.isPointerLockEnabled) {
-            var movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
-            var movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
-            guac_mouse.currentState.fromClientPositionPointerLocked(element, movementX, movementY);
+        if (element.isRelativeMouse == true) {
+        	if (element.isPointerLockEnabled) {
+            	// PointerLock: relative mouse coordinates arriving
+                var movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+                var movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+                guac_mouse.currentState.fromClientPositionPointerLocked(element, movementX, movementY);
+                if (guac_mouse.onmousemove)
+                    guac_mouse.onmousemove(guac_mouse.currentState);
+            }
+        	else {
+        		// PointerLock disabled: ignore this event!
+        	}
         }
         else {
-            // Otherwise: absolute mouse coordinates
+            // Absolute mouse coordinates arriving
             guac_mouse.currentState.fromClientPosition(element, e.clientX, e.clientY);
+            if (guac_mouse.onmousemove)
+                guac_mouse.onmousemove(guac_mouse.currentState);
         }
-
-        if (guac_mouse.onmousemove)
-            guac_mouse.onmousemove(guac_mouse.currentState);
 
     }, false);
 
@@ -177,6 +183,11 @@ Guacamole.Mouse = function(element) {
             case 2:
                 guac_mouse.currentState.right = true;
                 break;
+        }
+
+        if (element.isRelativeMouse == true && element.isPointerLockEnabled) {
+           	// PointerLock: reset last mouse movement
+       		guac_mouse.currentState.fromClientPositionPointerLocked(element, 0, 0);
         }
 
         if (guac_mouse.onmousedown)

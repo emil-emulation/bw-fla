@@ -28,10 +28,10 @@ import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
 import de.bwl.bwfla.common.services.guacplay.events.IGuacEventListener;
 import de.bwl.bwfla.common.services.guacplay.graphics.OffscreenCanvas;
 import de.bwl.bwfla.common.services.guacplay.graphics.ScreenRegionList;
-import de.bwl.bwfla.common.services.guacplay.net.PlayerSocket;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionBuilder;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
+import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
 
 
 /** Handler for Guacamole's <i>png-</i> instruction (Replay-Version). */
@@ -39,7 +39,7 @@ public class PngInstrHandlerPLAY extends PngInstrHandler implements IGuacEventLi
 {
 	// Member fields
 	private final ScreenRegionList updates;
-	private final PlayerSocket socket;
+	private final ICharArrayConsumer client;
 	private final InstructionBuilder ibuilder;
 	
 	/** ID of the overlay layer. */
@@ -77,12 +77,12 @@ public class PngInstrHandlerPLAY extends PngInstrHandler implements IGuacEventLi
 	
 
 	/** Constructor */
-	public PngInstrHandlerPLAY(OffscreenCanvas canvas, ScreenRegionList updates, PlayerSocket socket)
+	public PngInstrHandlerPLAY(OffscreenCanvas canvas, ScreenRegionList updates, ICharArrayConsumer socket)
 	{
 		super(canvas);
 		
 		this.updates = updates;
-		this.socket = socket;
+		this.client = socket;
 		this.ibuilder = new InstructionBuilder(512);
 	}
 
@@ -101,7 +101,7 @@ public class PngInstrHandlerPLAY extends PngInstrHandler implements IGuacEventLi
 		}
 
 		// Send visual feedback, when client connected
-		if (socket != null) {
+		if (client != null) {
 			// Mark the updated screen-area
 			ibuilder.start(OpCode.RECT);
 			ibuilder.addArgument(OVERLAY_LAYER);
@@ -114,10 +114,8 @@ public class PngInstrHandlerPLAY extends PngInstrHandler implements IGuacEventLi
 			final char[] rectinstr = ibuilder.toCharArray();
 			
 			// Send constructed rectangle to client
-			synchronized (socket) {
-				socket.post(rectinstr, 0, rectinstr.length);
-				socket.post(INSTR_CSTROKE_GRAY, 0, INSTR_CSTROKE_GRAY.length);
-			}
+			client.consume(rectinstr, 0, rectinstr.length);
+			client.consume(INSTR_CSTROKE_GRAY, 0, INSTR_CSTROKE_GRAY.length);
 		}
 	}
 	
@@ -133,9 +131,12 @@ public class PngInstrHandlerPLAY extends PngInstrHandler implements IGuacEventLi
 		}
 
 		// Clear the overlay
-		if (socket != null) {
-			synchronized (socket) {
-				socket.post(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+		if (client != null) {
+			try {
+				client.consume(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+			}
+			catch (Exception exception) {
+				// Ignore it!
 			}
 		}
 	}

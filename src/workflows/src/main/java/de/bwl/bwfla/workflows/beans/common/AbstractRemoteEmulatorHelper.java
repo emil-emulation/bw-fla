@@ -21,11 +21,19 @@ package de.bwl.bwfla.workflows.beans.common;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
+
 import javax.activation.DataHandler;
+
 import de.bwl.bwfla.api.eaas.ConnectionType;
 import de.bwl.bwfla.api.eaas.EaasWS;
+import de.bwl.bwfla.common.datatypes.Drive;
 import de.bwl.bwfla.common.datatypes.EaasState;
+import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
+import de.bwl.bwfla.common.datatypes.Environment;
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.EmulatorUtils;
 import de.bwl.bwfla.workflows.api.WorkflowResource;
@@ -35,25 +43,34 @@ import de.bwl.bwfla.workflows.conf.WorkflowSingleton;
 public abstract class AbstractRemoteEmulatorHelper implements WorkflowResource
 {
 	protected static final Logger LOG = Logger.getLogger(AbstractRemoteEmulatorHelper.class.getName());
+	protected String 	sessId;
+	protected EaasWS 	eaas;
+	protected boolean	cleanedUp;
+	protected EmulatorMediaManager mediaManager;
+	protected final Environment environment;
+	
 
-	protected String sessid;
-	protected EaasWS eaas;
-
-	public AbstractRemoteEmulatorHelper()
+	public AbstractRemoteEmulatorHelper(Environment env)
 	{
-		this.sessid = null;
+		this.sessId = null;
 		this.eaas = null;
+		this.cleanedUp = false;
+		this.mediaManager = null;
+		environment = env;
 	}
 	
 	public void initialize()
 	{			
-		try {
+		try
+		{
 			URL wsdl = new URL(WorkflowSingleton.CONF.eaasGw);
+			
 			eaas = EmulatorUtils.getEaas(wsdl);
-			if (eaas == null)
+			if(eaas == null)
 				throw new WFPanicException("EAAS is null");
 		}
-		catch (MalformedURLException exception) {
+		catch(MalformedURLException exception)
+		{
 			exception.printStackTrace();
 			throw new WFPanicException("Eaas wsdl property is malformed");
 		}
@@ -63,47 +80,55 @@ public abstract class AbstractRemoteEmulatorHelper implements WorkflowResource
 	{
 		if(eaas == null)
 		{
-			LOG.severe("cleanup: eaas is null: this is a bug!");
+			LOG.warning("cleanup: eaas is null, will not proceed (session either was removed before or not initialized yet), cleanedUp is " + cleanedUp);
 			return;
 		}
 		
-		eaas.releaseSession(sessid);
-		
-		this.sessid  = null;
-		this.eaas 	= null;
-	}
-
-	public void startEmulator() throws BWFLAException
-	{
-		eaas.start(sessid);
+		this.eaas.releaseSession(sessId);
+		this.sessId 	 = null;
+		this.eaas 		 = null;
+		this.cleanedUp   = true;
 	}
 	
-	public void stop()
+	public void startEmulator() throws BWFLAException
 	{
-		try {
-			final String state = eaas.getSessionState(sessid);
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed");
+		
+		eaas.start(sessId);
+	}
+	
+	public void stop() throws BWFLAException
+	{
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed");
+		
+		try 
+		{
+			final String state = eaas.getSessionState(sessId);
 			if (EaasState.fromValue(state) != EaasState.SESSION_RUNNING)
 				return;
 			
-			eaas.stop(sessid);
+			eaas.stop(sessId);
 		}
-		catch(BWFLAException exception) {
+		catch(BWFLAException exception) 
+		{
 			exception.printStackTrace();
 		}
 	}
 
-	public boolean isRunning() throws BWFLAException
-	{	
-		final String state = eaas.getSessionState(sessid);
-		return state.equalsIgnoreCase(EaasState.SESSION_RUNNING.value());
-	}
-
 	public synchronized EaasState getEaasState()
-	{
+	{	
+		if(this.cleanedUp)
+		{
+			LOG.warning("cannot perform this operation, since this session was already removed");
+			return null;
+		}
+		
 		EaasState state = null;
 		if (eaas != null) {
 			try {
-				state = EaasState.fromValue(eaas.getSessionState(sessid));
+				state = EaasState.fromValue(eaas.getSessionState(sessId));
 			}
 			catch (BWFLAException exception) {
 				exception.printStackTrace();
@@ -113,15 +138,14 @@ public abstract class AbstractRemoteEmulatorHelper implements WorkflowResource
 		return state;
 	}
 	
-	public String getSessionId()
-	{
-		return sessid;
-	}
-
 	public String getControlUrl() throws BWFLAException
 	{
-		try {
-			return eaas.getControlURL(sessid, ConnectionType.HTML, null);
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed (timeout?)");
+		
+		try 
+		{
+			return eaas.getControlURL(sessId, ConnectionType.HTTP, null);
 		}
 		catch(Throwable e)
 		{
@@ -129,33 +153,69 @@ public abstract class AbstractRemoteEmulatorHelper implements WorkflowResource
 		}
 	}
 
+	public String saveEnvironment(String host, String name, String type) throws BWFLAException
+	{
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed (timeout?)");
+		
+		String environment = null;
+		environment = eaas.saveEnvironment(sessId, host, name, type);
+		return environment;
+	}
+		
+	public void takeScreenshot() throws BWFLAException
+	{
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed (timeout?)");
+		
+		eaas.takeScreenshot(sessId);
+	}
+	
+	public DataHandler getNextScreenshot() throws BWFLAException
+	{
+		if(this.cleanedUp)
+			throw new BWFLAException("cannot perform operation, since this session was already removed (timeout?)");
+		
+		return eaas.getNextScreenshot(sessId);
+	}
+	
 	public EaasWS getEaasWS()
 	{
 		return eaas;
 	}
 	
-	public boolean isOutOfResources()
+	public String getSessionId()
 	{
+		return sessId;
+	}
+	
+	public EmulatorMediaManager getMediaManager()
+	{
+		return mediaManager;
+	}
+	
+	public EmulationEnvironment getEmulationEnvironment()
+	{
+		if(environment == null)
+			return null;
+		
+		if(environment instanceof EmulationEnvironment)
+			return (EmulationEnvironment)environment;
+		
+		return null;
+	}
+	
+	public boolean requiresUserPrefs()
+	{
+		if(environment == null)
+			return false;
+		
+		if(!(environment instanceof EmulationEnvironment))
+			return false;
+		
+		EmulationEnvironment env = (EmulationEnvironment)environment;
+		if(env != null && env.getUiOptions() != null && env.getUiOptions().getInput() != null && env.getUiOptions().getInput().isRequired())
+			return true;
 		return false;
-	}
-	
-	public String saveEnvironment(String host, String name, String type) throws BWFLAException
-	{
-		String environment = null;
-		environment = eaas.saveEnvironment(sessid, host, name, type);
-		return environment;
-	}
-	
-	
-	/* =============== Screenshot API =============== */
-	
-	public void takeScreenshot() throws BWFLAException
-	{
-		eaas.takeScreenshot(sessid);
-	}
-	
-	public DataHandler getNextScreenshot() throws BWFLAException
-	{
-		return eaas.getNextScreenshot(sessid);
 	}
 }

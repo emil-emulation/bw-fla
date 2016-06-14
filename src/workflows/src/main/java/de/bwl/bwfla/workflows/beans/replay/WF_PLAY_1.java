@@ -42,10 +42,10 @@ public class WF_PLAY_1 extends BwflaFileAttachBean implements Serializable
 		RemoteEmulatorHelper emuHelper = wfdata.getRemoteEmulatorHelper();
 
 		if(imageDevices == null)
-			imageDevices = emuHelper.getImageDevices();
+			imageDevices = emuHelper.getMediaManager().getImageDevices();
 
 		if(helperDevices == null)
-			helperDevices = emuHelper.getHelperDevices();
+			helperDevices = emuHelper.getMediaManager().getHelperDevices();
 
 		return super.getDevices();
 	}
@@ -54,7 +54,7 @@ public class WF_PLAY_1 extends BwflaFileAttachBean implements Serializable
 	public String forward()
 	{
 		RemoteEmulatorHelper emuhelper = wfdata.getRemoteEmulatorHelper();
-		emuhelper.setFilesToInject(uploadedFiles);
+		emuhelper.getMediaManager().setFilesToInject(uploadedFiles);
 		return WF_PLAY_Data.getPageUrl(2, true);
 	}
 	

@@ -19,28 +19,30 @@
 
 package de.bwl.bwfla.common.services.guacplay.record;
 
-import de.bwl.bwfla.common.services.guacplay.protocol.IGuacInstructionConsumer;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionHandler;
+import de.bwl.bwfla.common.services.guacplay.protocol.InstructionSink;
+
+// Internal class (package-private)
 
 
-public class InstructionForwarder extends InstructionHandler
+final class InstructionForwarder extends InstructionHandler
 {
-	private final IGuacInstructionConsumer output;
+	private final InstructionSink isink;
 	
 	
 	/** Constructor */
-	public InstructionForwarder(IGuacInstructionConsumer output)
+	public InstructionForwarder(InstructionSink isink)
 	{
 		super("forwarder");
-		this.output = output;
+		this.isink = isink;
 	}
 
 	@Override
 	public void execute(InstructionDescription desc, Instruction instruction) throws Exception
 	{
 		// Simply pass it as-is to the output!
-		output.consume(desc, instruction);
+		isink.consume(desc, instruction);
 	}
 }

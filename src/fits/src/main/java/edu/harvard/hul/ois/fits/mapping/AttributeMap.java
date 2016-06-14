@@ -20,7 +20,6 @@ package edu.harvard.hul.ois.fits.mapping;
 
 import java.util.Hashtable;
 import java.util.List;
-
 import org.jdom.Element;
 
 public class AttributeMap {

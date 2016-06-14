@@ -35,6 +35,7 @@ class WF_REC_Data extends WorkflowData implements Serializable
 	
 	/* Member fields */
 	private RemoteSessionRecorder recorder;
+	private String citationLink;
 
 	
 	/** Constructor */
@@ -51,6 +52,16 @@ class WF_REC_Data extends WorkflowData implements Serializable
 	public RemoteSessionRecorder getRemoteSessionRecorder()
 	{
 		return recorder;
+	}
+	
+	public void setCitationLink(String link)
+	{
+		citationLink = link;
+	}
+	
+	public String getCitationLink()
+	{
+		return citationLink;
 	}
 	
 	public static String getPageUrl(int page, boolean redirect)

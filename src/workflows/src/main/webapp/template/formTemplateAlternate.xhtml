@@ -62,12 +62,36 @@
 		</h:form>		
 	</div>
 	
+	<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
+    	<p:graphicImage library="images" name="ajaxloadingbar.gif" />
+	</p:dialog>
+	
+	<script type="text/javascript">		
+		function showLoadingAnimation() {
+			PF('statusDialog').show();
+		}
+		
+		function hideLoadingAnimation() {
+			PF('statusDialog').hide();
+		}
+	</script>
+	
 	<script type="text/javascript">
 	$(function(){
 		if (!isPrimefacesCompatible()) {
-			growlVar.show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
+			PF('growlVar').show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
 		}
 	});
+	</script>
+	
+	<script type="text/javascript">
+		$(function() {
+			if($.browser.msie) {
+				if ($.browser.versionNumber == 8) {
+					PF('growlVar').show([{summary: 'Warning', detail: 'We do not yet fully support Internet Explorer 8. You may experience bugs.', severity: 'warn'}]);
+				}
+			}
+		});
 	</script>
 </h:body>
 

@@ -1,7 +1,6 @@
 package edu.kit.scc.webreg.service;
 
 import java.util.Map;
-
 import edu.kit.scc.webreg.dao.GroupDao;
 import edu.kit.scc.webreg.entity.GroupEntity;
 import edu.kit.scc.webreg.entity.UserEntity;

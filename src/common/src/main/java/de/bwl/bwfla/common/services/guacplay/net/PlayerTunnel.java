@@ -19,23 +19,19 @@
 
 package de.bwl.bwfla.common.services.guacplay.net;
 
+import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
+
 
 /** A custom {@link GuacTunnel} for connections between the client and the player. */
 public class PlayerTunnel extends GuacTunnel
 {
 	/** Constructor. */
-	public PlayerTunnel(int msgBufferCapacity)
+	public PlayerTunnel(GuacTunnel tunnel, ICharArrayConsumer output, int msgBufferCapacity)
 	{
-		this(null, msgBufferCapacity);
-	}
-	
-	/** Constructor. */
-	public PlayerTunnel(IGuacInterceptor interceptor, int msgBufferCapacity)
-	{
-		super(new PlayerSocket(interceptor, msgBufferCapacity));
+		super(new PlayerSocket(tunnel.getGuacReader(), tunnel.getGuacWriter(), output, msgBufferCapacity));
 	}
 
-	/** Enable the writing through this tunnel. */
+	/** Enable writing through this tunnel. */
 	public void enableWriting()
 	{
 		// Obtain exclusive access!
@@ -47,7 +43,7 @@ public class PlayerTunnel extends GuacTunnel
 		this.releaseWriter();
 	}
 	
-	/** Disable the writing through this tunnel. */
+	/** Disable writing through this tunnel. */
 	public void disableWriting()
 	{
 		// Obtain exclusive access!

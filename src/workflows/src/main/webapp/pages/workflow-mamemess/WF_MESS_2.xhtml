@@ -27,12 +27,7 @@
 	</ui:define>
 	
 	<ui:define name="metadata">
-		<h:outputScript library="syntaxhighlighter" name="scripts/shCore.js"/>
-		<h:outputScript library="syntaxhighlighter" name="scripts/shBrushJScript.js"/>
-        <h:outputScript library="syntaxhighlighter" name="scripts/shBrushXml.js"/>
         <h:outputScript library="zeroclipboard" name="ZeroClipboard.min.js"/>
-        <h:outputStylesheet library="syntaxhighlighter" name="styles/shCore.css"/>
-        <h:outputStylesheet library="syntaxhighlighter" name="styles/shThemeDefault.css"/>
     </ui:define>		
 	 
 	<ui:define name="content">
@@ -50,7 +45,7 @@
 			
 			<script>
 				$(function(){
-					startEmulationButtonVar.jq.click();
+					PF('startEmulationButtonVar').jq.click();
 				});
 			</script>
 			
@@ -101,7 +96,7 @@
 
                                                         clip.on( 'mousedown', function(client) {
                                                                 $('.iframeclipboard').select();
-                                                                growlVar.show([{summary:'Info', detail: 'Text was Copied to the Clipboard!', severity: 'info'}]);
+                                                                PF('growlVar').show([{summary:'Info', detail: 'Text was Copied to the Clipboard!', severity: 'info'}]);
                                                         });
                                                         } else {
                                                                 button.click(function() {

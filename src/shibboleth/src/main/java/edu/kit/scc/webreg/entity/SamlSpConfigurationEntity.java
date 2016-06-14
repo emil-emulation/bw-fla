@@ -2,12 +2,10 @@ package edu.kit.scc.webreg.entity;
 
 import java.util.Arrays;
 import java.util.List;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
-
 import org.hibernate.annotations.Type;
 
 

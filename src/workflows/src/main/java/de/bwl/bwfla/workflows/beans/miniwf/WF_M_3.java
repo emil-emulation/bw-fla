@@ -24,12 +24,16 @@ import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+
 import org.apache.commons.io.FilenameUtils;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
+
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
 import de.bwl.bwfla.workflows.beans.common.WorkflowResources;
@@ -58,7 +62,12 @@ public class WF_M_3 extends BwflaFormBean implements Serializable
 		this.storage = wfData.getStorage();
 		
 		resourceManager.disableTimeout();
-		this.files = storage.emuHelper.detachAndDownloadContainers();
+		try {
+			this.files = storage.emuHelper.getMediaManager().detachAndDownloadContainers();
+		} catch (BWFLAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		resourceManager.restartTimeout();
 		
 		for(Pair<WorkflowsFile, String> file: files)

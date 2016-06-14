@@ -1,79 +1,54 @@
-/*
- * This file is part of the Emulation-as-a-Service framework.
- *
- * The Emulation-as-a-Service framework is free software: you can
- * redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * The Emulation-as-a-Service framework is distributed in the hope that
- * it will be useful, but WITHOUT ANY WARRANTY; without even the
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with the Emulation-as-a-Software framework.
- * If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.bwl.bwfla.common.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
-import javax.xml.bind.JAXB;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.ValidationEventHandler;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.soap.SOAPBinding;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-
 import de.bwl.bwfla.api.eaas.EaasWS;
 import de.bwl.bwfla.api.eaas.EaasWSService;
-import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
-import de.bwl.bwfla.common.datatypes.Environment;
-import de.bwl.bwfla.common.datatypes.NetworkEnvironment;
-import de.bwl.bwfla.common.datatypes.Resource;
-import de.bwl.bwfla.common.services.container.helpers.ContainerHelper;
-import de.bwl.bwfla.common.services.container.helpers.ContainerHelperFactory;
-import de.bwl.bwfla.common.services.container.types.Container;
-import de.bwl.bwfla.common.services.container.types.Container.Filesystem;
-import eu.planets_project.services.datatypes.Content;
-import eu.planets_project.services.datatypes.DigitalObject;
-import eu.planets_project.services.datatypes.DigitalObjectContent;
-import eu.planets_project.services.datatypes.ImmutableDigitalObject;
+import de.bwl.bwfla.common.datatypes.Binding;
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 
 public class EmulatorUtils 
 {
 	protected static final Logger log = Logger.getLogger("EmulatorUtils");
 
-	
+	public enum XmountOutputFormat {
+		RAW("raw"),
+		VDI("vdi"),
+		VHD("vhd"),
+		VMDK("vmdk");
+
+		private final String format;
+
+		private XmountOutputFormat(String s) {
+			this.format = s;
+		}
+		public String toString() {
+			return this.format;
+		}
+	}
+
+
 	public static String computeMd5(File file) 
 	{
 		String result = new String();
@@ -97,176 +72,74 @@ public class EmulatorUtils
 		{
 			log.warning(e.getMessage());
 		}
-		
+
 		return result;
 	}
 
-	public static Map<String, ImmutableDigitalObject> prepareFilesForInjection(
-			Map<String, List<File>> uploads) {
-		Map<String, ImmutableDigitalObject> objsInj = new HashMap<>();
+    public static String connectBinding(Binding resource, Path resourceDir,
+            XmountOptions xmountOpts)
+                    throws BWFLAException, IllegalArgumentException {
+        String resUrl = resource.getUrl();
 
-		for (Map.Entry<String, List<File>> upload : uploads.entrySet()) {
-			String dev = upload.getKey();
-			List<File> files = upload.getValue();
-			Filesystem fs;
+        // TODO handle.net resolution according to used transport
 
-			switch (dev) {
-			case "disk":
-				fs = Filesystem.FAT16;
-				break;
+        if (resource == null || resource.getId() == null
+                || resource.getId().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Given resource is null or has invalid id.");
+        }
 
-			case "floppy":
-				fs = Filesystem.FAT12;
-				break;
+        if (resource.getAccess() == null)
+            resource.setAccess(Binding.AccessType.COW);
 
-			case "cdrom":
-			case "iso":
-				fs = Filesystem.ISO;
-				break;
+        if (resource.getId() == null || resUrl == null
+                || resource.getId().isEmpty() || resUrl.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Given id is null or has invalid id.");
+        }
 
-			default:
-				log.warning("the supplied device type is either invalid or is currently unsupported, skipping: "
-						+ dev);
-				continue;
-			}
+        String resFile = null;
+        switch (resource.getAccess()) {
+        case COW:
+            // create cow container
+            // Qemu's block layer driver handles many transport protocols,
+            // as long as we don't want to support yet another one, we can
+            // safely ignore transports here and just pass the url to Qemu.
+            Path cowPath = resourceDir.resolve(resource.getId() + ".cow");
 
-			ContainerHelper helper = ContainerHelperFactory.getContainerHelper(
-					dev, fs);
-			Container container = helper.createEmptyContainer();
-			helper.insertIntoContainer(container, files);
+            EmulatorUtils.createCowFile(resUrl, cowPath);
 
-			DigitalObjectContent doContent = Content.byReference(container
-					.getFile());
-			DigitalObject.Builder builder = new DigitalObject.Builder(doContent);
-			builder.title("do_" + dev + "_container_");
+            Path fuseMountpoint = cowPath
+                    .resolveSibling(cowPath.getFileName() + ".fuse");
+            try {
+                resFile = mountCowFile(cowPath, fuseMountpoint, xmountOpts)
+                        .toString();
+            } catch (IOException e) {
+                throw new BWFLAException("Could not fuse-mount image file.", e);
+            }
+            break;
+        case COPY:
+            // use qemu-imgs convert feature to create a new local raw copy
+            Path imgCopy = resourceDir.resolve(resource.getId() + ".copy");
+            ProcessRunner process = new ProcessRunner("qemu-img");
+            process.addArgument("convert");
+            process.addArgument("-fraw");
+            process.addArgument("-O" + xmountOpts.getOutFmt().toString().toLowerCase());
+            process.addArgument(resUrl);
+            process.addArgument(imgCopy.toString());
+            if (!process.execute()) {
+                throw new BWFLAException(
+                        "Cannot create local copy of the binding's data, connecting binding cancelled.");
+            }
 
-			ImmutableDigitalObject obj = (ImmutableDigitalObject) builder
-					.build();
-			objsInj.put(dev, obj);
-		}
+            resFile = imgCopy.toString();
+            break;
+        default:
+            log.severe("This should never happen!");
+        }
 
-		return objsInj;
-	}
-
-	public static String connectBinding(Resource resource, Path resourceDir) {
-		// TODO: in Java, this function should throw exceptions
-		// instead of returning failure states
-
-		String resUrl = resource.getUrl();
-		log.info("resource: " + resUrl);
-
-		// TODO handle.net resolution according to used transport
-
-		if (resource.getAccess() == null)
-			resource.setAccess(Resource.AccessType.COPY);
-
-		String resFile = null;
-		switch (resource.getAccess()) {
-		case COW:
-			// create cow container
-			// Qemu's block layer driver handles many transport protocols,
-			// as long as we don't want to support yet another one, we can
-			// safely ignore transports here and just pass the url to Qemu.
-			Path cowPath = resourceDir.resolve(resource.getId() + ".cow");
-			if (!EmulatorUtils.createCowFile(resUrl, cowPath)) {
-				log.info("Cannot create cow file, connecting binding cancelled: "
-						+ cowPath.toString());
-				return null;
-			}
-			Path fuseMountpoint = cowPath.resolveSibling(cowPath.getFileName()
-					+ ".fuse");
-			if (!EmulatorUtils.mountCowFile(cowPath,
-					cowPath.resolveSibling(cowPath.getFileName() + ".fuse"))) {
-				log.info("Cannot create cow file, connecting binding cancelled: "
-						+ cowPath.toString());
-				return null;
-			}
-
-			resFile = fuseMountpoint.resolve(cowPath.getFileName()).toString();
-			break;
-		case COPY:
-			// use qemu-imgs convert feature to create a new local raw copy
-			Path imgCopy = resourceDir.resolve(resource.getId() + ".copy");
-			ProcessRunner process = new ProcessRunner("qemu-img");
-			process.addArgument("convert");
-			process.addArgument("-fraw");
-			process.addArgument("-Oraw");
-			process.addArgument(resUrl);
-			process.addArgument(imgCopy.toString());
-			if (!process.execute()) {
-				log.severe("Cannot create local copy of the binding's data, connecting binding cancelled.");
-				return null;
-			}
-
-			resFile = imgCopy.toString();
-			break;
-		default:
-			log.info("This should never happen!");
-		}
-
-		// resFile is now a local file that is either a file directly usable
-		// by the emulator, or an EWF image containing such a file
-		// So we need to wrap the EWF in a qcow2 container again in order
-		// to access it.
-
-		Path ewfLink = resourceDir.resolve(Paths.get(resFile).getFileName()
-				+ ".E01");
-		try {
-			Files.createSymbolicLink(ewfLink, Paths.get(resFile));
-		} catch (IOException e) {
-			log.info("failed to create link");
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ProcessRunner process = new ProcessRunner();
-
-		// determine if image is derivative
-		process.setCommand("qemu-img");
-		process.addArgument("info");
-		process.addArgument(ewfLink.toString());
-		if (!process.start())
-			return null;
-
-		process.waitUntilFinished();
-
-		// if the image has a backing file, it already is a derivative
-		boolean isEWF = false;
-		try {
-			String output = process.getStdOutString();
-			isEWF = output.contains("file format: ewf");
-			log.info(output);
-		} catch (IOException exception) {
-			log.severe("Could not determine if an image is EWF!");
-			exception.printStackTrace();
-		}
-		process.cleanup();
-
-		if (isEWF) {
-			log.info("unwrapping EWF file");
-			Path unEwfPath = resourceDir.resolve(resource.getId() + ".unewf");
-
-			process.setCommand("qemu-img");
-			process.addArguments("create", "-f", "qcow2", "-o");
-			process.addArgument("backing_file=", ewfLink.toString());
-			process.addArgValue(",backing_fmt=ewf");
-
-			process.addArgument(unEwfPath.toString());
-			if (!process.execute()) {
-				return null;
-			}
-			Path fuseMountpoint = unEwfPath.resolveSibling(unEwfPath
-					.getFileName() + ".fuse");
-			if (!EmulatorUtils.mountCowFile(unEwfPath, fuseMountpoint)) {
-				log.info("Cannot create unEWF file, connecting binding cancelled: "
-						+ unEwfPath.toString());
-				return null;
-			}
-
-			resFile = fuseMountpoint.resolve(unEwfPath.getFileName())
-					.toString();
-		}
-		return resFile;
-	}
+        return resFile;
+    }
 
 	public static Path prepareSoftwareCollection(String handle, Path tempPath) {
 		try {
@@ -281,7 +154,7 @@ public class EmulatorUtils
 				return null;
 
 			return mountpoint;
-			
+
 		} catch (Exception e) {
 			log.severe("Temporary mountpoint cannot be created: " + e.getMessage());
 		}
@@ -291,7 +164,7 @@ public class EmulatorUtils
 	private static Path handleToPath(String handle, Path tempPath) throws Exception
 	{
 		ProcessRunner process = new ProcessRunner();
-		
+
 		// creating local cow image file
 		Path cowFile = java.nio.file.Files.createTempFile(tempPath, "cow-", ".qcow2");
 		process.setCommand("qemu-img");
@@ -299,7 +172,7 @@ public class EmulatorUtils
 		process.addArgument("backing_file=", handle, ",backing_fmt=raw");
 		process.addArgument(cowFile.toString());
 		process.execute();
-		
+
 		// loop-mounting cow image to produce raw block stream
 		// representation
 		Path mountpoint = Files.createTempDirectory(tempPath, "fuse-");
@@ -307,7 +180,8 @@ public class EmulatorUtils
 		process.addArguments("-o", "kernel_cache",
 				             "-o", "noforget",
 				             "-o", "large_read",
-				             "-o", "max_readahead=131072");
+				             "-o", "max_readahead=131072",
+				             "-o", "allow_root");
 		process.addArgument(cowFile.toString());
 		process.addArgument(mountpoint.toString());
 		process.execute();
@@ -326,21 +200,19 @@ public class EmulatorUtils
 	 * @return true if the cow file could be created successfully, false
 	 *         otherwise.
 	 */
-	public static boolean createCowFile(String imgUrl, Path cowPath) {
-		// TODO: in Java, this method should throw exceptions instead
-		// of returning failure states
-
+	public static void createCowFile(String imgUrl, Path cowPath) throws BWFLAException {
 		ProcessRunner process = new ProcessRunner();
-		
+
 		// determine if image is derivative
 		process.setCommand("qemu-img");
 		process.addArgument("info");
 		process.addArgument(imgUrl);
-		if (!process.start())
-			return false;
-		
+		if (!process.start()) {
+			throw new BWFLAException("qemu-img invocation failed. Check log output for ProcessRunner's information.");
+		}
+
 		process.waitUntilFinished();
-		
+
 		// if the image has a backing file, it already is a derivative
 		boolean isDerivative = false;
 		try {
@@ -348,28 +220,25 @@ public class EmulatorUtils
 			isDerivative = output.contains("backing file");
 		}
 		catch (IOException exception) {
-			log.severe("Could not determine if an image is derivative!");
-			exception.printStackTrace();
+			log.warning("Could not determine if an image is derivative! Assuming non-derivative.");
 		}
-		
+
+		// Should this go in a try..finally statement?
 		process.cleanup();
-		
+
 		process.setCommand("qemu-img");
 		process.addArguments("create", "-f", "qcow2", "-o");
 		process.addArgument("backing_file=", imgUrl);
-
-		if (!isDerivative) {
-			// for base images, enforce the backing_fmt to
-			// play nice with emulator-specific formats
-			process.addArgValue(",backing_fmt=raw");
-		}
-		// else:
-		//       for derivatives, use auto-detection of backing_fmt
-		//       to accept the backing_file as containing diff data
-
 		process.addArgument(cowPath.toString());
-		
-		return process.execute();
+
+		if (!process.execute()) {
+			try {
+				Files.deleteIfExists(cowPath);
+			} catch (Exception e) {
+				log.severe("Created a temporary file but cannot delete it after error. This is bad.");
+			}
+			throw new BWFLAException("Could not create local COW file. See log output for more information (maybe).");
+		}
 	}
 
 	/**
@@ -384,15 +253,13 @@ public class EmulatorUtils
 	 *            The commandline used to mount imagePath at mountpoint
 	 * @return true if the file could successfully be mounted, false otherwise
 	 */
-	protected static boolean mountFile(Path imagePath, Path mountpoint,
-			String command) {
-		// TODO: in Java, this method should throw exceptions instead
-		// of returning failure states
-
-		if (imagePath == null || !Files.isRegularFile(imagePath)) {
-			log.severe("Image file cannot be accessed, mounting cancelled: "
-					+ imagePath.toString());
-			return false;
+	protected static void mountFile(Path imagePath, Path mountpoint,
+			String command) throws IllegalArgumentException, BWFLAException {
+		if (imagePath == null) {
+			throw new IllegalArgumentException("Given image path was null");
+		}
+		if (!Files.isRegularFile(imagePath)) {
+			throw new IllegalArgumentException("Given image path \"" + imagePath + "\" is not a regular file.");
 		}
 
 		try {
@@ -400,36 +267,114 @@ public class EmulatorUtils
 			Files.createDirectories(mountpoint);
 
 			ProcessRunner process = new ProcessRunner(command);
-			if (!process.execute())
-				return false;
-
+			if (!process.execute()) {
+				try {
+					Files.deleteIfExists(mountpoint);
+				} catch (IOException e) {
+					log.severe("Created a temporary file but cannot delete it after error. This is bad.");
+				}
+				throw new BWFLAException("Error mounting " + imagePath.getFileName()
+						+ ". See log output for more information (maybe).");
+			}
 		} catch (IOException e) {
-			log.severe("Temporary mountpoint cannot be created: "
-					+ e.getMessage());
-			return false;
+			throw new BWFLAException("Error mounting " + imagePath.getFileName() + ".", e);
 		}
-		return true;
 	}
 
+	public static Path mountCowFile(Path image, Path mountpoint)
+			throws IllegalArgumentException, IOException, BWFLAException {
+		return mountCowFile(image, mountpoint, null);
+	}
+	
 	/**
 	 * Mounts a QEMU qcow file (or any QEMU image file) to the specified
 	 * mountpoint. The mountpoint is created if it does not exist.
 	 * 
-	 * @param imagePath
-	 *            The image filename to be mounted.
+	 * @param image
+	 *            Path to the image file to be mounted.
 	 * @param mountpoint
 	 *            Path where the qcow2 file will be mounted to.
-	 * @return true if the file could be mounted successfully, false otherwise
+	 * @param readonly
+	 *            Whether the image should be mounted read-only (default false)
+	 * @param outputFormat
+	 *            Determines the output format of the mount operation (default raw)
+	 * @return Path to the image within the mountpoint
+	 * @throws BWFLAException if the mounting fails (see cause for further info)
+	 * @throws IllegalArgumentException if the image cannot be used as a mount source
+	 * @throws IOException If readonly is false and the image cannot be mounted read/write
 	 */
-	public static boolean mountCowFile(Path imagePath, Path mountpoint) {
-		// TODO: in Java, this method should throw exceptions instead
-		// of returning failure states
-
-		String command = "qemu-fuse -o kernel_cache -o noforget -o large_read -o max_readahead=131072 " + imagePath.toString() + " "
-				+ mountpoint.toString();
-		return mountFile(imagePath, mountpoint, command);
+	public static Path mountCowFile(Path image, Path mountpoint, XmountOptions xmountOpts) throws IllegalArgumentException,
+			IOException, BWFLAException {
+		if (image == null) {
+			throw new IllegalArgumentException("Given image path was null");
+		}
+		if (!Files.isRegularFile(image)) {
+			throw new IllegalArgumentException("Given image path \"" + image
+					+ "\" is not a regular file.");
+		}
+		if (!xmountOpts.isReadonly() && !Files.isWritable(image)) {
+			throw new IOException("Given image path \"" + image
+					+ "\" is not writable but rw access was requested.");
+		}
+		
+		return xmount(image.toAbsolutePath().toString(), 
+				mountpoint, xmountOpts);	
 	}
+	
+	public static Path xmount(String imagePath, Path mountpoint, 
+				XmountOptions xmountOpts)
+		throws IllegalArgumentException,IOException, BWFLAException
+	{
+		if(xmountOpts == null)
+			xmountOpts = new XmountOptions();
+		
+		// This mimicks the behavior of xmount which looks for the
+	    // last slash in the string and takes everything up until
+	    // the last dot in the string as the base name for the image
+        String baseName = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+        if (baseName.lastIndexOf('.') > 0)
+            baseName = baseName.substring(0, baseName.lastIndexOf('.'));
+	    
+	    try {
+			// create mountpoint if necessary
+			Files.createDirectories(mountpoint);
+			log.info("created subdirectories up to " + mountpoint.toString());
 
+			ProcessRunner process = new ProcessRunner("xmount");
+			process.addArguments("--in", "qemu", imagePath);
+			xmountOpts.setXmountOptions(process);
+			process.addArguments(mountpoint.toAbsolutePath().toString());
+
+			if (!process.execute()) {
+				try {
+					Files.deleteIfExists(mountpoint);
+				} catch (IOException e) {
+					log.severe(
+							"Created a temporary file but cannot delete it after error. This is bad.");
+				}
+				throw new BWFLAException("Error mounting " + imagePath
+						+ ". See log output for more information (maybe).");
+			}
+
+			switch (xmountOpts.getOutFmt()) {
+			case RAW:
+				return mountpoint.resolve(baseName + ".dd");
+			case VDI:
+			case VHD:
+			case VMDK:
+				return mountpoint.resolve(baseName + "."
+						+ xmountOpts.getOutFmt().toString().toLowerCase());
+			default:
+				return null;
+			}
+		} catch (IOException e) {
+			throw new BWFLAException(
+					"Error mounting " + imagePath + ".", e);
+		}
+	}
+	
+    
+    
 	/**
 	 * Mounts a UDF or ISO file to the specified mountpoint. The mountpoint is
 	 * created if it does not exist.
@@ -439,17 +384,28 @@ public class EmulatorUtils
 	 * @param mountpoint
 	 *            Path where the udf file will be mounted to.
 	 * @return true if the file could be mounted successfully, false otherwise
+	 * @throws BWFLAException if the mounting fails (see cause for further info)
+	 * @throws IllegalArgumentException if the imagePath cannot be used as a mount source
 	 */
-	public static boolean mountUdfFile(Path imagePath, Path mountpoint) {
-		// TODO: in Java, this method should throw exceptions instead
-		// of returning failure states
-
+	public static void mountUdfFile(Path imagePath, Path mountpoint) throws IllegalArgumentException, BWFLAException {
 		String command = "fuseiso " + imagePath.toString() + " "
-				+ mountpoint.toString();
-		return mountFile(imagePath, mountpoint, command);
+				+ mountpoint.toString() + " -o allow_root";
+		mountFile(imagePath, mountpoint, command);
 	}
 
-	
+	public static Path mountUdfFile(Path imagePath) 
+			throws IllegalArgumentException, IOException, BWFLAException 
+	{
+		Path mountpoint = Files.createTempDirectory("iso-mount-");
+		try {
+			mountUdfFile(imagePath, mountpoint);
+		} catch (BWFLAException e) {
+			Files.deleteIfExists(mountpoint);
+			throw new BWFLAException(e);
+		}
+		return mountpoint;
+	}
+
 	public static EaasWS getEaas(URL wsdl) {
 		if (wsdl == null)
 			return null;
@@ -461,12 +417,98 @@ public class EmulatorUtils
 		SOAPBinding binding = (SOAPBinding) bp.getBinding();
 		bp.getRequestContext().put("javax.xml.ws.client.receiveTimeout", "0");
 		bp.getRequestContext()
-				.put("javax.xml.ws.client.connectionTimeout", "0");
+		.put("javax.xml.ws.client.connectionTimeout", "0");
 		binding.setMTOMEnabled(true);
 		bp.getRequestContext()
-				.put("com.sun.xml.internal.ws.transport.http.client.streaming.chunk.size",
-						8192);
+		.put("com.sun.xml.internal.ws.transport.http.client.streaming.chunk.size",
+				8192);
 		return comp;
 	}
+	
+	public static File mount(Path path, String fsType) throws BWFLAException, IOException
+	{
+		if(path == null)
+			return null;
+		
+		ProcessRunner process = new ProcessRunner();
+		File tempDir = Files.createTempDirectory("mount-").toFile();
+
+		process.setCommand("sudo");
+		process.addArgument("/bin/mount");
+		if(fsType != null)
+		{
+			process.addArgument("-t");
+			process.addArgValue(fsType);
+		}
+		process.addArgument(path.toString());
+		process.addArgument(tempDir.getAbsolutePath());
+		if(!process.execute())
+		{	
+			FileUtils.deleteDirectory(tempDir);
+			throw new BWFLAException("mount failed");
+		}
+		return tempDir;
+	}
+	
+	public static void unmount(File tempDir) throws BWFLAException, IOException
+	{
+		if(tempDir == null)
+			return;
+		ProcessRunner process = new ProcessRunner();
+		process.setCommand("sudo");
+		process.addArgument("/bin/umount");
+		process.addArgument(tempDir.getAbsolutePath());
+		if(!process.execute())
+		{
+			throw new BWFLAException("unmounting " + tempDir.getAbsolutePath() + "failed");
+		}
+		FileUtils.deleteDirectory(tempDir);
+	}
+	
+	public static void unmountFuse(File tempDir) throws BWFLAException, IOException
+	{
+		if(tempDir == null)
+			return;
+		
+		ProcessRunner process = new ProcessRunner();
+		process.setCommand("fusermount");
+		process.addArguments("-u", "-z");
+		process.addArgument(tempDir.toString());
+		if(!process.execute())
+		{
+			throw new BWFLAException("unmounting " + tempDir.getAbsolutePath() + " failed");
+		}
+		
+		FileUtils.deleteDirectory(tempDir);
+	}
+	
+	public static boolean padFile(File f, int blocksize)
+	{
+		if(!f.exists())
+			return false;
+		
+		long fileSize = f.length();
+		if(fileSize == 0 || fileSize % blocksize == 0)
+			return false;
+		
+		int padding = (int) (blocksize - (fileSize % blocksize)) % blocksize;
+		log.info("Warn: padding file: " + f.getName());
+		
+		byte[] bytes = new byte[padding];
+		Arrays.fill( bytes, (byte) 0 );
+		try {
+			FileOutputStream output = new FileOutputStream(f, true);
+			output.write(bytes);
+			output.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	
 }
 

@@ -19,23 +19,18 @@
 
 package de.bwl.bwfla.workflows.catalogdata;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.xml.bind.JAXBException;
 
 import de.bwl.bwfla.common.datatypes.Drive;
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
+import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
 import de.bwl.bwfla.common.datatypes.Environment;
 import de.bwl.bwfla.common.datatypes.utils.EmulationEnvironmentHelper;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
-import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.beans.common.RemoteEmulatorHelper;
-import de.bwl.bwfla.workflows.catalogdata.SystemEnvironmentDescription.SystemEnvironmentDescriptionType;
 
 public class ObjectEnvironmentDescription extends SystemEnvironmentDescription 
 {
@@ -50,16 +45,10 @@ public class ObjectEnvironmentDescription extends SystemEnvironmentDescription
 	private boolean visible;
 	private boolean accessible;
 
-	private String  objectId;
-	private String	objectRef;
-
-	public String getObjectRef() {
-		return objectRef;
-	}
-
-	public void setObjectRef(String objectRef) {
-		this.objectRef = objectRef;
-	}
+	private String objectId;
+	private String objectArchiveHost;
+	private String objectArchive;
+	private DriveType type;
 
 	private String	author;
 
@@ -68,11 +57,14 @@ public class ObjectEnvironmentDescription extends SystemEnvironmentDescription
 		return (ObjectEnvironmentDescription) DescriptionSerializer.fromString(json, ObjectEnvironmentDescription.class);
 	}
 
-	public ObjectEnvironmentDescription(SystemEnvironmentHelper envHelper, String envId, String objectId, String objRef)
+	public ObjectEnvironmentDescription(SystemEnvironmentHelper envHelper, String envId, 
+			String archiveHost, String archiveName, String objectId, DriveType type)
 	{
 		super(envHelper, envId);
-		this.objectRef = objRef;
+		this.objectArchiveHost = archiveHost;
+		this.objectArchive = archiveName;
 		this.objectId = objectId;
+		this.type = type;
 		resolution = SystemEnvironmentHelper.ScreenRes.length - 1;
 		colordepth = SystemEnvironmentHelper.ColorDepth.length - 1;
 		internetconnectivity = true;
@@ -166,8 +158,25 @@ public class ObjectEnvironmentDescription extends SystemEnvironmentDescription
 			}
 		}	
 		
-		env = EmulationEnvironmentHelper.registerDataSource(env, this.objectRef, Drive.DriveType.CDROM);
-		return new RemoteEmulatorHelper(env);
+		if(env instanceof EmulationEnvironment)
+		{
+			RemoteEmulatorHelper emuHelper; 
+			if(objectArchiveHost != null && objectArchive != null)
+			{
+				emuHelper = new RemoteEmulatorHelper(env);
+				emuHelper.getMediaManager().addArchiveBinding(objectArchiveHost, objectArchive, objectId, type);
+			}
+			else
+			{
+				env = EmulationEnvironmentHelper.registerDataSource(env, objectId, type);
+				emuHelper = new RemoteEmulatorHelper(env);
+			}
+			return emuHelper;
+		}
+		else
+		{
+			throw new BWFLAException("Evironment type/instance not supported");
+		}
 	}
 
 	public String getHtml()

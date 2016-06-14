@@ -5,25 +5,36 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwlcc="http://java.sun.com/jsf/composite/component">
 
 
 <ui:composition template="/template/formTemplateAlternate.xhtml">
 	<ui:param name="beanName" value="#{startBean}" />
 
-	<ui:define name="title">
-		bwFLA Demo Server
-	</ui:define>
+	<ui:define name="title">bwFLA Demo Server</ui:define>
 
 	<ui:define name="menu" />
-
+	
+	<ui:define name="metadata">
+		<script>		
+		// show loading dialog when leaving the page takes long
+		$(function() {
+			$('.start-wf-action').click(function() {
+				setTimeout(function() {
+					showLoadingAnimation();
+				}, 500);
+			});
+		});
+		</script>
+	</ui:define>
+	
 	<ui:define name="content">
-
 		<div class="page-index">
-
 			<h:form>
 				<div class="nav-meta">
-					<h:commandLink action="#{startBean.gotoConfiguration}">configuration</h:commandLink>
+					<a href="#" onclick="PF('user_pref_change_dlg').show(); return false;">	user preferences</a> | 
+					<h:commandLink action="#{startBean.gotoConfiguration}">configuration</h:commandLink> 
 				</div>
 			</h:form>
 
@@ -42,90 +53,102 @@
 			</h:form>
 
 			<section class="whole-system-preservation">
-			<h3>Step 1: Include a disk-image</h3>
-
-			<h:form>
-				<h:commandLink id="newImage" action="#{startBean.gotoNewImage}"
-					class="button-big">
-					<strong>Image Ingest</strong>
-					<div class="caption">Prepare a virtual harddisk image to be
-						rendered by supported emulator</div>
-				</h:commandLink>
-
-				<div class="description">
-					This workflow allows to include a disk-image to the EaaS service.
-					The disk-image can either be uploaded directly to an incoming
-					folder or provided as a HTTP reference.<br /> The disk image can be
-					connected to virtual hardware and configured to be used with EaaS.
-				</div>
-			</h:form> </section>
+				<h3>Step 1: Include a disk-image</h3>
+				
+				<h:form>
+					<h:commandLink id="newImage" styleClass="button-big start-wf-action" action="#{startBean.gotoNewImage}">
+						<strong>Image Ingest</strong>
+						<div class="caption">Prepare a virtual harddisk image to be
+							rendered by supported emulator</div>
+					</h:commandLink>
+	
+					<div class="description">
+						This workflow allows to include a disk-image to the EaaS service.
+						The disk-image can either be uploaded directly to an incoming
+						folder or provided as a HTTP reference.<br /> The disk image can be
+						connected to virtual hardware and configured to be used with EaaS.
+					</div>
+				</h:form>
+			</section>
 
 			<section class="whole-system-preservation">
-			<h3>Step 2: Preparation</h3>
-
-			<h:form>
-				<h:commandLink id="base" action="#{startBean.gotoBaseImages}"
-					class="button-big">
-					<strong>Modify Images</strong>
-					<div class="caption">Customize existing images<br/>Publish environments</div>
-				</h:commandLink>
-
-				<h:commandLink id="sw" action="#{startBean.gotoSWArchive}"
-					class="button-big">
-					<strong>Software Archive</strong>
-					<div class="caption">Package software</div>
-				</h:commandLink>
-				<div class="description">
-					This workflow
-					allows to customize, eg. by installing software and/or specific
-					configuration steps.<br /> Software can either be used from the
-					EaaS software archive or uploaded directly from the user's
-					computer.<br/>
-					Derivate chains allow to reference each
-					modification step with a URL for citation. External objects will be
-					injected into the rendering environment on an emulated storage
-					device.
-				</div>
-			</h:form> </section>
+				<h3>Step 2: Preparation</h3>
+	
+				<h:form>
+					<h:commandLink id="base" action="#{startBean.gotoBaseImages}" styleClass="button-big start-wf-action">
+						<strong>Modify Images</strong>
+						<div class="caption">Customize existing images<br/>Publish environments</div>
+					</h:commandLink>
+	
+					<h:commandLink id="sw" action="#{startBean.gotoSWArchive}" styleClass="button-big start-wf-action">
+						<strong>Software Archive</strong>
+						<div class="caption">Package software</div>
+					</h:commandLink>
+					<div class="description">
+						This workflow
+						allows to customize, eg. by installing software and/or specific
+						configuration steps.<br /> Software can either be used from the
+						EaaS software archive or uploaded directly from the user's
+						computer.<br/>
+						Derivate chains allow to reference each
+						modification step with a URL for citation. External objects will be
+						injected into the rendering environment on an emulated storage
+						device.
+					</div>
+				</h:form>
+			</section>
 
 
 			<section class="mass-curation-digital-art">
-			<h3>Step 3: Object Ingest</h3>
-			<h:form>
-
-				<h:commandLink id="inDO" action="#{startBean.gotoIngestDigArt}"
-					class="button-big">
-					<strong>Ingest</strong>
-					<div class="caption">Browse a list of legacy CD-ROM art,
-						evaluate emulation performance, Prepare for access</div>
-				</h:commandLink>
-
-			</h:form>
-			<div class="description">
-				This workflow allows to use digital artifacts (e.g. CDROM images) to be used 
-				with previously prepared emulation environments.<br/>
-				CDROMs may be automatically characterized (ie. to find a suitable emulation environment)
-				or an environment can be selected manually. <br></br>
-				A combination of environment and object can then be evaluated. If the performance meets the
-				curator's expectation the combination can be saved and published.
-			</div>
+				<h3>Step 3: Object Ingest</h3>
+				<h:form>	
+					<h:commandLink id="inDO" action="#{startBean.gotoIngestDigArt}" styleClass="button-big start-wf-action">
+						<strong>Ingest</strong>
+						<div class="caption">Browse a list of legacy CD-ROM art,
+							evaluate emulation performance, Prepare for access</div>
+					</h:commandLink>	
+				</h:form>
+				
+				<div class="description">
+					This workflow allows to use digital artifacts (e.g. CDROM images) to be used 
+					with previously prepared emulation environments.<br/>
+					CDROMs may be automatically characterized (ie. to find a suitable emulation environment)
+					or an environment can be selected manually. <br></br>
+					A combination of environment and object can then be evaluated. If the performance meets the
+					curator's expectation the combination can be saved and published.
+				</div>
 			</section>
 
 			<section class="mass-curation-digital-art">
-			<h3>Step 4: Access objects</h3>
-			<h:form>
-				<h:commandLink id="aDO" action="#{startBean.gotoAccessDigArt}"
-					class="button-big">
-					<strong>Access</strong>
-					<div class="caption">Access objects in a ready-made emulation environment.</div>
-				</h:commandLink>
-			</h:form>
-			<div class="description">
-				This workflow demonstrates user access to a published object (in combination with a suitable emulation environment)
-				through a (library) catalog as well as citation options.  
-			</div>
+				<h3>Step 4: Access objects</h3>
+				<h:form>
+					<h:commandLink id="aDO" action="#{startBean.gotoAccessDigArt}" styleClass="button-big start-wf-action">
+						<strong>Access</strong>
+						<div class="caption">Access objects in a ready-made emulation environment.</div>
+					</h:commandLink>
+				</h:form>
+				
+				<div class="description">
+					This workflow demonstrates user access to a published object (in combination with a suitable emulation environment)
+					through a (library) catalog as well as citation options.  
+				</div>
+			</section>
+			
+			<section class="mass-curation-digital-art">
+				<h3>WIP: Record and Replay</h3>
+				<h:form>
+					<h:commandLink action="#{startBean.gotoSessionRecording}" styleClass="button-big start-wf-action">
+						<strong>Record Session</strong>
+						<div class="caption">Start a new session <br/> and record it.</div>
+					</h:commandLink>
+					<h:commandLink action="#{startBean.gotoSessionReplay}" styleClass="button-big start-wf-action">
+						<strong>Replay Session</strong>
+						<div class="caption">Replay a previously <br/> recorded session.</div>
+					</h:commandLink>
+				</h:form>
 			</section>
 		</div>
+		<bwlcc:user-preference-dialog />
 	</ui:define>
 </ui:composition>
 </html>

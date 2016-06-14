@@ -10,11 +10,13 @@
 		<common.exclude>false</common.exclude>
 		<emucomp.exclude>true</emucomp.exclude>
 		<imagearchive.exclude>true</imagearchive.exclude>
-        <objectarchive.exclude>true</objectarchive.exclude>
+		<objectarchive.exclude>true</objectarchive.exclude>
+		<softwarearchive.exclude>true</softwarearchive.exclude>
 		<eaas.exclude>true</eaas.exclude>
 		<shibboleth.exclude>true</shibboleth.exclude>
 		<workflows.exclude>true</workflows.exclude>
 		<fits.exclude>true</fits.exclude>
+		<emil.exclude>true</emil.exclude>
 	</properties>
 
 	<profiles>
@@ -28,10 +30,12 @@
 				<emucomp.exclude>false</emucomp.exclude>
 				<imagearchive.exclude>false</imagearchive.exclude>
                 <objectarchive.exclude>false</objectarchive.exclude>
+                <softwarearchive.exclude>false</softwarearchive.exclude>
 				<eaas.exclude>false</eaas.exclude>
 				<shibboleth.exclude>false</shibboleth.exclude>
 				<workflows.exclude>false</workflows.exclude>
 				<fits.exclude>false</fits.exclude>
+				<emil.exclude>false</emil.exclude>
 			</properties>
 		</profile>
 
@@ -56,10 +60,24 @@
 			</properties>
 		</profile>
 
+        <profile>
+			<id>softwarearchive</id>
+			<properties>
+				<softwarearchive.exclude>false</softwarearchive.exclude>
+			</properties>
+		</profile>
+
 		<profile>
 			<id>eaas</id>
 			<properties>
 				<eaas.exclude>false</eaas.exclude>
+			</properties>
+		</profile>
+		
+		<profile>
+			<id>emil</id>
+			<properties>
+				<emil.exclude>false</emil.exclude>
 			</properties>
 		</profile>
 
@@ -83,6 +101,7 @@
 				<fits.exclude>false</fits.exclude>
 			</properties>
 		</profile>
+
 	</profiles>
 
 	<build>
@@ -103,7 +122,6 @@
 							<artifactId>fits</artifactId>
 							<bundleFileName>fits.jar</bundleFileName>
 							<excluded>${fits.exclude}</excluded>
-							<unpack>true</unpack>
 						</jarModule>
 						<webModule>
 							<groupId>de.bwl.bwfla</groupId>
@@ -112,20 +130,7 @@
 							<bundleFileName>emucomp.war</bundleFileName>
 							<excluded>${emucomp.exclude}</excluded>
 						</webModule>
-						<ejbModule>
-							<groupId>de.bwl.bwfla</groupId>
-							<artifactId>imagearchive</artifactId>
-							<bundleDir>/</bundleDir>
-							<bundleFileName>imagearchive-ejb.jar</bundleFileName>
-							<excluded>${imagearchive.exclude}</excluded>
-						</ejbModule>
-                        <ejbModule>
-							<groupId>de.bwl.bwfla</groupId>
-							<artifactId>objectarchive</artifactId>
-							<bundleDir>/</bundleDir>
-							<bundleFileName>objectarchive-ejb.jar</bundleFileName>
-							<excluded>${objectarchive.exclude}</excluded>
-						</ejbModule>
+						
 						<ejbModule>
 							<groupId>de.bwl.bwfla</groupId>
 							<artifactId>eaas</artifactId>
@@ -133,6 +138,14 @@
 							<bundleFileName>eaas-ejb.jar</bundleFileName>
 							<excluded>${eaas.exclude}</excluded>
 						</ejbModule>
+						<webModule>
+							<groupId>de.bwl.bwfla</groupId>
+							<artifactId>emil</artifactId>
+							<contextRoot>/emil</contextRoot>
+							<bundleDir>/</bundleDir>
+							<bundleFileName>emil.war</bundleFileName>
+							<excluded>${emil.exclude}</excluded>
+						</webModule>
 						<!--
 						<ejbModule>
 							<groupId>de.bwl.bwfla</groupId>
@@ -149,6 +162,27 @@
 							<bundleFileName>workflows.war</bundleFileName>
 							<excluded>${workflows.exclude}</excluded>
 						</webModule>
+						<webModule>
+							<groupId>de.bwl.bwfla</groupId>
+							<artifactId>objectarchive</artifactId>
+							<contextRoot>/object-archive</contextRoot>
+							<bundleFileName>objectarchive.war</bundleFileName>
+							<excluded>${objectarchive.exclude}</excluded>
+						</webModule>
+						<webModule>
+							<groupId>de.bwl.bwfla</groupId>
+							<artifactId>imagearchive</artifactId>
+							<contextRoot>/image-archive</contextRoot>
+							<bundleFileName>imagearchive.war</bundleFileName>
+							<excluded>${imagearchive.exclude}</excluded>
+						</webModule>
+						<ejbModule>
+							<groupId>de.bwl.bwfla</groupId>
+							<artifactId>softwarearchive</artifactId>
+							<bundleDir>/</bundleDir>
+							<bundleFileName>softwarearchive.jar</bundleFileName>
+							<excluded>${softwarearchive.exclude}</excluded>
+						</ejbModule>
 					</modules>
 					<outputDirectory>${basedir}/../../ext/appserver/standalone/deployments</outputDirectory>
 					<displayName>A bwFLA Java Enterprise Application project.</displayName>
@@ -193,11 +227,16 @@
 		<dependency>
 			<groupId>de.bwl.bwfla</groupId>
 			<artifactId>imagearchive</artifactId>
-			<type>ejb</type>
+			<type>war</type>
 		</dependency>
         <dependency>
 			<groupId>de.bwl.bwfla</groupId>
 			<artifactId>objectarchive</artifactId>
+			<type>war</type>
+		</dependency>
+        <dependency>
+			<groupId>de.bwl.bwfla</groupId>
+			<artifactId>softwarearchive</artifactId>
 			<type>ejb</type>
 		</dependency>
 		<dependency>
@@ -226,6 +265,11 @@
 			<groupId>edu.harvard.hul.ois.fits</groupId>
 			<artifactId>fits</artifactId>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>de.bwl.bwfla</groupId>
+			<artifactId>emil</artifactId>
+			<type>war</type>
 		</dependency>
 	</dependencies>
 </project>

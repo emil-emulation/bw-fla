@@ -1,0 +1,40 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  	<name>emil</name>
+  	<artifactId>emil</artifactId>
+	<description>EMIL - Emulation of Multimedia Objects in Libraries</description>
+  	<packaging>war</packaging>
+  
+	<parent>
+		<groupId>de.bwl.bwfla</groupId>
+		<artifactId>root</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../root</relativePath>
+	</parent>
+	
+	<dependencies>	
+		<dependency>
+			<groupId>de.bwl.bwfla</groupId>
+			<artifactId>common</artifactId>
+			<scope>provided</scope>
+			<type>jar</type>
+		</dependency>
+	
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jaxrs</artifactId>
+			<version>2.2.1.GA</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jackson-provider</artifactId>
+			<version>3.0.4.Final</version>
+		</dependency>
+                <dependency>
+                        <groupId>edu.harvard.hul.ois.fits</groupId>
+                        <artifactId>fits</artifactId>
+                        <scope>provided</scope>
+                </dependency>
+	</dependencies>
+</project>

@@ -35,23 +35,24 @@ public class SessionPlayerWrapper
 	/** Logger instance. */
 	private final Logger log = LoggerFactory.getLogger(SessionPlayerWrapper.class);
 	
-	private final PlayerTunnel clitunnel;
+	private final boolean headless;
 	private final Path trace;
 	private SessionPlayer player;
 	private boolean started;
 	
 	
-	public SessionPlayerWrapper(Path trace, PlayerTunnel tunnel)
+	public SessionPlayerWrapper(Path trace, boolean headless)
 	{
-		this.clitunnel = tunnel;
+		this.headless = headless;
 		this.trace = trace;
+		this.player = null;
 		this.started = false;
 	}
 
 	public boolean start(GuacTunnel emutunnel, String id, ProcessMonitor monitor)
 	{
 		try {
-			player = new SessionPlayer(id, emutunnel, clitunnel, monitor);
+			player = new SessionPlayer(id, emutunnel, monitor, headless);
 			player.prepare(trace);
 			started = true;
 		}
@@ -83,7 +84,7 @@ public class SessionPlayerWrapper
 	
 	public PlayerTunnel getPlayerTunnel()
 	{
-		return clitunnel;
+		return player.getPlayerTunnel();
 	}
 	
 	public int getProgress()

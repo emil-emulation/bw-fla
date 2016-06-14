@@ -51,7 +51,7 @@ public class NodeBuilder implements Callable<String>
 	{
 		try
 		{
-			final String THIS_HOST 	= NetworkUtils.getHostAddress().getHostAddress();
+			final String THIS_HOST 	= NetworkUtils.getHostWSAddress().getHostAddress();
 			final String resWsdl = "http://" + THIS_HOST + ":8080/eaas-ejb/ResourceAllocatorWS?wsdl";
 			ResourceAllocatorWSService resService = new ResourceAllocatorWSService(new URL(resWsdl));
 			resourcePort = resService.getResourceAllocatorWSPort();
@@ -60,6 +60,9 @@ public class NodeBuilder implements Callable<String>
 		catch(MalformedURLException e)
 		{
 			LOG.severe("url of resource allocator is malformed, behavior of this object will be undefined, check the value of 'resWsdl' member-field");
+		} catch (Exception e) {
+		    LOG.severe(e.getMessage());
+		    e.printStackTrace();
 		}
 	}
 

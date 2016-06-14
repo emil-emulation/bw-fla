@@ -28,53 +28,59 @@ public class SimpleRemoteEmulatorHelper extends AbstractRemoteEmulatorHelper
 {
 	public SimpleRemoteEmulatorHelper(String sessid)
 	{
-		super();
-		this.sessid = sessid;
+		super(null);
+		this.sessId = sessid;
 	}
 	
 	public void initialize()
 	{
-		super.initialize();
-
-		boolean initialized = false;
+		final int TIMEOUT_IN_SEC = 15;
+		EaasState state = null;
 		
-		// Wait for the session to become ready.
-		for (int i = 1500; !initialized && (i > 0); --i) {
-			final EaasState state = this.getEaasState();
-			switch(state)
-			{
-				case SESSION_UNDEFINED:
-				case SESSION_RUNNING:
-				case SESSION_STOPPED:
-				case SESSION_BUSY:
-					throw new WFPanicException("EAAS is in an illegal state at this point");
-
-				case SESSION_ALLOCATING:
-					break;
-
-				case SESSION_READY:
-					initialized = true;
-					continue;
-
-				case SESSION_CLIENT_FAULT:
-					throw new WFPanicException("Client has specified illegal input data to EAAS");
-
-				case SESSION_FAILED:
-					throw new WFPanicException("An internal error occured in EAAS, remote state");
-
-				case SESSION_OUT_OF_RESOURCES:
-					throw new WFPanicException("EAAS is out of resources, please try again later");
-			}
+		try
+		{
+			super.initialize();
 			
-			try {
-				Thread.sleep(100);
+			for(int i = 0, DELAY_MS = 100; i < TIMEOUT_IN_SEC * DELAY_MS; ++i)
+			{
+				state = this.getEaasState();
+				switch(state)
+				{
+					case SESSION_UNDEFINED:
+					case SESSION_RUNNING:
+					case SESSION_STOPPED:
+						throw new WFPanicException("EAAS is in an illegal state at this point: " + state.value());
+
+					case SESSION_CLIENT_FAULT:
+						throw new WFPanicException("client has specified illegal input data to EAAS");
+
+					case SESSION_FAILED:
+						throw new WFPanicException("an internal error occured on the server side");
+
+					case SESSION_OUT_OF_RESOURCES:
+						throw new WFPanicException("EAAS infrastructure is out of resources, please try again later");
+						
+					case SESSION_ALLOCATING:
+					case SESSION_BUSY:
+						Thread.sleep(DELAY_MS);
+						continue;
+						
+					case SESSION_READY:
+						return;
+				}			
 			}
-			catch (InterruptedException exception) {
-				exception.printStackTrace();
-			}	
+
+			throw new WFPanicException("EAAS session not allocated after a predefined workflow timeout, last known remote state: " + state.value());			
 		}
-		
-		if (!initialized)
-			throw new WFPanicException("EAAS session was not ready after a predefined timeout");
+		catch(Throwable t)
+		{
+			t.printStackTrace();
+			throw new WFPanicException("web-interface module has experienced an internal error, please try again later");
+		}
+		finally
+		{
+			if(state != EaasState.SESSION_READY && this.sessId != null && this.eaas != null)
+				this.eaas.releaseSession(this.sessId);
+		}
 	}
 }

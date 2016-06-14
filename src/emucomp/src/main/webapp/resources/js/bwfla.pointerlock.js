@@ -11,11 +11,15 @@ BWFLA.requestPointerLock = function(target, event)
 		                      || 'webkitPointerLockElement' in document;
 	
 		if (!havePointerLock) {
-			console.warn("Your browser does not support the PointerLock API!");
-			console.warn("Using relative mouse is not possible.");
+			var message = "Your browser does not support the PointerLock API!\n"
+				        + "Using relative mouse is not possible.\n\n"
+				        + "Mouse input will be disabled for this virtual environment.";
+			
+			console.warn(message);
+			alert(message);
 			return;
 		}
-	
+		
 		// Activate pointer-locking
 		target.requestPointerLock = target.requestPointerLock
 		                            || target.mozRequestPointerLock
@@ -50,28 +54,40 @@ BWFLA.requestPointerLock = function(target, event)
 		}
 	};
 
+	function onPointerLockError(error) {
+		var message = "Pointer lock failed!";
+		console.warn(message);
+		alert(message);
+	}
+
 	// Hook for pointer lock state change events
 	document.addEventListener('pointerlockchange', onPointerLockChange, false);
 	document.addEventListener('mozpointerlockchange', onPointerLockChange, false);
 	document.addEventListener('webkitpointerlockchange', onPointerLockChange, false);
+
+	// Hook for pointer lock errors
+	document.addEventListener('pointerlockerror', onPointerLockError, false);
+	document.addEventListener('mozpointerlockerror', onPointerLockError, false);
+	document.addEventListener('webkitpointerlockerror', onPointerLockError, false);
 	
 	enableLockEventListener();
+	
+	// Set flag for relative-mouse mode
+	target.isRelativeMouse = true;
 };
 
 
 /** Hides the layer containing client-side mouse-cursor. */
-BWFLA.hideClientCursor = function(display)
+BWFLA.hideClientCursor = function(guac)
 {
-	var layer = display.getCursorLayer();
-	var element = layer.getElement();
-	$(element).hide();
+	var display = guac.getDisplay();
+	display.showCursor(false);
 };
 
 
 /** Shows the layer containing client-side mouse-cursor. */
-BWFLA.showClientCursor = function(display)
+BWFLA.showClientCursor = function(guac)
 {
-	var layer = display.getCursorLayer();
-	var element = layer.getElement();
-	$(element).show();
+	var display = guac.getDisplay();
+	display.showCursor(true);
 };

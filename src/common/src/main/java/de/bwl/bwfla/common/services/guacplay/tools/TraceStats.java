@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
-
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.ExtOpCode;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.OpCode;
 import de.bwl.bwfla.common.services.guacplay.io.TraceBlockReader;

@@ -21,14 +21,12 @@ package edu.harvard.hul.ois.fits.mapping;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.xpath.XPath;
-
 import edu.harvard.hul.ois.fits.Fits;
 import edu.harvard.hul.ois.fits.tools.Tool;
 import edu.harvard.hul.ois.fits.tools.ToolInfo;

@@ -19,10 +19,14 @@
 
 package de.bwl.bwfla.emucomp.html;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.logging.Logger;
+
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpSession;
 import de.bwl.bwfla.common.datatypes.EmuCompState;
@@ -49,7 +53,7 @@ public class IframeBean implements Serializable
 		
 		this.sessionId = ((HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false)).getId();
 		this.emulatorBean = EmucompSingleton.getComponent(cookie, EmulatorBeanWrapper.class);
-		this.htmlConnector = (HtmlConnector) emulatorBean.getViewConnectors().get("HTML");
+		this.htmlConnector = (HtmlConnector) emulatorBean.getViewConnectors().get("HTTP");
 	}
 	
 	public String getSessionId()
@@ -65,7 +69,29 @@ public class IframeBean implements Serializable
 	public void checkRunningState() throws EmucompDisconnectException
 	{
 		EmuCompState state = EmuCompState.fromValue(emulatorBean.getEmulatorState());
-		if(state != EmuCompState.EMULATOR_RUNNING && state != EmuCompState.EMULATOR_BUSY)
-			throw new EmucompDisconnectException();
+		switch (state) {
+			case EMULATOR_RUNNING:
+			case EMULATOR_INACTIVE:
+			case EMULATOR_BUSY:
+				break;
+				
+			case EMULATOR_STOPPED:
+				final Logger log = Logger.getLogger(this.getClass().getName());
+				final String url = "stopped.xhtml";
+				try {
+					log.info("Emulator stopped, redirecting to: " + url);
+					ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+					context.redirect(url + "?faces-redirect=true");
+				}
+				catch (IOException exception) {
+					log.warning("Redirection to '" + url + "' failed!");
+					exception.printStackTrace();
+				}
+				
+				break;
+				
+			default:
+				throw new EmucompDisconnectException();
+		}
 	}
 }

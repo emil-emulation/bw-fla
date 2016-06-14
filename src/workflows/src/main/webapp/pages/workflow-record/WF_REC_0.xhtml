@@ -32,6 +32,10 @@
 								style="width: auto;" required="true" requiredMessage="Please select an OS image to proceed">
 							<f:selectItems value="#{WF_REC_0.environmentList}" 
 								var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}"/>
+								<f:selectItems value="#{WF_REC_0.derivatesList}" var="env"
+								itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+							<f:selectItems value="#{WF_REC_0.systemsList}" var="env"
+								itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
 						</p:selectOneListbox>
 					</div>
 					

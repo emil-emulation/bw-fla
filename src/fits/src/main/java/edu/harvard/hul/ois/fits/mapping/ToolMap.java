@@ -21,7 +21,6 @@ package edu.harvard.hul.ois.fits.mapping;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.jdom.Attribute;
 import org.jdom.Element;
 

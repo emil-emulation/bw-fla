@@ -1,0 +1,46 @@
+<ui:composition 
+	xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:cc="http://java.sun.com/jsf/composite"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://java.sun.com/jsf/core">
+
+	<cc:interface componentType="de.bwl.bwfla.workflows.component.UserPreferenceDialog">
+		<cc:attribute name="visible" type="java.lang.Boolean" default="false" />
+		<cc:attribute name="closable" type="java.lang.Boolean" default="true" />	
+		<cc:attribute name="onchange" type="java.lang.String" default="" />		
+	</cc:interface>
+
+	<cc:implementation>
+		<p:dialog header="Set preferences" widgetVar="user_pref_change_dlg"
+	      modal="true" width="750" closable="false" height="400" draggable="false" closeOnEscape="true" resizable="false" visible="#{cc.attrs.visible}">
+	    	<h:form>
+			    <p:panelGrid styleClass="formGrid" columns="2">
+			    	<p:outputLabel for="enableCRTEmulationCheckbox" value="Enable CRT Emulation" />
+        			<p:selectBooleanCheckbox id="enableCRTEmulationCheckbox" value="#{cc.userPrefs.enableCRTEmulationCheckbox}" />
+        			
+       				<p:outputLabel for="selectKBmodel" value="Select Keyboard Model: " />
+			        <p:selectOneMenu id="selectKBmodel" value="#{cc.userPrefs.keyboardModel}" required="true">
+			            <f:selectItems value="#{cc.models}" />
+			        </p:selectOneMenu>
+			        
+			        <p:outputLabel for="selectKBlayout" value="Select Keyboard Layout: " />
+			        <p:selectOneMenu id="selectKBlayout" value="#{cc.userPrefs.keyboardLayout}" required="true">
+			            <f:selectItems value="#{cc.layouts}" />
+			        </p:selectOneMenu>
+			    </p:panelGrid>
+				
+				<div style="float: right; margin-top: 20px;">
+					<p:commandButton value="Save" actionListener="#{cc.updateUserPreferences}" 
+					  onsuccess="PF('user_pref_change_dlg').hide(); #{cc.attrs.onchange};" />
+					  
+					<p:commandButton value="Cancel" update="@form" process="@this" style="margin-left: 20px;" 
+					  onsuccess="PF('user_pref_change_dlg').hide();" rendered="#{cc.attrs.closable}">
+		                <p:resetInput target="@form" />
+		            </p:commandButton>
+				</div>
+		    </h:form>
+		</p:dialog>
+	</cc:implementation>
+</ui:composition>

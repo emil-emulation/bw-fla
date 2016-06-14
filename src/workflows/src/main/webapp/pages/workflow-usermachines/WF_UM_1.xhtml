@@ -14,7 +14,7 @@
 					resizable="false" draggable="false">
 					<h:form enctype="multipart/form-data">
 					    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_UM_1.handleFileUpload}" 
-					    	update=":uploadedFilesForm:uploadedFiles" mode="advanced" auto="true" oncomplete="uploadDialog.hide();"/>
+					    	update=":uploadedFilesForm:uploadedFiles" mode="advanced" auto="true" oncomplete="PF('uploadDialog').hide();"/>
 						<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
 					</h:form>
 				</p:dialog>

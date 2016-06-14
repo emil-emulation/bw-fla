@@ -19,51 +19,21 @@
 
 package de.bwl.bwfla.objectarchive;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-import javax.ejb.LocalBean;
-import javax.ejb.Stateless;
-import javax.jws.WebMethod;
-import javax.jws.WebService;
 
+import de.bwl.bwfla.common.datatypes.FileCollection;
 
-
-@WebService
-@Stateless
-@LocalBean
-public class DigitalObjectArchive
+/**
+ * 
+ * @author klaus
+ * This interface is the internal view on object archive impl. Currently it 
+ * is in sync with ObjectArchiveFacadeWSRemote, however, the implementation 
+ * is not bound to the WS interface. The WS facade is in charge of translating 
+ * between DigitalObjectArchive and the Facade. 
+ */
+public interface DigitalObjectArchive
 {
-	protected static final Logger LOG = Logger.getLogger(DigitalObjectArchive.class.getName());
-	
-	/**
-	 * @return an archive's name presented to the user
-	 */
-	@WebMethod
-	public String getName()
-	{
-		LOG.info("'String getName()' method called");
-		return new String("test result");
-	}
-
-	/**
-	 * @return list of object IDs
-	 */
-	@WebMethod
-	public List<String> getObjectList()
-	{
-		LOG.info("'List<String> getObjectList()' method called");
-		return new ArrayList<>();
-	}
-
-	/**
-	 * @param id object-id
-	 * @return object reference as PID / PURL
-	 */
-	@WebMethod
-	public String getObjectReference(String id)
-	{
-		LOG.info("'String getObjectReference(String id)' method called");
-		return new String();
-	}
+	public List<String> getObjectList(); 
+	public FileCollection getObjectReference(String objectId);
+	String getName();
 }

@@ -18,6 +18,12 @@
 		</dependency>
 		<dependency>
 			<groupId>de.bwl.bwfla</groupId>
+			<artifactId>softwarearchive</artifactId>
+			<scope>provided</scope>
+			<type>ejb</type>
+		</dependency>
+		<dependency>
+			<groupId>de.bwl.bwfla</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.2.2</version>
 		</dependency>

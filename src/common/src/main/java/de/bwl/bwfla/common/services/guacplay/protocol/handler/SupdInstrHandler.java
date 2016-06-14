@@ -21,6 +21,7 @@ package de.bwl.bwfla.common.services.guacplay.protocol.handler;
 
 import java.util.concurrent.TimeUnit;
 
+import de.bwl.bwfla.common.services.guacplay.GuacDefs;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.CompositeMode;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.EventType;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.ExtOpCode;
@@ -31,11 +32,11 @@ import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
 import de.bwl.bwfla.common.services.guacplay.events.IGuacEventListener;
 import de.bwl.bwfla.common.services.guacplay.graphics.ScreenRegion;
 import de.bwl.bwfla.common.services.guacplay.graphics.ScreenRegionList;
-import de.bwl.bwfla.common.services.guacplay.net.PlayerSocket;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionBuilder;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionHandler;
+import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
 import de.bwl.bwfla.common.services.guacplay.util.StopWatch;
 import de.bwl.bwfla.common.services.guacplay.util.TimeUtils;
 
@@ -44,13 +45,17 @@ import de.bwl.bwfla.common.services.guacplay.util.TimeUtils;
 public class SupdInstrHandler extends InstructionHandler implements IGuacEventListener
 {
 	// Member fields
-	private final PlayerSocket socket;
+	private final ICharArrayConsumer client;
 	private final ScreenRegionList updates;
 	private final ScreenRegion update;
 	private final InstructionBuilder ibuilder;
 	private final StopWatch stopwatch;
+	private long minTimestamp;
 	private char[] rectinstr;
 	private volatile boolean exitflag;
+	
+	private static final int MIN_HEIGHT = GuacDefs.VSYNC_RECT_HEIGHT / 2;
+	private static final int MIN_WIDTH  = GuacDefs.VSYNC_RECT_WIDTH / 2;
 	
 	/** Threshold for screen-matching computation. */
 	private static final float SCREEN_UPDATE_MATCH_THRESHOLD = 0.6F;
@@ -58,9 +63,9 @@ public class SupdInstrHandler extends InstructionHandler implements IGuacEventLi
 	/** Time to wait, when screen-matching fails (in ms). */
 	private static final long RETRY_TIMEOUT = 1000L;
 	
-	/** Time to wait, when repeated screen-matching fails (in ms). */
+	/** Time to wait, when repeated screen-matching fails (in ns). */
 	private static final long UNMATCHED_TIMEOUT
-			= TimeUtils.convert(15L, TimeUnit.SECONDS, TimeUnit.NANOSECONDS);
+			= TimeUtils.convert(5L, TimeUnit.SECONDS, TimeUnit.NANOSECONDS);
 	
 	/** ID of the overlay layer. */
 	private static final int OVERLAY_LAYER = 2;
@@ -113,29 +118,39 @@ public class SupdInstrHandler extends InstructionHandler implements IGuacEventLi
 	
 	
 	/** Constructor */
-	public SupdInstrHandler(ScreenRegionList updates, PlayerSocket socket)
+	public SupdInstrHandler(ScreenRegionList updates, ICharArrayConsumer socket)
 	{
 		super(ExtOpCode.SCREEN_UPDATE);
 		
-		this.socket = socket;
+		this.client = socket;
 		this.updates = updates;
 		this.update = new ScreenRegion();
 		this.ibuilder = new InstructionBuilder(512);
 		this.stopwatch = new StopWatch();
+		this.minTimestamp = 0L;
 		this.exitflag = false;
 	}
 
 	@Override
 	public void execute(InstructionDescription desc, Instruction instruction) throws Exception
 	{
+		// Skip screen-update matching, when requested
+		if (desc.getTimestamp() < minTimestamp)
+			return;
+		
 		// Get the arguments
-		final int xpos   = instruction.argAsInt(0);
-		final int ypos   = instruction.argAsInt(1);
 		final int width  = instruction.argAsInt(2);
 		final int height = instruction.argAsInt(3);
+
+		// Skip small thin-shaped screen-updates!
+		if (width < MIN_WIDTH || height < MIN_HEIGHT)
+			return;
+
+		final int xpos = instruction.argAsInt(0);
+		final int ypos = instruction.argAsInt(1);
 		
 		// Send visual feedback, when client connected
-		if (socket != null) {
+		if (client != null) {
 			// Mark the screen-area
 			ibuilder.start(OpCode.RECT);
 			ibuilder.addArgument(OVERLAY_LAYER);
@@ -148,11 +163,9 @@ public class SupdInstrHandler extends InstructionHandler implements IGuacEventLi
 			rectinstr = ibuilder.toCharArray();
 
 			// Send constructed rectangle to client
-			synchronized (socket) {
-				socket.post(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
-				socket.post(rectinstr, 0, rectinstr.length);
-				socket.post(INSTR_CSTROKE_BLUE, 0, INSTR_CSTROKE_BLUE.length);
-			}
+			client.consume(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+			client.consume(rectinstr, 0, rectinstr.length);
+			client.consume(INSTR_CSTROKE_BLUE, 0, INSTR_CSTROKE_BLUE.length);
 		}
 		
 		synchronized (updates) {
@@ -179,18 +192,34 @@ public class SupdInstrHandler extends InstructionHandler implements IGuacEventLi
 		}
 		
 		// Send matched rectangle to client
-		if (socket != null) {
-			synchronized (socket) {
-				socket.post(rectinstr, 0, rectinstr.length);
-				socket.post(INSTR_CSTROKE_YELLOW, 0, INSTR_CSTROKE_YELLOW.length);
-			}
+		if (client != null) {
+			client.consume(rectinstr, 0, rectinstr.length);
+			client.consume(INSTR_CSTROKE_YELLOW, 0, INSTR_CSTROKE_YELLOW.length);
 		}
 	}
 	
 	@Override
 	public void onGuacEvent(GuacEvent event)
 	{
-		if (event.getType() == EventType.TERMINATION)
+		final int type = event.getType();
+		
+		if (type == EventType.TERMINATION)
 			exitflag = true;
+		
+		else if ((type == EventType.TRACE_END) && (client != null)) {
+			try {
+				// Send an instruction to clear the overlay of this handler.
+				client.consume(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+			}
+			catch (Exception exception) {
+				// Ignore it!
+			}
+		}
+	}
+	
+	/** Set timestamp for starting screen-update matching. */
+	public void setMinTimestamp(long timestamp)
+	{
+		this.minTimestamp = timestamp;
 	}
 }

@@ -19,6 +19,8 @@
 
 package de.bwl.bwfla.common.datatypes;
 
+import java.util.Map;
+import java.util.TreeMap;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 import javax.xml.bind.annotation.XmlType;
@@ -44,6 +46,9 @@ public enum EaasState
 	@XmlEnumValue("running")
 	SESSION_RUNNING("running"),
 	
+	@XmlEnumValue("inactive")
+	SESSION_INACTIVE("inactive"),
+	
 	@XmlEnumValue("stopped")
 	SESSION_STOPPED("stopped"),
 	
@@ -68,15 +73,20 @@ public enum EaasState
         return value;
     }
 
-    public static EaasState fromValue(String v) 
+    public static EaasState fromValue(String value) 
     {
-        for (EaasState c: VALUES) 
-            if (c.value.equals(v))
-                return c;
+    	EaasState state = VALUES.get(value);
+        if (state == null)
+        	throw new IllegalArgumentException(value);
         
-        throw new IllegalArgumentException(v);
+        return state;
     }
     
     /** Local copy of the possible values */
-    private static final EaasState[] VALUES = EaasState.values();
+    private static final Map<String, EaasState> VALUES;
+    static {
+    	VALUES = new TreeMap<String, EaasState>(String.CASE_INSENSITIVE_ORDER);
+    	for (EaasState state: EaasState.values())
+    		VALUES.put(state.value(), state);
+    }
 }

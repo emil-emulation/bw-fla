@@ -19,11 +19,12 @@
 
 package de.bwl.bwfla.emucomp.components.emulators;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
+
 import de.bwl.bwfla.common.datatypes.Drive;
 import de.bwl.bwfla.common.datatypes.Nic;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
@@ -38,6 +39,18 @@ public class HatariBean extends EmulatorBean
 	public void prepareEmulatorRunner() throws BWFLAException
 	{
 		runner.setCommand(EmucompSingleton.CONF.hatariBean);
+		
+		String config = this.getNativeConfig();
+		if (config != null && !config.isEmpty()) {
+			String[] tokens = config.trim().split("\\s+");
+			for (String token : tokens)
+			{
+				if(token.isEmpty())
+						continue;
+				runner.addArgument(token.trim());
+			}
+		}
+		
 		if (this.isLocalModeEnabled()) {
 			runner.addArgument("--fullscreen");
 			this.setupEmulatorForY11();
@@ -48,8 +61,21 @@ public class HatariBean extends EmulatorBean
 	@Override
 	public boolean addDrive(Drive drive)
 	{
-		String resultHddFile;
-		if(drive == null || (resultHddFile = this.lookupResource(drive.getData())) == null) 
+        if (drive == null || (drive.getData() == null)) {
+            LOG.warning("Drive doesn't contain an image, attach canceled.");
+            return false;
+        }
+
+        Path imagePath = null;
+        try {
+            imagePath = Paths.get(this.lookupResource(drive.getData(),
+                    this.getImageFormatForDriveType(drive.getType())));
+        } catch (Exception e) {
+            LOG.warning(
+                    "Drive doesn't reference a valid binding, attach cancelled.");
+            return false;
+        }
+		if(drive == null || imagePath == null) 
 		{
 			LOG.warning("drive doesn't contain an image, attach cancelled");
 			return false;
@@ -63,8 +89,8 @@ public class HatariBean extends EmulatorBean
 					try
 					{
 						Path unzippedHddDir = Files.createTempDirectory(tempDir.toPath(), "unzipped_container", new FileAttribute<?>[0]);
-						Zip32Utils.unzip(new File(resultHddFile), unzippedHddDir.toFile());
-						resultHddFile = unzippedHddDir.toString();
+						Zip32Utils.unzip(imagePath.toFile(), unzippedHddDir.toFile());
+						imagePath = unzippedHddDir;
 						runner.addArgument("--harddrive");
 					}
 					catch(IOException e)
@@ -82,7 +108,7 @@ public class HatariBean extends EmulatorBean
 		else
 			runner.addArgument("--tos");
 		
-		runner.addArgument(resultHddFile);
+		runner.addArgument(imagePath.toString());
 		return true;
 	}
 

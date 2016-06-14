@@ -22,7 +22,6 @@ package de.bwl.bwfla.common.datatypes;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.logging.Logger;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;

@@ -42,6 +42,7 @@
 				
 				<h:form id="uploadedFilesForm">
 				    <p:dataTable var="pair" value="#{beanName['uploadedFiles']}" id="uploadedFiles" rowKey="#{pair.hashCode}" selection="#{beanName['selectedFile']}" selectionMode="single">
+				        <p:ajax event="rowSelect" update="viewButton"/>
 				        <p:column sortBy="#{pair.b.name}">
 				            <f:facet name="header">
 				                <h:outputText value="Filename" />
@@ -57,7 +58,7 @@
 				        </p:column>
 			
 						<f:facet name="footer">
-							<p:commandButton id="viewButton" value="Remove Selected File" icon="ui-icon-closethick" update="@form" actionListener="#{beanName['removeUploadedFile']}" />
+							<p:commandButton id="viewButton" disabled="#{empty beanName['selectedFile']}" value="Remove Selected File" icon="ui-icon-closethick" update="@form" actionListener="#{beanName['removeUploadedFile']}" />
 						</f:facet>
 					</p:dataTable>
 					<br />

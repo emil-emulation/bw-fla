@@ -39,8 +39,8 @@ import de.bwl.bwfla.conf.CommonSingleton;
 public class HddHfsHelper extends ContainerHelper
 {
 	private static final Logger LOG = Logger.getLogger(HddHfsHelper.class.getSimpleName());
-	private File createScript = new File(CommonSingleton.CONF.helpersConf.hddHfsCreate);
-	private File ioScript = new File(CommonSingleton.CONF.helpersConf.hddHfsIo);
+	private File createScript = new File(CommonSingleton.helpersConf.hddHfsCreate);
+	private File ioScript = new File(CommonSingleton.helpersConf.hddHfsIo);
 	
 	public HddHfsHelper()
 	{	

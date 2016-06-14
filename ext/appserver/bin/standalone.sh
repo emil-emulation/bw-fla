@@ -157,6 +157,11 @@ if $cygwin; then
     JBOSS_MODULEPATH=`cygpath --path --windows "$JBOSS_MODULEPATH"`
 fi
 
+# Add debug options, when specified
+if [ "x$JAVA_DEBUG_OPTS" != "x" ]; then
+	JAVA_OPTS="$JAVA_OPTS $JAVA_DEBUG_OPTS"
+fi
+
 # Display our environment
 echo "========================================================================="
 echo ""

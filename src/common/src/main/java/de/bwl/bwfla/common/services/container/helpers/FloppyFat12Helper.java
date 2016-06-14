@@ -44,7 +44,7 @@ public class FloppyFat12Helper extends ContainerHelper
 	public Container createEmptyContainer()
 	{
 		// acquire floppy_create.sh script location
-		File floppyCreateScript = new File(CommonSingleton.CONF.helpersConf.floppyFat12Create); 
+		File floppyCreateScript = new File(CommonSingleton.helpersConf.floppyFat12Create); 
 
 		File floppy = null;
 		FloppyContainer floppyContainer = null;
@@ -96,7 +96,7 @@ public class FloppyFat12Helper extends ContainerHelper
 			return false;
 
 		// acquire floppy_io.sh script location
-		File floppyIoScript = new File(CommonSingleton.CONF.helpersConf.floppyFat12Io);
+		File floppyIoScript = new File(CommonSingleton.helpersConf.floppyFat12Io);
 		ProcessRunner runner = new ProcessRunner();
 
 		// iteratively inject files into floppy
@@ -123,7 +123,7 @@ public class FloppyFat12Helper extends ContainerHelper
 		if(!floppyFile.exists())
 			return null;
 
-		File floppyIoScript = new File(CommonSingleton.CONF.helpersConf.floppyFat12Io);
+		File floppyIoScript = new File(CommonSingleton.helpersConf.floppyFat12Io);
 		File result = null;
 		
 		boolean success = false;

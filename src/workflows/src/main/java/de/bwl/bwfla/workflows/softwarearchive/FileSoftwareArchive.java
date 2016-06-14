@@ -40,10 +40,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.Iso9660Utils;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.BundledFile;
-import de.bwl.bwfla.workflows.softwarearchive.datatypes.MediumType;
 
 @XmlRootElement(name = "fileSoftwareArchive")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -137,7 +137,7 @@ public class FileSoftwareArchive extends SoftwareArchive {
 		try (DirectoryStream<Path> directoryStream = Files
 				.newDirectoryStream(in.toPath())) {
 			for (Path path : directoryStream) {
-				filesSource.add(new BundledFile(path.getFileName(), platform, MediumType.CDROM));
+				filesSource.add(new BundledFile(path.getFileName(), platform, DriveType.CDROM));
 			}
 		} catch (IOException ex) {
 		}

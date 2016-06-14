@@ -24,12 +24,18 @@ import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+
 import org.apache.commons.io.FilenameUtils;
+import org.primefaces.context.RequestContext;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
+
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
 import de.bwl.bwfla.workflows.beans.common.WorkflowResources;
@@ -48,10 +54,21 @@ public class WF_REC_4 extends BwflaFormBean implements Serializable
 	public void initialize()
 	{
 		super.initialize();
-		this.files = wfData.getRemoteEmulatorHelper().detachAndDownloadContainers();
+		try {
+			this.files = wfData.getRemoteEmulatorHelper().getMediaManager().detachAndDownloadContainers();
+		} catch (BWFLAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		for(Pair<WorkflowsFile, String> file: files)
 			resourceManager.register(WorkflowResources.WF_RES.FILE, file.getA());
+		
+		final String citationLink = wfData.getCitationLink();
+		if (citationLink != null && !citationLink.isEmpty()) {
+			FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Your Citation-Link", citationLink);
+			RequestContext.getCurrentInstance().showMessageInDialog(message);
+		}
 	}
 
 	public List<StreamedContent> getFiles()

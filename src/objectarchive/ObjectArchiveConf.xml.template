@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <objectArchiveConf>
-    <!-- TODO: put your property fields/objects here -->
+    <objDir>/home/iv1004/Workspace/sw-archive/transmediale-isos-new/</objDir>
+    <httpExport>http://132.230.4.15:8080/object-archive/</httpExport>
 </objectArchiveConf>

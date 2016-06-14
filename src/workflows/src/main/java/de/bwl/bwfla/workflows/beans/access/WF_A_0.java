@@ -30,9 +30,9 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
 
+import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.Pair;
-import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
 import de.bwl.bwfla.workflows.beans.common.ImageUtils;
 import de.bwl.bwfla.workflows.beans.common.RepeatPaginator;
@@ -51,18 +51,13 @@ public class WF_A_0 extends BwflaFormBean implements Serializable
 	private int sortSelection = 0;
 	private String filterString = "";
 	private List<Pair<Long, String>> availableEnviroments;
-	private String isoDir;
 	private String metaDataDir;
 	private MetaDataFacade metaDataArchive;
 	private RepeatPaginator descriptionPaginator;
-
+    private boolean requirePrefs = false;
 	
 	private boolean configureBean()
 	{
-		String imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
-		if(imageArchiveHost == null)
-			panic("imageArchiveHost not set: fix bwfla_workflows");
-		
 		metaDataDir = WorkflowSingleton.CONF.metaDir;
 		if(metaDataDir == null)
 			panic("metaDataDir not set: fix bwfla_workflows");
@@ -146,13 +141,23 @@ public class WF_A_0 extends BwflaFormBean implements Serializable
 		} catch (BWFLAException e) {
 			panic(e.getMessage());
 		}
+		
+		EmulationEnvironment env = wfData.getStorage().emuHelper.getEmulationEnvironment();
+		if(wfData.getStorage().emuHelper.requiresUserPrefs())
+		{
+			System.out.println("requires userprefs");
+			requirePrefs = true;
+			if(!this.isDidUserSetPrefs())
+			{
+				return "";
+			}
+			
+			setUserPreferences(env);
+		}
+		
 		wfData.getStorage().emuHelper.initialize();
 		
-		if(wfData.getStorage().emuHelper.isOutOfResources())
-			panic("please try later, no free resources found");
-		
 		this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, wfData.getStorage().emuHelper);
-		
 		return "/pages/workflow-access/WF_A_2.xhtml?faces-redirect=true";
 	}
 
@@ -190,5 +195,10 @@ public class WF_A_0 extends BwflaFormBean implements Serializable
 	public void setDescriptionPaginator(RepeatPaginator descriptionPaginator) 
 	{
 		this.descriptionPaginator = descriptionPaginator;
+	}
+	
+	public boolean isRequirePrefs()
+	{
+		return requirePrefs;
 	}
 }

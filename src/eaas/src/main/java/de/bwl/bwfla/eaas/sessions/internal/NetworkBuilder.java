@@ -57,7 +57,7 @@ public class NetworkBuilder implements Callable<NetworkBuildResult>
 	{
 		try
 		{
-			final String THIS_HOST 	= NetworkUtils.getHostAddress().getHostAddress();			
+			final String THIS_HOST 	= NetworkUtils.getHostWSAddress().getHostAddress();
 			final String emulWsdl   = "http://" + THIS_HOST + ":8080/eaas-ejb/EmulatorWSService/EmulatorProxyWS?wsdl";
 			final String switchWsdl = "http://" + THIS_HOST + ":8080/eaas-ejb/NetworkSwitchWSService/NetworkSwitchProxyWS?wsdl";
 			
@@ -70,7 +70,10 @@ public class NetworkBuilder implements Callable<NetworkBuildResult>
 		catch(MalformedURLException e)
 		{
 			LOG.severe("url of network switch and/or emulator is malformed, behavior of this object will be undefined, check the value of 'emulatorPort' and/or 'switchPort' member-field");
-		}
+		} catch (Exception e) {
+            LOG.severe(e.getMessage());
+            e.printStackTrace();
+        }
 	}
 
 	public NetworkBuilder(NetworkEnvironment env, Network network, String clientTemplate)

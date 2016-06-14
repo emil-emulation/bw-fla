@@ -1,22 +1,3 @@
-/*
- * This file is part of the Emulation-as-a-Service framework.
- *
- * The Emulation-as-a-Service framework is free software: you can
- * redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * The Emulation-as-a-Service framework is distributed in the hope that
- * it will be useful, but WITHOUT ANY WARRANTY; without even the
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with the Emulation-as-a-Software framework.
- * If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.bwl.bwfla.workflows.beans.common;
 
 import java.io.PrintWriter;
@@ -47,6 +28,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.myfaces.extensions.cdi.core.api.scope.conversation.WindowContext;
 import de.bwl.bwfla.workflows.conf.WorkflowSingleton;
 
@@ -59,6 +41,11 @@ public class BWFLAExceptionHandler extends ExceptionHandlerWrapper
 	private final static String		START_PAGE	= "/faces/pages/bwfla.xhtml";
 	private ExceptionHandler		wrapped		= null;
 	
+	private final static String	LOCAL_START_PAGE = "/faces/pages/workflow-local/WF_L_0.xhtml";
+	private final static String	LOCAL_ERROR_PAGE = "/faces/pages/workflow-local/WF_L_error.xhtml";
+	
+	private final static String LOCAL_SPECIAL_START_PAGE = "/faces/pages/workflow-local-special/WF_LS_0.xhtml";
+	private final static String LOCAL_SPECIAL_ERROR_PAGE = "/faces/pages/workflow-local-special/WF_LS_error.xhtml";
 	
 	public BWFLAExceptionHandler(ExceptionHandler wrapped)
 	{
@@ -131,12 +118,18 @@ public class BWFLAExceptionHandler extends ExceptionHandlerWrapper
 			e.printStackTrace();
 		}
 		
+		FacesContext jsf = FacesContext.getCurrentInstance();
+		HttpServletRequest request = (HttpServletRequest) jsf.getExternalContext().getRequest();
+		String clientIp = request.getRemoteHost();
+		if(clientIp == null || clientIp.isEmpty())
+			clientIp= "(unkown)";
+		
 		try
 		{
 			MimeMessage mimeMessage = new MimeMessage(session);
 			mimeMessage.setFrom(new InternetAddress(sender));
 			mimeMessage.addRecipient(Message.RecipientType.TO, new InternetAddress(recepient));
-			mimeMessage.setSubject("bwFLA Error Notification. Time: " + "'" + (new Date()).toString() + "'" + "; " + "Host: " + "'" + hostname + "'");
+			mimeMessage.setSubject("bwFLA Error Notification. Time: " + "'" + (new Date()).toString() + "'" + "; " + "Host: " + "'" + hostname + "'" + "; " + "Client IP: " + "'" + clientIp + "'");
 			mimeMessage.setText(message);
 			Transport.send(mimeMessage);
 		}
@@ -152,7 +145,10 @@ public class BWFLAExceptionHandler extends ExceptionHandlerWrapper
 		if(!iterator.hasNext())
 			return;
 
-		FacesContext jsf = FacesContext.getCurrentInstance();
+		final FacesContext jsf = FacesContext.getCurrentInstance();
+		final String currentPage = "/faces" + jsf.getViewRoot().getViewId();
+		final boolean isInLocalSpecialMode = currentPage.contains("workflow-local-special");
+		final boolean isInLocalMode = !isInLocalSpecialMode && currentPage.contains("workflow-local");
 		Throwable cause = null, rootCause = null;
 		
 		try
@@ -163,12 +159,17 @@ public class BWFLAExceptionHandler extends ExceptionHandlerWrapper
 			
 			if(rootCause instanceof ViewExpiredException)
 			{	
-				String currentPage = "/faces" + jsf.getViewRoot().getViewId();
-				
 				if(!currentPage.equalsIgnoreCase(START_PAGE))
 					jsf.addMessage("growl", new FacesMessage(FacesMessage.SEVERITY_WARN, "Previous Link: Expired", "You've been automatically\nredirected to the start page."));
 				
-				jsf.getExternalContext().redirect(START_PAGE);
+				
+				String startPage = START_PAGE;
+				if (isInLocalMode)
+					startPage = LOCAL_START_PAGE;
+				else if (isInLocalSpecialMode)
+					startPage = LOCAL_SPECIAL_START_PAGE;
+				
+				jsf.getExternalContext().redirect(startPage);
 				return;
 			}
 			
@@ -196,9 +197,16 @@ public class BWFLAExceptionHandler extends ExceptionHandlerWrapper
 		{
 			Map<String, Object> sessionParams = jsf.getExternalContext().getSessionMap();
 			sessionParams.put("rootCause" + this.getWindowId(), rootCause);
-			jsf.getExternalContext().redirect(ERROR_PAGE + "?faces-redirect=true");
 			
-			if(WorkflowSingleton.CONF.emailNotifier != null && WorkflowSingleton.CONF.emailNotifier.sender != null && WorkflowSingleton.CONF.emailNotifier != null && WorkflowSingleton.CONF.emailNotifier.smtpHost != null)
+			String errorPage = ERROR_PAGE;
+			if (isInLocalMode)
+				errorPage = LOCAL_ERROR_PAGE;
+			else if (isInLocalSpecialMode)
+				errorPage = LOCAL_SPECIAL_ERROR_PAGE;
+			
+			jsf.getExternalContext().redirect(errorPage + "?faces-redirect=true");
+			
+			if(WorkflowSingleton.CONF.emailNotifier != null && WorkflowSingleton.CONF.emailNotifier.sender != null && WorkflowSingleton.CONF.emailNotifier.smtpHost != null)
 			{
 				StringWriter errorMessage = new StringWriter();
 				PrintWriter pw = new PrintWriter(errorMessage);

@@ -22,6 +22,7 @@ package de.bwl.bwfla.common.services.guacplay.record;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -44,11 +45,12 @@ import de.bwl.bwfla.common.services.guacplay.io.Metadata;
 import de.bwl.bwfla.common.services.guacplay.io.TraceFile;
 import de.bwl.bwfla.common.services.guacplay.io.TraceFileWriter;
 import de.bwl.bwfla.common.services.guacplay.net.IGuacInterceptor;
+import de.bwl.bwfla.common.services.guacplay.protocol.BufferedMessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
 import de.bwl.bwfla.common.services.guacplay.protocol.IGuacInstructionConsumer;
+import de.bwl.bwfla.common.services.guacplay.protocol.InstructionParser;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionSink;
-import de.bwl.bwfla.common.services.guacplay.protocol.VisualSyncFinalizer;
 import de.bwl.bwfla.common.services.guacplay.protocol.VSyncInstrGenerator;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.ArcInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.CFillInstrHandler;
@@ -57,7 +59,6 @@ import de.bwl.bwfla.common.services.guacplay.protocol.handler.CloseInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.CurveInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.DisposeInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.InstructionSkipper;
-import de.bwl.bwfla.common.services.guacplay.protocol.handler.KeyInstrHandlerREC;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.LineInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.MouseInstrHandlerREC;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.PngInstrHandlerREC;
@@ -65,9 +66,7 @@ import de.bwl.bwfla.common.services.guacplay.protocol.handler.RectInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.SizeInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.StartInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.InstructionTrap;
-import de.bwl.bwfla.common.services.guacplay.util.Barrier;
 import de.bwl.bwfla.common.services.guacplay.util.CharArrayWrapper;
-import de.bwl.bwfla.common.services.guacplay.util.StopWatch;
 
 
 public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsumer
@@ -79,11 +78,12 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 	private final OffscreenCanvas canvas;
 	private final InstructionSink isink;
 	private final EventSink esink;
-	private final StopWatch stopwatch;
+	private final AtomicLong timestamp;
+	private final InstructionParser iparser;
 	private final TraceBlockWriter tblock;
 	private final BufferedTraceWriter tbuffer;
-	private final ClientMessageProcessor clientMsgProcessor;
-	private final ServerMessageProcessor serverMsgProcessor;
+	private final BufferedMessageProcessor clientMsgProcessor;
+	private final BufferedMessageProcessor serverMsgProcessor;
 	private TraceFile tfile;
 	private TraceFileWriter twriter;
 	
@@ -113,25 +113,24 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 		this.canvas = new OffscreenCanvas();
 		this.isink = new InstructionSink(1);
 		this.esink = new EventSink(4);
-		this.stopwatch = new StopWatch();
+		this.timestamp = new AtomicLong(0);
+		this.iparser = new InstructionParser();
 		this.tblock = new TraceBlockWriter();
-		this.tbuffer = new BufferedTraceWriter(tblock, 512);
+		this.serverMsgProcessor = new BufferedMessageProcessor("SMP-" + winid, msgBufferCapacity);
+		this.clientMsgProcessor = new BufferedMessageProcessor("CMP-" + winid, msgBufferCapacity);
+		this.tbuffer = new BufferedTraceWriter("BTW-" + winid, clientMsgProcessor, serverMsgProcessor);
 		
-		final VisualSyncFinalizer vsyncfin = new VisualSyncFinalizer(isink, esink, canvas, VSyncType.AVERAGE_COLOR);
-		final Barrier vsyncBarrier = new Barrier(2, vsyncfin);
-
-		this.serverMsgProcessor = new ServerMessageProcessor("SMP-" + winid, msgBufferCapacity, vsyncBarrier);
-		this.clientMsgProcessor = new ClientMessageProcessor("CMP-" + winid, msgBufferCapacity, vsyncBarrier, serverMsgProcessor);
-
-		final InstructionForwarder iforwarder = new InstructionForwarder(this);
+		final InstructionForwarder iforwarder = new InstructionForwarder(isink);
 		final InstructionSkipper iskipper = new InstructionSkipper();
 		final InstructionTrap itrap = new InstructionTrap();
 		
 		// Construct the handlers for client messages
 		{
+			VSyncInstrGenerator vsyncgen = VSyncInstrGenerator.construct(canvas, VSyncType.AVERAGE_COLOR, true);
+			
 			// Add implemented handlers
-			clientMsgProcessor.addInstructionHandler(OpCode.KEY, new KeyInstrHandlerREC(isink));
-			clientMsgProcessor.addInstructionHandler(OpCode.MOUSE, new MouseInstrHandlerREC(isink, esink));
+			clientMsgProcessor.addInstructionHandler(OpCode.KEY, iforwarder);
+			clientMsgProcessor.addInstructionHandler(OpCode.MOUSE, new MouseInstrHandlerREC(isink, vsyncgen));
 			clientMsgProcessor.addInstructionHandler(ExtOpCode.ACTION_FINISHED, iforwarder);
 			
 			// Mark instructions to ignore
@@ -165,7 +164,6 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 			serverMsgProcessor.addInstructionHandler(OpCode.RECT, new RectInstrHandler(canvas));
 			serverMsgProcessor.addInstructionHandler(OpCode.SIZE, sizeInstrHandler);
 			serverMsgProcessor.addInstructionHandler(OpCode.START, new StartInstrHandler(canvas));
-			serverMsgProcessor.addInstructionHandler(OpCode.SYNC, new SyncInstrHandler(tbuffer));
 			serverMsgProcessor.addInstructionHandler(ExtOpCode.ACTION_FINISHED, iforwarder);
 			
 			// Mark instructions to ignore
@@ -182,6 +180,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 			serverMsgProcessor.addInstructionHandler(OpCode.PIPE, iskipper);
 			serverMsgProcessor.addInstructionHandler(OpCode.NEST, iskipper);
 			serverMsgProcessor.addInstructionHandler(OpCode.READY, iskipper);
+			serverMsgProcessor.addInstructionHandler(OpCode.SYNC, iskipper);
 
 			// Mark important, but not implemented, handlers
 			serverMsgProcessor.addInstructionHandler(OpCode.CLIP, itrap);
@@ -200,10 +199,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 			serverMsgProcessor.addInstructionHandler(OpCode.TRANSFORM, itrap);
 		}
 
-		// Register all listener and event consumer
-		esink.addConsumer(serverMsgProcessor);
-		esink.addConsumer(clientMsgProcessor);
-		esink.addConsumer(vsyncfin);
+		// Register listeners + event-consumers
 		isink.addConsumer(this);
 				
 		this.tfile = null;
@@ -217,8 +213,8 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 	/** Post a new message to the internal message-processors. */
 	public void postMessage(SourceType source, char[] data, int offset, int length)
 	{
-		VSyncedMessageProcessor processor = (source == SourceType.CLIENT) ? clientMsgProcessor : serverMsgProcessor;
-		processor.postMessage(source, stopwatch.time(), data, offset, length);
+		BufferedMessageProcessor processor = (source == SourceType.CLIENT) ? clientMsgProcessor : serverMsgProcessor;
+		processor.postMessage(source, timestamp.get(), data, offset, length);
 	}
 	
 	/** Add a new metadata chunk to the trace-file. */
@@ -265,7 +261,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 		}
 		
 		// Update the timestamps
-		startRecTimestamp = stopwatch.time();
+		startRecTimestamp = timestamp.get();
 		stopRecTimestamp = Long.MAX_VALUE;
 		
 		isRecordingEnabled = true;
@@ -278,7 +274,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 			return;
 		
 		// Update the timestamps
-		stopRecTimestamp = stopwatch.time();
+		stopRecTimestamp = timestamp.get();
 		
 		isRecordingEnabled = false;
 	}
@@ -302,17 +298,12 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 		
 		log.info("Recording into trace-file:  {}", dstpath.toString());
 		
-		// All timestamps for recieved messages will
-		// be calculated relative to this timepoint!
-		stopwatch.start();
-		
 		twriter.comment("User's input-events and server's updates.");
 		twriter.comment("Format: " + tblock.format());
 		twriter.begin(tblock);
 		
-		// Start the processors now
-		serverMsgProcessor.start();
-		clientMsgProcessor.start();
+		// Start processing
+		tbuffer.start();
 		
 		state = State.PREPARED;
 	}
@@ -333,13 +324,8 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 		// Notify about the termination of the processor
 		esink.consume(new GuacEvent(EventType.TERMINATION, this));
 		
-		// Request the termination of client-processor, then
-		// server-processor and wait for both to finish!
-		clientMsgProcessor.terminate(false);
-		serverMsgProcessor.terminate(true);
-		clientMsgProcessor.terminate(true);
-		
-		tbuffer.flush();  // Flush buffered trace-entries
+		// Flush buffered trace-entries
+		tbuffer.terminate(true);
 		
 		// At this point all pending messages are processed and the connection is closed.
 		
@@ -369,7 +355,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 	public void onBeginConnection() throws IOException
 	{
 		// Notify about the session start!
-		esink.consume(new SessionBeginEvent(this, stopwatch.time()));
+		esink.consume(new SessionBeginEvent(this, timestamp.get()));
 	}
 
 	@Override
@@ -381,8 +367,43 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 	@Override
 	public boolean onClientMessage(CharArrayWrapper message) throws Exception
 	{
+		// Find the timestamp of the last received instruction
+		
+		final char[] array = message.array();
+		final int offset = message.offset();
+		int length = message.length();
+		int index = offset + length - 2;
+		
+		// Search from message's back to front
+		// the begin of the last instruction...
+		while (index >= offset) {
+			final char c = array[index];
+			if (c == GuacDefs.INSTRUCTION_TERMINATOR)
+				break;
+			
+			--index;
+		}
+		
+		++index;
+		length -= index - offset;
+
+		long newTimestamp = -1;
+		
+		// Try to parse the timestamp only
+		iparser.setInput(array, index, length);
+		final String tsval = iparser.parseOpcode();
+		final char c = tsval.charAt(0);
+		if (c >= '0' && c <= '9')
+			newTimestamp = Long.parseLong(tsval);
+		
 		// Pass the message unmodified to the processor
-		clientMsgProcessor.postMessage(SourceType.CLIENT, stopwatch.time(), message);
+		if (clientMsgProcessor.postMessage(SourceType.CLIENT, timestamp.get(), message) == 1)
+			tbuffer.wakeup();
+		
+		// Now we can update the timestamp
+		if (newTimestamp > 0)
+			timestamp.set(newTimestamp + 1);
+		
 		return true;
 	}
 
@@ -390,7 +411,9 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 	public boolean onServerMessage(CharArrayWrapper message) throws Exception
 	{
 		// Pass the message unmodified to the processor
-		serverMsgProcessor.postMessage(SourceType.SERVER, stopwatch.time(), message);
+		if (serverMsgProcessor.postMessage(SourceType.SERVER, timestamp.get(), message) == 1)
+			tbuffer.wakeup();
+		
 		return true;
 	}
 
@@ -407,7 +430,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 				|| instr.getOpcode().startsWith(ExtOpCode.SCREEN_UPDATE);
 		
 		if (record)
-			tbuffer.post(desc, instr);
+			tblock.write(desc, instr);
 	}
 	
 	
@@ -457,7 +480,7 @@ public class SessionRecorder implements IGuacInterceptor, IGuacInstructionConsum
 				// From left to right (x-direction)
 				for (int j = 0; j < jmax; ++j, xpos += xstep) {
 					vsyncgen.generate(xpos, ypos, vsync);
-					idesc.setTimestamp(stopwatch.time());
+					idesc.setTimestamp(timestamp.get() + 1);
 					tblock.write(idesc, vsync);
 				}
 			}

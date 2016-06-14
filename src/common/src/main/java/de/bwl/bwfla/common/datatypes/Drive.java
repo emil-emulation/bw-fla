@@ -96,10 +96,10 @@ public class Drive
     protected String filesystem;
     @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
     protected Drive.DriveType type;
-    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
-    protected Boolean boot;
-    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
-    protected boolean plugged;
+    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes", required = false)
+    protected Boolean boot = false;
+    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes", required = false)
+    protected boolean plugged = false;
 
     /**
      * Gets the value of the data property.

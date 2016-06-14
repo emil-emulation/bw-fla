@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets" 
+	xmlns:h="http://java.sun.com/jsf/html" 
+	xmlns:f="http://java.sun.com/jsf/core" 
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core" 
+	xmlns:func="http://example.com/functions" 
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+
+
+	<ui:composition template="/template/formTemplate.xhtml">
+		<ui:param name="beanName" value="#{WF_EMN_0}" />
+	
+		<ui:define name="metadata"/>		
+		 
+		<ui:define name="content">
+			<style type="text/css">
+                html, body {background: transparent ! important; overflow: hidden !important;}
+                .wrapper, .content { display: block !important;}
+				#header, #menu {display: none !important;}
+				#content {margin: 0 !important}
+           </style>
+			
+			<ui:include src="/template/emulator_content_default.xhtml">
+				<ui:param name="beanName" value="#{WF_EMN_0}" />
+			</ui:include>
+			
+			<ul class="emulator-menu">
+				<p:outputPanel rendered="#{not empty beanName['chosenMediaForDevices']}">
+					<li class="mediachange">Change Media</li>
+				</p:outputPanel>
+			</ul>
+			
+			<script>
+				// pass on messages about canvas size change to parent frame
+				window.addEventListener("message", function(message) {					
+					var target = window.parent;
+					if (!target) {
+						// not embedded, maybe for testing
+						return;
+					}
+
+					var data = JSON.parse(message.data);
+
+					if (data.opcode == undefined || data.w == undefined || data.h == undefined) {
+						// not the type of message we are interested in
+						return;
+					}
+					
+                    var origin = (window.location != window.parent.location) ? document.referrer: document.location;                                       
+                    target.postMessage(data, origin);
+				}, false);			
+			</script>
+		</ui:define>
+		
+		<ui:define name="header" />
+		
+		<ui:define name="menu" />
+		
+		<ui:define name="footer" />
+	</ui:composition>
+
+</html>

@@ -23,12 +23,13 @@
 	</ui:define>
 	
 	<ui:define name="metadata">
-		<h:outputScript library="syntaxhighlighter" name="scripts/shCore.js"/>
-		<h:outputScript library="syntaxhighlighter" name="scripts/shBrushJScript.js"/>
-        <h:outputScript library="syntaxhighlighter" name="scripts/shBrushXml.js"/>
         <h:outputScript library="zeroclipboard" name="ZeroClipboard.min.js"/>
-        <h:outputStylesheet library="syntaxhighlighter" name="styles/shCore.css"/>
-        <h:outputStylesheet library="syntaxhighlighter" name="styles/shThemeDefault.css"/>
+        
+        <style>
+        	#content {
+        		margin-top: calc(2em + 31px);
+        	}
+        </style>
     </ui:define>		
 	 
 	<ui:define name="content">

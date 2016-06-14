@@ -29,6 +29,4 @@ public class CommonConf extends Configuration
 	private static final long	serialVersionUID	= 2016307534677229437L;
 
 	public HdlConf hdlConf;
-	public HelpersConf helpersConf;
-	public RunnerConf processRunner;
 }

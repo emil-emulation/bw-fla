@@ -38,6 +38,7 @@ import org.glyptodon.guacamole.servlet.GuacamoleSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.bwl.bwfla.api.emucomp.ConnectionType;
+import de.bwl.bwfla.common.services.guacplay.net.GuacSession;
 import de.bwl.bwfla.common.services.guacplay.net.IGuacReader;
 import de.bwl.bwfla.emucomp.components.emulators.EmulatorBeanWrapper;
 import de.bwl.bwfla.emucomp.components.emulators.HtmlConnector;
@@ -55,34 +56,35 @@ public class BWFLAGuacamoleTunnelServlet extends GuacamoleHTTPTunnelServlet
 	private final Logger log = LoggerFactory.getLogger(BWFLAGuacamoleTunnelServlet.class);
 	
 	@Override
-	protected GuacamoleTunnel doConnect(HttpServletRequest request)
+	protected GuacamoleTunnel doConnect(HttpServletRequest request) throws GuacamoleException
 	{
 		String cookie;
 		
-		try 
-		{
+		// Parse the request's body, that should contain the session's ID
+		try {
 			BufferedReader reader = request.getReader();
 			cookie = reader.readLine();
-			if (cookie == null) 
-			{
+			if (cookie == null) {
 				log.error("Cookie was not specified!");
 				return null;
 			}
 		}
-		catch (IOException exception) 
-		{
+		catch (IOException exception) {
 			log.error("Cookie could not be parsed!");
 			exception.printStackTrace();
 			return null;
 		}
-		
-		HtmlConnector connector = (HtmlConnector) EmucompSingleton.getComponent(cookie, EmulatorBeanWrapper.class).getViewConnectors().get(ConnectionType.HTML.toString());
+
+		GuacSession.register(request.getSession(true));
+
+		// Lookup the corresponding tunnel
+		EmulatorBeanWrapper emubean = EmucompSingleton.getComponent(cookie, EmulatorBeanWrapper.class);
+		HtmlConnector connector = (HtmlConnector) emubean.getViewConnectors().get(ConnectionType.HTTP.toString());
 		GuacamoleTunnel tunnel = connector.getTunnel(); 
 		if (tunnel != null)
 			log.info("Predefined tunnel was found! ID: {}", tunnel.getUUID().toString().toUpperCase());
-		else
-			log.error("Tunnel with the following ID was not found! ID: {}", cookie);
-			
+		else log.error("Tunnel for the following session ID was not found! ID: {}", cookie);
+
 		return tunnel; 
 	}
 	
@@ -92,10 +94,10 @@ public class BWFLAGuacamoleTunnelServlet extends GuacamoleHTTPTunnelServlet
 		// NOTE: This code is mostly copied from the GuacamoleHTTPTunnelServlet.doWrite(...) method!
 		//       Important changes are marked apropriately.
 		
-		GuacamoleSession session = new GuacamoleSession(request.getSession(false));
+		GuacamoleSession session = GuacSession.get(request.getSession(false));
 
 		// Get tunnel and ensure, that it exists
-		GuacamoleTunnel tunnel = session.getTunnel(tunnelId);
+		final GuacamoleTunnel tunnel = session.getTunnel(tunnelId);
 		if (tunnel == null)
 			throw new GuacamoleResourceNotFoundException("No such tunnel.");
 
@@ -115,14 +117,32 @@ public class BWFLAGuacamoleTunnelServlet extends GuacamoleHTTPTunnelServlet
 				// IMPORTANT CHANGES:
 				//    - The data's length is known in the request, no need to allocate the 8kB buffers.
 				//    - Furthermore the data can be written in one shot, no need for a loop.
-				
+
+				int numReadCalls = 0;
+
 				// Allocate a new buffer and fill it with data.
-				char[] buffer = new char[request.getContentLength()];
-				int length = input.read(buffer, 0, buffer.length);
+				final int expLength = request.getContentLength();
+				final char[] buffer = new char[expLength];
+				int curLength = 0;
+				do {
+					final int remaining = expLength - curLength;
+					final int numBytesRead = input.read(buffer, curLength, remaining);
+					if (numBytesRead < 0)
+						break;
+					
+					curLength += numBytesRead;
+					++numReadCalls;
+					
+				} while (curLength < expLength);
 				
 				// Transfer data using the buffer
-				if (tunnel.isOpen() && (length != -1))
-					writer.write(buffer, 0, length);
+				if (tunnel.isOpen() && (curLength > 0))
+					writer.write(buffer, 0, curLength);
+				
+				if (numReadCalls > 1) {
+					String msg = "Client's HTTP-WriteRequest for tunnel {} required {} reads/writes.";
+					log.info(msg, tunnel.getUUID(), numReadCalls);
+				}
 			}
 
 			// Close input-stream in all cases
@@ -155,10 +175,10 @@ public class BWFLAGuacamoleTunnelServlet extends GuacamoleHTTPTunnelServlet
 		// NOTE: This code is mostly copied from the GuacamoleHTTPTunnelServlet.doRead(...) method!
 		//       Important changes are marked apropriately.
 		
-		GuacamoleSession session = new GuacamoleSession(request.getSession(false));
+		GuacamoleSession session = GuacSession.get(request.getSession(false));
 		
 		// Get tunnel and ensure, that it exists
-		GuacamoleTunnel tunnel = session.getTunnel(tunnelId);
+		final GuacamoleTunnel tunnel = session.getTunnel(tunnelId);
 		if (tunnel == null)
 			throw new GuacamoleResourceNotFoundException("No such tunnel.");
 
@@ -197,7 +217,10 @@ public class BWFLAGuacamoleTunnelServlet extends GuacamoleHTTPTunnelServlet
 						break;
 					
 					// Read and send next message
-					reader.readInto(output);
+					if (!reader.readInto(output)) {
+						// End-of-stream reached!
+						session.detachTunnel(tunnel);
+					}
 				}
 
 				// End-of-instructions marker

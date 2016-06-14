@@ -21,7 +21,6 @@ package de.bwl.bwfla.common.services.guacplay;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import de.bwl.bwfla.common.services.guacplay.net.IGuacInterceptor;
 import de.bwl.bwfla.common.services.guacplay.util.CharArrayWrapper;
 

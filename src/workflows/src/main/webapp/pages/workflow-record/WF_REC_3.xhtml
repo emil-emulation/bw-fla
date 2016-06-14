@@ -36,6 +36,7 @@
 						<h:outputLabel value="Description:" for="description"/>
 						<i><h:outputText value="(optional)" style="float: right;"/></i><br/>
 						<p:inputTextarea id="description" value="#{beanName.description}" rows="3" cols="100" styleClass="textinput"/>
+						<p:selectBooleanCheckbox itemLabel="Generate a citation link for the environment and recorded session." value="#{beanName.citationEnabled}" style="margin-top: 20px;"/>
 					</div>
 				
 					<p:panel header="Help" collapsed="true" toggleable="true" style="margin-top: 20px;">

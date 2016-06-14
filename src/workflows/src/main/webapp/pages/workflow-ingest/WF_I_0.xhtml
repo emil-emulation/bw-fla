@@ -6,7 +6,9 @@
 	xmlns:c="http://java.sun.com/jsp/jstl/core"
 	xmlns:func="http://example.com/functions"
 	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
-	xmlns:bwl="http://bwfla.bwl.de/facelets">
+	xmlns:bwl="http://bwfla.bwl.de/facelets"
+	xmlns:bwlcc="http://java.sun.com/jsf/composite/component"
+	>
 
 <ui:composition template="/template/formTemplate.xhtml">
 	<ui:param name="beanName" value="#{WF_I_0}" />
@@ -19,11 +21,7 @@
 	</ui:define>
 	
 	<ui:define name="metadata">
-		<style>
-			#content {
-				margin-top: 0;
-			}
-			
+		<style>			
 			.left-container {
 				display: inline-block;
 				margin-right: 30px;
@@ -118,6 +116,10 @@
 				</f:facet>
 			</p:panel>
 		</h:form>
+		
+		<bwlcc:user-preference-dialog
+			rendered="#{not WF_I_0['didUserSetPrefs'] and WF_I_0['requirePrefs']}"
+			visible="true" closable="false" />
 	</ui:define>
 </ui:composition>
 

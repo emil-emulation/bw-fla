@@ -38,6 +38,8 @@ public class GuacWriter implements GuacamoleWriter
 	private final IGuacInterceptor interceptor;
 	private final CharArrayWrapper wrapper;
 	private final Writer output;
+	private long numBytesWritten;
+	private long numMsgsWritten;
 	
 	
 	/** Constructor */
@@ -52,8 +54,22 @@ public class GuacWriter implements GuacamoleWriter
 		this.interceptor = interceptor;
 		this.wrapper = (interceptor != null) ? new CharArrayWrapper() : null;
 		this.output = output;
+		this.numBytesWritten = 0L;
+		this.numMsgsWritten = 0L;
 	}
 
+	/** Returns the number of bytes written by this writer. */
+	public long getNumBytesWritten()
+	{
+		return numBytesWritten;
+	}
+	
+	/** Returns the number of messages written by this writer. */
+	public long getNumMsgsWritten()
+	{
+		return numMsgsWritten;
+	}
+	
 	@Override
 	public void write(char[] data, int offset, int length) throws GuacamoleException
 	{
@@ -71,6 +87,9 @@ public class GuacWriter implements GuacamoleWriter
 			}
 			
 			output.flush();
+			
+			numBytesWritten += length;
+			++numMsgsWritten;
 		}
 		catch (Exception exception) {
 			// Something is broken, rethrow

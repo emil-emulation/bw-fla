@@ -45,6 +45,7 @@ import org.primefaces.model.DualListModel;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
+import de.bwl.bwfla.common.datatypes.Drive;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.utils.Pair;
 import de.bwl.bwfla.workflows.beans.common.BwflaFormBean;
@@ -54,7 +55,6 @@ import de.bwl.bwfla.workflows.conf.WorkflowSingleton;
 import de.bwl.bwfla.workflows.softwarearchive.SoftwareArchive;
 import de.bwl.bwfla.workflows.softwarearchive.SoftwareDescription;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.BundledFile;
-import de.bwl.bwfla.workflows.softwarearchive.datatypes.MediumType;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.SoftwareBundle;
 
 @ManagedBean(name = "WF_I_SW_new")
@@ -209,8 +209,7 @@ public class WF_I_SW_new extends BwflaFormBean implements Serializable {
 
 		this.getFiles()
 				.getTarget()
-				.add(new BundledFile(Paths.get(filename), selectedPlatform, MediumType
-						.fromValue(type)));
+				.add(new BundledFile(Paths.get(filename), selectedPlatform, Drive.DriveType.valueOf(type.toUpperCase())));
 		log.info(type);
 		log.info(filename);
 		log.info("" + this.getFiles().getTarget().size());

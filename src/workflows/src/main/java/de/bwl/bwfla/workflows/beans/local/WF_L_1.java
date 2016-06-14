@@ -26,6 +26,7 @@ import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
 
 import de.bwl.bwfla.workflows.beans.common.BwflaEmulatorViewBean;
+import de.bwl.bwfla.workflows.beans.common.RedirectionObserver;
 
 
 @ManagedBean
@@ -39,10 +40,11 @@ public class WF_L_1 extends BwflaEmulatorViewBean implements Serializable
 	@Override
 	public void initialize()
 	{
-		super.initialize();
-
 		description = wfData.getSystemEnvironmentDescription();
 		emuHelper = wfData.getRemoteEmulatorHelper();
+		super.initialize();
+		
+		this.setEaasStateObserver(RedirectionObserver.create(jsf, "/faces" + this.forward()));
 	}
 	
 	public String forward()

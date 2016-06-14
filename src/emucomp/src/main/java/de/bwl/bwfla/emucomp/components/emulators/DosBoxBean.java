@@ -19,6 +19,9 @@
 
 package de.bwl.bwfla.emucomp.components.emulators;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import javax.ejb.Stateful;
 import de.bwl.bwfla.common.datatypes.Drive;
 import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
@@ -67,12 +70,19 @@ public class DosBoxBean extends EmulatorBean {
 
 	@Override
 	public boolean addDrive(Drive drive) {
-		if (drive == null || this.lookupResource(drive.getData()) == null) {
-			LOG.warning("Drive doesn't contain an image, attach canceled.");
-			return false;
-		}
+        if (drive == null || (drive.getData() == null)) {
+            LOG.warning("Drive doesn't contain an image, attach canceled.");
+            return false;
+        }
+        
+        Path imagePath = null;
+        try {
+            imagePath = Paths.get(this.lookupResource(drive.getData(), this.getImageFormatForDriveType(drive.getType())));
+        } catch (Exception e) {
+            LOG.warning("Drive doesn't reference a valid binding, attach cancelled.");
+            return false;
+        }
 
-		String value = this.lookupResource(drive.getData());
 /*
 		if (value.contains("zip")) {
 
@@ -86,15 +96,15 @@ public class DosBoxBean extends EmulatorBean {
 */
 		switch (drive.getType()) {
 		case FLOPPY:
-			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), value, "-t floppy"));
+			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), imagePath.toString(), "-t floppy"));
 			break;
 
 		case DISK:
-			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), value, "-t hdd"));
+			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), imagePath.toString(), "-t hdd"));
 			break;
 
 		case CDROM:
-			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), value, "-t iso"));
+			runner.addArguments("-c", String.format("imgmount %s %s %s", this.getDriveLetter(drive), imagePath.toString(), "-t iso"));
 			break;
 
 		default:

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <eaasConf> 
+    <sessionIdleTimeout>300</sessionIdleTimeout>
     <bladeClusterPlugin>
         <bladeConnection>
             <node>
-                <address>http://1.2.3.23:8080/emucomp</address>
+                <address>http://132.230.3.213:8080/emucomp</address>
                 <nodespecs>
                     <cpucores>4</cpucores>
                     <memory>4096</memory>
@@ -17,12 +18,12 @@
     <!--  
     <googleCloudPlugin>
         <googleConnection>
-            <accountId>xxx@developer.gserviceaccount.com</accountId>
+            <accountId>405299599624-jvj060roded4qm1or6al6kouhgu3f982@developer.gserviceaccount.com</accountId>
             <project>warm-access-87915</project>
-            <certificate>/home/bwfla/emucloud.p12</certificate>
+            <certificate>/home/iv1004/emucloud-a385232c1bb1.p12</certificate>
             <zone>us-central1-a</zone>
             <machine>n1-highcpu-4</machine>
-            <osImage>https://www.googleapis.com/compute/v1/projects/fla/global/images/bwfla</osImage>
+            <osImage>https://www.googleapis.com/compute/v1/projects/warm-access-87915/global/images/bwfla-ubuntu-14-04-amd64-v5</osImage>
         </googleConnection>
     </googleCloudPlugin>
     -->

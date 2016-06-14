@@ -27,13 +27,16 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "environmentDescription", namespace = "http://bwfla.bwl.de/common/datatypes", propOrder = {
-    "title"
+    "title",
+    "os"
 })
 public class EnvironmentDescription {
 
-	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes", required = true)
+    @XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes", required = true)
     protected String title;
-    
+	
+    @XmlElement(namespace="http://bwfla.bwl.de/common/datatypes", required = false)
+    protected String os;
     
     public String getTitle() {
         return title;
@@ -41,5 +44,13 @@ public class EnvironmentDescription {
 
     public void setTitle(String value) {
         this.title = value;
+    }
+
+    public String getOs() {
+        return os;
+    }
+
+    public void setOs(String os) {
+        this.os = os;
     }
 }

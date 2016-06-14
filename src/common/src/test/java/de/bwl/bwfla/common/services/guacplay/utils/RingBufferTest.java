@@ -78,6 +78,7 @@ public class RingBufferTest extends BaseTest
 					
 					RingBufferTest.sleep(rand1, MAX_TIMEOUT);
 					
+					message.reset();
 					queue.finishTakeOp();
 				}
 				

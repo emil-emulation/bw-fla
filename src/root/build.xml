@@ -38,6 +38,11 @@
 		</exec>
 	</target>
 
+	<target name="debug" depends="-check-properties-existence">
+		<exec dir="${appserver.location}/bin" executable="./standalone-debug.sh" >
+			<arg value="-Djava.io.tmpdir=${tmpdir.location}" />
+		</exec>
+	</target>
 
 
 

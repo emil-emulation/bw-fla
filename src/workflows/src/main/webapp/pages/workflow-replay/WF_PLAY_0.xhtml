@@ -39,7 +39,11 @@
 							<p:outputLabel value="OS-Images:" for="osimages" styleClass="label"/> <br/>
 							<p:selectOneListbox id="osimages" value="#{beanName.selectedEnv}" styleClass="listbox"
 									style="width: 330px; margin-right: 5px;" required="true" requiredMessage="Please select an OS-Image to proceed">
-								<f:selectItems value="#{beanName.environmentList}" var="os" itemLabel="#{os.description.title}" itemValue="#{os.id}"/>
+								<f:selectItems value="#{beanName.environmentList}" var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}"/>
+								<f:selectItems value="#{beanName.derivatesList}" var="env"
+								itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+							<f:selectItems value="#{beanNamesystemsList}" var="env"
+								itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
 								<p:ajax event="change" update="traces,descr" listener="#{beanName.loadAvailableTraces()}"/>
 							</p:selectOneListbox>
 						</div>

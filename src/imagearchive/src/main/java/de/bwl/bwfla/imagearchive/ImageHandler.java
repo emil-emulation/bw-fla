@@ -1,22 +1,3 @@
-/*
- * This file is part of the Emulation-as-a-Service framework.
- *
- * The Emulation-as-a-Service framework is free software: you can
- * redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * The Emulation-as-a-Service framework is distributed in the hope that
- * it will be useful, but WITHOUT ANY WARRANTY; without even the
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with the Emulation-as-a-Software framework.
- * If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.bwl.bwfla.imagearchive;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -28,7 +9,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,12 +19,14 @@ import javax.xml.bind.JAXBException;
 
 import org.apache.commons.io.FileUtils;
 
+import de.bwl.bwfla.common.datatypes.AbstractDataResource;
+import de.bwl.bwfla.common.datatypes.Binding;
 import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
 import de.bwl.bwfla.common.datatypes.EmulationNode;
 import de.bwl.bwfla.common.datatypes.Environment;
 import de.bwl.bwfla.common.datatypes.Network;
 import de.bwl.bwfla.common.datatypes.NetworkEnvironment;
-import de.bwl.bwfla.common.datatypes.Resource;
+import de.bwl.bwfla.common.utils.EmulatorUtils;
 import de.bwl.bwfla.imagearchive.ImageArchiveConfig.ImageType;
 
 public class ImageHandler {
@@ -63,6 +45,8 @@ public class ImageHandler {
 
 	protected boolean publishImage(File img, String exportId, ExportType unused)
 	{
+		EmulatorUtils.padFile(img, 512);
+			
 		File exportFile = new File(iaConfig.exportPath + "/" + exportId);
 		if(exportFile.exists())
 			exportFile.delete();
@@ -85,7 +69,7 @@ public class ImageHandler {
 
 	private File importImageFile(File image, String exportId, String type, boolean delete)
 	{
-		
+		EmulatorUtils.padFile(image, 512);
 		File target = getImageTargetPath(exportId, type);
 		File destImgFile = new File(target, exportId);
 
@@ -99,9 +83,10 @@ public class ImageHandler {
 			if(delete)
 				Files.move(image.toPath(), destImgFile.toPath(), REPLACE_EXISTING);
 			else
-				Files.copy(image.toPath(), destImgFile.toPath(), REPLACE_EXISTING);
-		} catch (IOException e1) {
+				Files.createSymbolicLink(destImgFile.toPath(), image.toPath());
+		} catch (Exception e1) {
 			log.info("failed moving incoming image to " + target + " reason " + e1.getMessage());
+			e1.printStackTrace();
 			return null;
 		}
 
@@ -145,7 +130,7 @@ public class ImageHandler {
 		return DataUtil.writeString(conf, destConfFile);
 	}
 
-	protected String loadMetaDataFile(File mf)
+	public String loadMetaDataFile(File mf)
 	{
 		String env;
 		try {
@@ -158,7 +143,7 @@ public class ImageHandler {
 		return exportConfig(env);	
 	}
 	
-	protected ConcurrentHashMap<Path,String> loadMetaData(File path)
+	public ConcurrentHashMap<Path,String> loadMetaData(File path)
 	{
 		ConcurrentHashMap <Path,String> md = new ConcurrentHashMap<Path,String>();
 
@@ -220,8 +205,11 @@ public class ImageHandler {
 		}
 
 		
-		for(Resource r : env.getBinding())
+		for(AbstractDataResource ar : env.getAbstractDataResource())
 		{
+			if(!(ar instanceof Binding))
+					continue;
+			Binding r = (Binding)ar;
 			try 
 			{
 				URI uri = new URI(r.getUrl());
@@ -278,14 +266,15 @@ public class ImageHandler {
 			}
 		} catch (JAXBException e) {
 			log.severe("Could not unmarshal environment:" + e.getMessage());
-			e.getStackTrace();
+			e.printStackTrace();
+			log.severe(env);
 			return null;
 		}
 		log.severe("Environment is neither NetworkEnvironment nor EmulationEnvironment. Aborting.");
 		return null;
 	}
 
-	protected ConcurrentHashMap<Path, String> getImages(String type)
+	public ConcurrentHashMap<Path, String> getImages(String type)
 	{
 		try {
 			ImageType t = ImageType.valueOf(type);

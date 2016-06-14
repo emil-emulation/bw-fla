@@ -1,7 +1,6 @@
 package edu.kit.scc.webreg.service;
 
 import java.util.List;
-
 import edu.kit.scc.webreg.entity.RegistryEntity;
 import edu.kit.scc.webreg.entity.RegistryStatus;
 import edu.kit.scc.webreg.entity.ServiceEntity;

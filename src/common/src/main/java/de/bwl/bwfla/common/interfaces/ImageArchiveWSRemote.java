@@ -20,15 +20,11 @@
 package de.bwl.bwfla.common.interfaces;
 
 import java.util.List;
-
 import javax.activation.DataHandler;
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlMimeType;
-
-import de.bwl.bwfla.common.datatypes.Drive.DriveType;
-import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.services.guacplay.replay.IWDMetaData;
 
 
@@ -45,8 +41,8 @@ public interface ImageArchiveWSRemote
 	@WebMethod
 	public String registerImage(String conf,  @XmlMimeType("application/octet-stream") DataHandler image, String type);
 	
-	@WebMethod(operationName="registerImageUsingFile")
-	public String registerImage(String conf, String image, boolean delete, String type);
+	@WebMethod
+	public String registerImageUsingFile(String conf, String image, boolean delete, String type);
 
 	@WebMethod
 	public boolean releaseImage(String url);

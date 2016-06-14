@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:ui="http://java.sun.com/jsf/facelets" 
+	xmlns:h="http://java.sun.com/jsf/html" 
+	xmlns:f="http://java.sun.com/jsf/core" 
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jsp/jstl/core" 
+	xmlns:func="http://example.com/functions" 
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+
+<ui:composition template="/template/emil-local-template.xhtml">
+	<ui:param name="beanName" value="#{WF_LS_error}"/>
+	<ui:define name="title">EMIL Local-Workflow</ui:define>
+	<ui:define name="content">
+		<div class="page-index">
+			<div>
+	    		<img class="logo" src="#{resource['images:emil-logo.png']}"/>
+	    		<h:form>
+					<h:commandLink action="#{beanName.forward}" class="button-big" style="margin-top: 0px;">
+						<strong>Restart Emulator</strong>
+						<div class="caption">Start a new emulation-session.</div>
+					</h:commandLink>
+				</h:form>
+	    		<div class="tagline" style="margin-bottom: 1em;">It seems likely, that something gone wrong :-(</div>
+	    		<div class="tagline" style="margin-bottom: 1em;"><b>#{beanName.apologize}</b> #{beanName.errorInfo}</div>
+			</div>
+		</div>
+	</ui:define>
+</ui:composition>
+</html>

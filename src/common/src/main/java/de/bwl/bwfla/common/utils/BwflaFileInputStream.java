@@ -22,7 +22,6 @@ package de.bwl.bwfla.common.utils;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import de.bwl.bwfla.common.services.container.types.ContainerFile;
 
 public class BwflaFileInputStream extends FileInputStream

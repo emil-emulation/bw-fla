@@ -1,7 +1,6 @@
 package edu.kit.scc.webreg.dao;
 
 import java.util.List;
-
 import edu.kit.scc.webreg.entity.GroupEntity;
 import edu.kit.scc.webreg.entity.UserEntity;
 

@@ -2,6 +2,6 @@
 
 <imageArchiveConf>
   <archiveBase>/mnt/data/image-archive</archiveBase>
-  <archiveHttpPrefix></archiveHttpPrefix>
+  <archiveHttpPrefix>http://132.230.4.15</archiveHttpPrefix>
   <archiveNbdPrefix/>
 </imageArchiveConf>

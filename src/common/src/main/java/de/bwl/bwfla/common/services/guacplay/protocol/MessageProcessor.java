@@ -139,7 +139,18 @@ public class MessageProcessor
 		parser.setInput(data, offset, length);
 		while (parser.available()) {
 			// Preparse the opcode only!
-			final String opcode = parser.parseOpcode();
+			String opcode = parser.parseOpcode();
+			final char c = opcode.charAt(0);
+			if (c >= '0' && c <= '9') {
+				// It's a timestamped instruction,
+				// use the parsed timestamp then
+				long tsvalue = Long.parseLong(opcode);
+				description.setTimestamp(tsvalue);
+				
+				// Parse the actual opcode now
+				parser.skip(1);
+				opcode = parser.parseOpcode();
+			}
 			if (opcode != curOpcode) {
 				// Different opcode, lookup the handler
 				curHandler = handlers.get(opcode);

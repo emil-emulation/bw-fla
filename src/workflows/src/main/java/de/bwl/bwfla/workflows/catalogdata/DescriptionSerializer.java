@@ -20,7 +20,6 @@
 package de.bwl.bwfla.workflows.catalogdata;
 
 import java.lang.reflect.Type;
-
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -30,7 +29,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
-
 import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.catalogdata.DescriptionTypes.TYPE;
 

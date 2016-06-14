@@ -25,8 +25,10 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.SampleModel;
 import java.io.IOException;
 import java.nio.IntBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import de.bwl.bwfla.common.services.guacplay.GuacDefs;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.CompositeMode;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.EventType;
@@ -40,7 +42,6 @@ import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
 import de.bwl.bwfla.common.services.guacplay.events.IGuacEventListener;
 import de.bwl.bwfla.common.services.guacplay.graphics.OffscreenCanvas;
 import de.bwl.bwfla.common.services.guacplay.graphics.ScreenObserver;
-import de.bwl.bwfla.common.services.guacplay.net.PlayerSocket;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionBuilder;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
@@ -49,6 +50,7 @@ import de.bwl.bwfla.common.services.guacplay.protocol.InstructionParserException
 import de.bwl.bwfla.common.services.guacplay.util.Base64;
 import de.bwl.bwfla.common.services.guacplay.util.CharArrayBuffer;
 import de.bwl.bwfla.common.services.guacplay.util.ConditionVariable;
+import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
 
 
 /** A handler for the custom vsync-instruction. */
@@ -56,7 +58,7 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 {
 	// Member fields
 	private final EventSink esink;
-	private final PlayerSocket socket;
+	private final ICharArrayConsumer client;
 	private final OffscreenCanvas canvas;
 	private final BufferedImage image;
 	private final InstructionBuilder ibuilder;
@@ -122,12 +124,12 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 	
 	
 	/** Constructor */
-	public VSyncInstrHandler(OffscreenCanvas canvas, PlayerSocket socket, EventSink esink)
+	public VSyncInstrHandler(OffscreenCanvas canvas, ICharArrayConsumer client, EventSink esink)
 	{
 		super(ExtOpCode.VSYNC);
 		
 		this.esink = esink;
-		this.socket = socket;
+		this.client = client;
 		this.canvas = canvas;
 		this.image = canvas.newBufferedImage(GuacDefs.VSYNC_RECT_WIDTH, GuacDefs.VSYNC_RECT_HEIGHT);
 		this.ibuilder = new InstructionBuilder(512);
@@ -163,7 +165,7 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 		char[] rectinstr = null;
 		
 		// Send visual feedback, when client connected
-		if (socket != null) {
+		if (client != null) {
 			// Mark the vsync-area
 			ibuilder.start(OpCode.RECT);
 			ibuilder.addArgument(OVERLAY_LAYER);
@@ -176,11 +178,9 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 			rectinstr = ibuilder.toCharArray();
 			
 			// Clear the overlay-layer's content and send red rectangle to client
-			synchronized (socket) {
-				socket.post(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
-				socket.post(rectinstr, 0, rectinstr.length);
-				socket.post(INSTR_CSTROKE_RED, 0, INSTR_CSTROKE_RED.length);
-			}
+			client.consume(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+			client.consume(rectinstr, 0, rectinstr.length);
+			client.consume(INSTR_CSTROKE_RED, 0, INSTR_CSTROKE_RED.length);
 		}
 		
 		boolean enabled = false;
@@ -211,12 +211,10 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 		if (enabled)
 			observer.reset();
 		
-		if (socket != null) {
+		if (client != null) {
 			// Send green rectangle to client
-			synchronized (socket) {
-				socket.post(rectinstr, 0, rectinstr.length);
-				socket.post(INSTR_CSTROKE_GREEN, 0, INSTR_CSTROKE_GREEN.length);
-			}
+			client.consume(rectinstr, 0, rectinstr.length);
+			client.consume(INSTR_CSTROKE_GREEN, 0, INSTR_CSTROKE_GREEN.length);
 		}
 		
 		// End of vsync-processing
@@ -226,8 +224,20 @@ public class VSyncInstrHandler extends InstructionHandler implements IGuacEventL
 	@Override
 	public void onGuacEvent(GuacEvent event)
 	{
-		if (event.getType() == EventType.TERMINATION)
+		final int type = event.getType();
+		
+		if (type == EventType.TERMINATION)
 			exitflag = true;
+		
+		else if ((type == EventType.TRACE_END) && (client != null)) {
+			try {
+				// Send an instruction to clear the overlay of this handler.
+				client.consume(INSTR_CLEAR_OVERLAY, 0, INSTR_CLEAR_OVERLAY.length);
+			}
+			catch (Exception exception) {
+				// Ignore it!
+			}
+		}
 	}
 	
 	

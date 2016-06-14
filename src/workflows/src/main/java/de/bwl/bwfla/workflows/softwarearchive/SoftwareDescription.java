@@ -26,7 +26,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -35,14 +34,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-
-import de.bwl.bwfla.common.utils.Pair;
-import de.bwl.bwfla.workflows.forms.FormHardware;
-import de.bwl.bwfla.workflows.forms.FormOs;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.BundledFile;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.SoftwareBundle;
 

@@ -1,0 +1,9 @@
+<!-- Configuration of external process runner - don't change unless you know what your doing! -->
+    <runnerConf>
+        <wrapperScript>subprocess-wrapper.sh</wrapperScript>
+        <tmpdirPrefix>bwfla-pr-</tmpdirPrefix>
+        <runflagFilename>running</runflagFilename>
+        <pidFilename>pid</pidFilename>
+        <stdoutFilename>stdout.log</stdoutFilename>
+        <stderrFilename>stderr.log</stderrFilename>
+    </runnerConf>

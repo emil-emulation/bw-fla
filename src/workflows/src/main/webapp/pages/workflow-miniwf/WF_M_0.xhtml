@@ -5,91 +5,128 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwlcc="http://java.sun.com/jsf/composite/component">
 
 <ui:composition template="/template/formTemplate.xhtml">
 	<ui:param name="beanName" value="#{WF_M_0}" />
-	
+
 	<ui:define name="title">
 			bwFLA Basic System Environments 
 	</ui:define>
-	
+
 	<ui:define name="content">
-	<style>
-			#content {
-				margin-top: 0;
-			}
-			
-			.left-container {
-				display: inline-block;
-				margin-right: 30px;
-			}
-			
-			.right-container {
-				display: inline-block;
-				vertical-align: top;
-			}
-			
-			.tall-listbox {
-				width: 250px;
-			}
-			
-			.tall-listbox .ui-selectlistbox-listcontainer {
-				min-height: 250px;
-			}
-		</style>
-	
+		<style>
+.left-container {
+	display: inline-block;
+	margin-right: 30px;
+}
+
+.right-container {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.tall-listbox {
+	width: 250px;
+}
+
+.tall-listbox .ui-selectlistbox-listcontainer {
+	min-height: 250px;
+}
+</style>
+
 		<h:form>
-			<p:panelGrid style="width: 650px; margin: 0 auto 30px auto;">  	
+			<p:panelGrid style="width: 650px; margin: 0 auto 30px auto;">
 				<f:facet name="header">
-					<p:row><p:column colspan="2">
+					<p:row>
+						<p:column colspan="2">
 						Emulator / Image Choice
-					</p:column></p:row>
+					</p:column>
+					</p:row>
 				</f:facet>
-				
+
 				<p:row>
 					<p:column>
-					    <p:selectOneListbox id="emulator" value="#{WF_M_0.selectedBean}" 
-					    	styleClass="tall-listbox" 
-					    	required="true" requiredMessage="Please select an Emulator to proceed">
-				        		<f:selectItems value="#{WF_M_0.beanList}" />	        	
-				        		<p:ajax event="change" update="env" listener="#{WF_M_0.loadEnvList}" 
-				        			onstart="showLoadingAnimation();" oncomplete="hideLoadingAnimation();"/>
-				        </p:selectOneListbox>
-			        </p:column>
-			        
-			        <p:column>
-				        <p:selectOneListbox id="env" value="#{WF_M_0.selectedEnv}" 
-				        styleClass="tall-listbox" 
-				         required="true" requiredMessage="Please select an OS to proceed">
-				        	<f:selectItems value="#{WF_M_0.environmentList}" var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}" />
-				        	<f:selectItems value="#{WF_M_0.derivatesList}" var="env" itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
-				        	<f:selectItems value="#{WF_M_0.systemsList}" var="env" itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
-				        </p:selectOneListbox>
-			        </p:column>
-			   	</p:row>
-			   	
-			   	<p:row>	
-			        <p:column colspan="2">
-			        	<p:panel header="Help" collapsed="true" toggleable="true" toggleTitle="Help">
+						<p:selectOneListbox id="emulator" value="#{WF_M_0.selectedBean}"
+							styleClass="tall-listbox" required="true"
+							requiredMessage="Please select an Emulator to proceed">
+							<f:selectItems value="#{WF_M_0.beanList}" />
+							<p:ajax event="change" update="env"
+								listener="#{WF_M_0.loadEnvList}"
+								onstart="showLoadingAnimation();"
+								oncomplete="hideLoadingAnimation();" />
+						</p:selectOneListbox>
+					</p:column>
+
+					<p:column>
+						<p:selectOneListbox id="env" value="#{WF_M_0.selectedEnv}"
+							styleClass="tall-listbox" required="true"
+							requiredMessage="Please select an OS to proceed">
+							<f:selectItems value="#{WF_M_0.environmentList}" var="env"
+								itemLabel="#{env.description.title}" itemValue="#{env.id}" />
+							<f:selectItems value="#{WF_M_0.derivatesList}" var="env"
+								itemLabel="#{env.description.title} (D)" itemValue="#{env.id}" />
+							<f:selectItems value="#{WF_M_0.systemsList}" var="env"
+								itemLabel="#{env.description.title} (S)" itemValue="#{env.id}" />
+						</p:selectOneListbox>
+					</p:column>
+				</p:row>
+
+				<p:row>
+					<p:column colspan="2">
+						<p:panel header="Help" collapsed="true" toggleable="true"
+							toggleTitle="Help">
 			        		Help / Information
 			        	</p:panel>
-			        </p:column>
+					</p:column>
 				</p:row>
-				
+
 				<f:facet name="footer">
 					<p:row>
 						<p:column colspan="2">
 							<div align="right">
-								<p:commandButton id="nextButton" onclick="showLoadingAnimation()" 
-								widgetVar="nextButton" ajax="false"  action="#{WF_M_0.navigate}" 
-								value="Next" style="margin-right:10px;" icon="ui-icon-arrowthick-1-e"/>
+
+								<p:commandButton value="Download Image" ajax="false"
+									onclick="PrimeFaces.monitorDownload(start, stop);"
+									icon="ui-icon-arrowthick-1-s">
+									<p:fileDownload value="#{WF_M_0.imageFile}" />
+								</p:commandButton>
+
+								<p:spacer width="3" />
+
+								<p:commandButton value="Download Meta-Data" ajax="false"
+									onclick="PrimeFaces.monitorDownload(start, stop);"
+									icon="ui-icon-arrowthick-1-s">
+									<p:fileDownload value="#{WF_M_0.imageMetaData}" />
+								</p:commandButton>
+
+								<p:spacer width="3" />
+
+								<p:commandButton id="nextButton"
+									onclick="showLoadingAnimation()" widgetVar="nextButton"
+									ajax="false" action="#{WF_M_0.navigate}" value="Next"
+									style="margin-right:10px;" icon="ui-icon-arrowthick-1-e" />
 							</div>
 						</p:column>
-					</p:row>	
+					</p:row>
 				</f:facet>
 			</p:panelGrid>
 		</h:form>
+		
+		<script type="text/javascript">
+					function start() {
+   						 PF('statusDialog').show();
+					}
+ 
+					function stop() {
+    					PF('statusDialog').hide();
+					}
+		</script>
+		
+		<bwlcc:user-preference-dialog
+			rendered="#{not WF_M_0['didUserSetPrefs'] and WF_M_0['requirePrefs']}"
+			visible="true" closable="false" />
 	</ui:define>
 </ui:composition>
 </html>

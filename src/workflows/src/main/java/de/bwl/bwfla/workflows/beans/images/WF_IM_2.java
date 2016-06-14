@@ -59,9 +59,9 @@ public class WF_IM_2 extends BwflaEmulatorViewBean implements Serializable
 	@Override
 	public void initialize()
 	{
-		super.initialize();
 		emuHelper = wfData.getStorage().emuHelper;
 		description = wfData.getStorage().description;
+		super.initialize();
 	}
 	
 	@Override

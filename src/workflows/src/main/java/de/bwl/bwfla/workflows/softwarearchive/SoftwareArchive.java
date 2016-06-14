@@ -25,7 +25,6 @@ import java.io.FileReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.List;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -35,7 +34,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.workflows.softwarearchive.datatypes.BundledFile;
 

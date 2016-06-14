@@ -26,18 +26,18 @@
 		</p:dialog>  
 
 		  <script type="text/javascript">  
-function start() {  
-    statusDialog.show();  
-}  
-  
-function stop() {  
-    statusDialog.hide();  
-}  
+			function start() {  
+			    PF('statusDialog').show();  
+			}  
+			  
+			function stop() {  
+			    PF('statusDialog').hide();  
+			}  
         </script> 			
 		<p:dialog header="Please choose the Album Art Image file" widgetVar="uploadDialog" modal="true" width="750" resizable="false" draggable="false">
 			<h:form enctype="multipart/form-data">
 			    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_I_6.handleFileUpload}" update=":form:artUpload" 
-			    	mode="advanced" auto="true" oncomplete="uploadDialog.hide();" allowTypes="/(\.|\/)(jpeg|png)$/" />
+			    	mode="advanced" auto="true" oncomplete="PF('uploadDialog').hide();" allowTypes="/(\.|\/)(jpeg|png)$/" />
 			</h:form>
 		</p:dialog>
 	
@@ -71,7 +71,7 @@ function stop() {
 					<img height="100" width="100" style="display:block; margin: auto; box-shadow: 0 1px 3px rgba(34, 25, 25, 0.4);border-radius: 3px;margin-top: 5px;" src="#{WF_I_6.pictureURL}" />
 					<br />
 					
-					<p:commandButton value="Upload New Image" type="button" style="display:block; margin: auto; margin-top: 15px; margin-bottom: 10px;" onclick="uploadDialog.show();" update=":artUpload"/>
+					<p:commandButton value="Upload New Image" type="button" style="display:block; margin: auto; margin-top: 15px; margin-bottom: 10px;" onclick="PF('uploadDialog').show();" update=":artUpload"/>
 				</p:panel>
 				<br />
 			</div>

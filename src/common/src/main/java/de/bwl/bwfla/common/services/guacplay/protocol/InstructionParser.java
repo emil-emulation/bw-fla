@@ -177,6 +177,12 @@ public class InstructionParser
 		ilength = buffer.position() - ioffset;
 	}
 	
+	/** Skip the specified number of chars of the current instruction. */
+	public void skip(int n)
+	{
+		buffer.skip(n);
+	}
+	
 	/** Parse and return the length prefix at current position. */
 	private static int parseLength(CharArrayBuffer srcbuf)
 	{

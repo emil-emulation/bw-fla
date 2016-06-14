@@ -5,10 +5,10 @@ set -ex
 #################  GENERAL FLAVOR RELATED CHANGES ############ 
 BWFLA='/home/bwfla'
 
-echo "deb http://packages.bw-fla.uni-freiburg.de/ trusty bwfla-demo" > /etc/apt/sources.list.d/bwfla.list
-echo -e "Package: *\nPin: release c=bwfla-demo\nPin-Priority: 1001" > /etc/apt/preferences.d/pin-bwfla.pref
+echo "deb http://packages.bw-fla.uni-freiburg.de/ trusty bwfla" > /etc/apt/sources.list.d/bwfla.list
+echo -e "Package: *\nPin: release c=bwfla\nPin-Priority: 1001" > /etc/apt/preferences.d/pin-bwfla.pref
 apt-get update -y
-mkdir $BWFLA/.bwFLA
+mkdir -p $BWFLA/.bwFLA
 
 
 ################# 'COMMON' RELATED CHANGES ################## 
@@ -49,8 +49,7 @@ cat << EOF > $BWFLA/.bwFLA/ImageArchiveConf.xml
 
 <imageArchiveConf>
   <archiveBase>/home/bwfla/image-archive</archiveBase>
-  <nbdPrefix>nbd:%PUBLIC_IP%:10809:exportname=</nbdPrefix>
-  <httpPrefix/>
+  <httpPrefix>http://%PUBLIC_IP%/image-archive/</httpPrefix>
 </imageArchiveConf>
 EOF
 
@@ -86,15 +85,16 @@ qemu-system-x86 \
 qemu-system-ppc \
 sheepshaver \
 libcurl3 \
-libcurl3-gnutls
-
-mkdir /etc/mess
-echo "unevenstretch 0" >> /etc/mess/mess.ini
+libcurl3-gnutls \
+qemu-block-extra \
+xmount \
+libxmount-input-qemu
 
 cat << EOF > $BWFLA/.bwFLA/EmucompConf.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <emucompConf>
+    <controlUrlAddressHttp>%PUBLIC_IP%:80</controlUrlAddressHttp>
     <qemuBean>/usr/bin/qemu-system-</qemuBean>
     <basiliskBean>/usr/bin/BasiliskII.real</basiliskBean>
     <sheepShaverBean>/usr/bin/SheepShaver</sheepShaverBean>
@@ -110,12 +110,23 @@ EOF
 
 
 ################# 'FITS' RELATED CHANGES ################## 
-apt-get install -y --force-yes zip
-mkdir -p 'lib/fits.jar'
-echo 'fits.home=/home/bwfla/misc/fits' > 'lib/fits.jar/fits.properties'
-zip -u "$BWFLA/appserver/standalone/deployments/bwFLA.ear" lib/fits.jar/fits.properties
-rm -r lib
+cat << EOF > $BWFLA/.bwFLA/FitsConf.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
+<fitsConf>
+    <fitsHome>$BWFLA/misc/fits</fitsHome>
+</fitsConf>
+EOF
+
+################# 'OBEJCTS' RELATED CHANGES #################
+cat << EOF > $BWFLA/.bwFLA/ObjectArchiveConf.xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<objectArchiveConf>
+    <objDir>$BWFLA/object-archives/</objDir>
+    <httpExport>http://%PUBLIC_IP%/object-archive/</httpExport>
+</objectArchiveConf>
+EOF
 
 ################# 'WORKFLOWS' RELATED CHANGES #################
 mkdir -p $BWFLA/{software-archive,object-archives,object-metadata,system-envs,pics}
@@ -123,11 +134,10 @@ cat << EOF > $BWFLA/.bwFLA/WorkflowsConf.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <workflowsConf>
-    <archiveGw>%IMAGE_ARCHIVE%</archiveGw>
+    <imageArchive>%IMAGE_ARCHIVE%</imageArchive>
     <eaasGw>http://%EAAS_GATEWAY%/eaas-ejb/EaasWS?wsdl</eaasGw>
-
+    <objectArchive>%OBJECT_ARCHIVE%</objectArchive>
     <metaDir>$BWFLA/object-metadata</metaDir>
-    <objDir>$BWFLA/object-archives</objDir>
     <picDir>$BWFLA/pics</picDir>
     <swArchive>$BWFLA/software-archive/swarchive.xml</swArchive>
  
@@ -135,8 +145,8 @@ cat << EOF > $BWFLA/.bwFLA/WorkflowsConf.xml
 </workflowsConf>
 EOF
 
-mkdir $BWFLA/software-archive/{storage,incoming}
-echo "{\"type\":\"FILE\",\"name\":\"User-Objects\",\"baseUri\":\"%BASE_URI%\",\"localPath\":\"$BWFLA/user-objects/\"}" > $BWFLA/object-archives/user-objects.json
+mkdir -p $BWFLA/software-archive/{storage,incoming}
+echo "{\"type\":\"FILE\",\"name\":\"User-Objects\",\"localPath\":\"$BWFLA/user-objects/\"}" > $BWFLA/object-archives/user-objects.json
 cat << EOF > $BWFLA/software-archive/swarchive.xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
@@ -157,3 +167,10 @@ ln -sf /sbin/losetup /usr/bin/
 ln -sf /sbin/sfdisk /usr/bin/
 ln -sf /sbin/mkfs.* /usr/bin/
 ln -sf /sbin/mkdosfs /usr/bin/
+
+rm -rf /usr/lib/xmount/libxmount_input_aff.so
+
+# add the bwfla user to the fuse group
+adduser bwfla fuse
+# allow_other required for xmount
+sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf

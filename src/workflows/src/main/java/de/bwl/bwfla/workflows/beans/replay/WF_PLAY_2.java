@@ -21,12 +21,14 @@ package de.bwl.bwfla.workflows.beans.replay;
 
 import java.io.IOException;
 import java.io.Serializable;
+
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+
+import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.workflows.beans.common.BwflaEmulatorViewBean;
 import de.bwl.bwfla.workflows.beans.common.RemoteSessionPlayer;
-import de.bwl.bwfla.workflows.beans.common.WorkflowResources;
 
 
 @ManagedBean
@@ -54,19 +56,25 @@ public class WF_PLAY_2 extends BwflaEmulatorViewBean implements Serializable
 			log.warning("An attempt made to construct the bean multiple times! Skip the redundant construction.");
 			return;
 		}
-
-		super.initialize();
 		
 		super.emuHelper = wfdata.getRemoteEmulatorHelper();
-		
+		super.initialize();
 		// Initialize the remote session-player
 		player = new RemoteSessionPlayer(emuHelper.getEaasWS(), emuHelper.getSessionId());
 		wfdata.setRemoteSessionPlayer(player);
 		
 		// Send the session-trace to the remote session-player
-		String trace = wfdata.getSystemEnvironmentHelper().getRecording(wfdata.getEmulatorEnvId(), wfdata.getTrace().getUuid());
-		if (!player.prepare(trace, false))
-			this.panic("Preparing remote session-player failed!");
+		try {
+			final String envid = wfdata.getEmulatorEnvId();
+			final String traceid = wfdata.getTrace().getUuid();
+			final SystemEnvironmentHelper envHelper = wfdata.getSystemEnvironmentHelper();
+			String trace = envHelper.getRecording(envid, traceid);
+			if (!player.prepare(trace, false))
+				this.panic("Preparing remote session-player failed!");
+		}
+		catch (Exception exception) {
+			this.panic("Loading the specified session-trace failed!", exception);
+		}
 		
 		this.statusmsg = "Replaying...";
 	}
@@ -91,13 +99,6 @@ public class WF_PLAY_2 extends BwflaEmulatorViewBean implements Serializable
 	public boolean isPlaying()
 	{
 		return ((player != null) && player.isReplayModeEnabled());
-	}
-	
-	@Override
-	public void cleanup()
-	{
-		resourceManager.cleanupResources(WorkflowResources.WF_RES.EMU_COMP);
-		super.cleanup();
 	}
 	
 	@Override

@@ -1,10 +1,9 @@
 package edu.kit.scc.webreg.service;
 
 import java.util.List;
-
 import org.opensaml.saml2.metadata.EntityDescriptor;
-
 import edu.kit.scc.webreg.entity.FederationEntity;
+import edu.kit.scc.webreg.service.impl.FederationServiceImpl;
 
 /**
  * Known implementations: {@link FederationServiceImpl}

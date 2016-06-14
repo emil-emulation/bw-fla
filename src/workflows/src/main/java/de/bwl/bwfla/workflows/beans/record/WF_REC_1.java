@@ -46,10 +46,10 @@ public class WF_REC_1 extends BwflaFileAttachBean implements Serializable
 	public List<String> getDevices() 
 	{
 		if(imageDevices == null)
-			imageDevices = emuHelper.getImageDevices();
+			imageDevices = emuHelper.getMediaManager().getImageDevices();
 		
 		if(helperDevices == null)
-			helperDevices = emuHelper.getHelperDevices();
+			helperDevices = emuHelper.getMediaManager().getHelperDevices();
 		
 		return super.getDevices();
 	}
@@ -58,7 +58,7 @@ public class WF_REC_1 extends BwflaFileAttachBean implements Serializable
 	public String forward()
 	{
 		RemoteEmulatorHelper emuhelper = wfdata.getRemoteEmulatorHelper();
-		emuhelper.setFilesToInject(uploadedFiles);
+		emuhelper.getMediaManager().setFilesToInject(uploadedFiles);
 		// Construct the next page's URL
 		return WF_REC_Data.getPageUrl(2, true);
 	}

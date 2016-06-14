@@ -1,29 +1,17 @@
-/*
- * This file is part of the Emulation-as-a-Service framework.
- *
- * The Emulation-as-a-Service framework is free software: you can
- * redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * The Emulation-as-a-Service framework is distributed in the hope that
- * it will be useful, but WITHOUT ANY WARRANTY; without even the
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with the Emulation-as-a-Software framework.
- * If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.bwl.bwfla.emucomp.components.emulators;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.ejb.Stateful;
+
 import de.bwl.bwfla.common.datatypes.Drive;
 import de.bwl.bwfla.common.datatypes.Nic;
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.emucomp.conf.EmucompSingleton;
 
@@ -38,7 +26,11 @@ public class QemuBean extends EmulatorBean
 	public void prepareEmulatorRunner() throws BWFLAException
 	{
 		String qemu_bin = EmucompSingleton.CONF.qemuBean;
-		if(qemu_bin != null && !qemu_bin.contains("i386"))
+		
+		if(qemu_bin == null)
+			throw new BWFLAException("Emulator's executable not found! Make sure you have specified " + "a valid path to your executable in the corresponding 'properties' file");
+		
+		if(!qemu_bin.contains("i386"))
 			qemu_bin += emuEnvironment.getArch(); 
 
 		File exec = new File(qemu_bin);
@@ -48,7 +40,7 @@ public class QemuBean extends EmulatorBean
 		String config = this.getNativeConfig();
 		// Initialize the process-runner
 		runner.setCommand(exec.getAbsolutePath());
-		// runner.addArguments("-monitor", "stdio", "-k", "de");
+		runner.addArguments("-monitor", "stdio");
 		if (config != null && !config.isEmpty()) {
 			String[] tokens = config.trim().split("\\s+");
 			for (String token : tokens)
@@ -66,25 +58,40 @@ public class QemuBean extends EmulatorBean
 		else 
 		{
 			runner.addEnvVariable("QEMU_AUDIO_DRV", "sdl");
+			runner.addArguments("-k", "en-us");
 			this.setupEmulatorForSDLONP();
 		}
+	}
+	
+	@Override
+	public Set<String> getHotplugableDrives()
+	{
+		HashSet<String> set = new HashSet<String>();
+		set.add(DriveType.CDROM.name());
+		set.add(DriveType.DISK.name());
+		set.add(DriveType.FLOPPY.name());
+		return set;
 	}
 
 	@Override
 	public boolean addDrive(Drive drive) {
-		if (drive == null) {
-			LOG.warning("Drive is null, attach cancelled.");
-			return false;
-		}
-		String driveData = this.lookupResource(drive.getData());
-		if (driveData == null) {
-			LOG.warning("Drive doesn't reference a valid binding, attach cancelled.");
-			return false;
-		}
+        if (drive == null || (drive.getData() == null)) {
+            LOG.warning("Drive doesn't contain an image, attach canceled.");
+            return false;
+        }
+
+        Path imagePath = null;
+        try {
+            imagePath = Paths.get(this.lookupResource(drive.getData(), this.getImageFormatForDriveType(drive.getType())));
+        } catch (Exception e) {
+            LOG.warning("Drive doesn't reference a valid binding, attach canceled.");
+            return false;
+        }
+        
 		switch (drive.getType()) {
 		case FLOPPY:
 			runner.addArgument("-drive");
-			runner.addArgument("file=", driveData, ",index=", drive.getUnit(), ",if=", drive.getIface());
+			runner.addArgument("file=", imagePath.toString(), ",index=", drive.getUnit(), ",if=floppy");
 			if (drive.isBoot())
 				runner.addArguments("-boot", "order=a");
 
@@ -92,7 +99,7 @@ public class QemuBean extends EmulatorBean
 
 		case DISK:
 			runner.addArgument("-drive");
-			runner.addArgument("file=", driveData,
+			runner.addArgument("file=", imagePath.toString(),
 			                   ",if=", drive.getIface(),
 			                   ",bus=", drive.getBus(),
 			                   ",unit=", drive.getUnit(),
@@ -105,7 +112,7 @@ public class QemuBean extends EmulatorBean
 
 		case CDROM:
 			runner.addArgument("-drive");
-			runner.addArgument("file=", driveData,
+			runner.addArgument("file=", imagePath.toString(),
 			                   ",if=", drive.getIface(),
 			                   ",bus=", drive.getBus(),
 			                   ",unit=", drive.getUnit(),
@@ -131,40 +138,69 @@ public class QemuBean extends EmulatorBean
 			return false;
 		}
 
-		String hotplug = new String();
-		switch (drive.getType()) {
-		
-		case FLOPPY:
-			hotplug = (drive.getUnit().equals("0")) ? "floppy0" : "floppy1";
-			break;
+		StringBuilder command = new StringBuilder();
 
-		case CDROM:
-			hotplug = "ide1-cd0";
-			break;
+        if (!connect) {
+            // detach/eject
+            command.append("eject -f ");
 
-		default:
-			LOG.severe("Device type '" + drive.getType() + "' is not hot-pluggable.");
-			return false;
-		}
+            switch (drive.getType()) {
+            case FLOPPY:
+                command.append("floppy" + drive.getUnit());
+                break;
+            case CDROM:
+                command.append(drive.getIface().toLowerCase());
+                command.append(drive.getBus());
+                command.append("-");
+                command.append("cd");
+                command.append(drive.getUnit());
+                command.append(" ");
+                break;
+            default:
+                LOG.severe("Device type '" + drive.getType()
+                        + "' is not hot-pluggable.");
+                return false;
+            }
+        } else {
+            if (drive == null) {
+                LOG.warning("Drive doesn't contain an image, attach canceled.");
+                return false;
+            }
+            
+            Path imagePath = null;
+            try {
+                imagePath = Paths.get(this.lookupResource(drive.getData(), this.getImageFormatForDriveType(drive.getType())));
+            } catch (Exception e) {
+                LOG.warning("Drive doesn't reference a valid binding, attach cancelled.");
+                return false;
+            }
+            
+            command.append("change ");
 
-		String monitorCommand = null;
-		if (connect) {
-			monitorCommand = String.format("change %s %s%n", hotplug,
-			        drive.getData().substring("file://".length()));
-		}
-		else monitorCommand = String.format("eject %s%n", hotplug);
-		
-		LOG.info("connect cmd: " + monitorCommand);
-		try {
-			runner.writeToStdIn(monitorCommand);
-		}
-		catch (IOException e) {
-			LOG.warning("Writing to emulator's stdin failed!");
-			e.printStackTrace();
-			return false;
-		}
-
-		return true;
+            switch (drive.getType()) {
+            case FLOPPY:
+                command.append("floppy" + drive.getUnit());
+                command.append(" ");
+                break;
+            case CDROM:
+                command.append(drive.getIface().toLowerCase());
+                command.append(drive.getBus());
+                command.append("-");
+                command.append("cd");
+                command.append(drive.getUnit());
+                command.append(" ");
+                break;
+            default:
+                LOG.severe("Device type '" + drive.getType()
+                        + "' is not hot-pluggable.");
+                return false;
+            }
+            
+            command.append(imagePath.toString());
+            
+        }
+        this.sendMonitorCommand(command.toString());
+        return true;
 	}
 
 //    @Override
@@ -262,5 +298,16 @@ public class QemuBean extends EmulatorBean
 		runner.addArgument("-net");
 		runner.addArgument("vde,sock=", this.tempDir.toPath().resolve("nic_" + nic.getHwaddress()).toString());
 		return true;
+    }
+    
+    protected void sendMonitorCommand(String command) {
+        if (command != null && !command.isEmpty()) {
+            try {
+                this.runner.writeToStdIn(command + "\n");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 }

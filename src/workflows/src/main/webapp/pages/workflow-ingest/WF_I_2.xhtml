@@ -26,7 +26,6 @@
 	<ui:define name="content">
 		<style>
 #content {
-	margin-top: 0;
 	overflow: hidden;
 	padding: 0;
 }
@@ -71,6 +70,11 @@
 				<ui:include src="/template/emulator_content_default.xhtml">
 					<ui:param name="disablePositionHack" value="#{true}" />
 				</ui:include>
+				<ul class="emulator-menu">
+				<p:outputPanel rendered="#{not empty beanName['chosenMediaForDevices']}">
+					<li class="mediachange">Change Media</li>
+				</p:outputPanel>
+			</ul>
 			</div>
 
 			<div id="evaluation"

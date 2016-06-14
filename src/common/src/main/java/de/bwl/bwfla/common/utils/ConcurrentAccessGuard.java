@@ -20,10 +20,8 @@
 package de.bwl.bwfla.common.utils;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import de.bwl.bwfla.common.exceptions.ConcurrentAccessException;
 
 

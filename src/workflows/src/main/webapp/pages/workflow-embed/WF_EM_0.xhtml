@@ -20,12 +20,41 @@
                 html, body {background: transparent ! important;}
                 .wrapper, .content { display: block !important;}
 				#header, #menu {display: none !important;}
-				#content {margin: 0 !important}
            </style>
+           
+           <script>
+             // if this page is embedded, remove any outer margin
+             if (window.top !== window.self) {
+               $('#content').each(function () {
+                 this.style.setProperty('margin', '0', 'important' );
+               });
+             }
+           </script>
 			
 			<ui:include src="/template/emulator_content_default.xhtml">
 				<ui:param name="beanName" value="#{WF_EM_0}" />
 			</ui:include>
+			
+			<script>
+				// pass on messages about canvas size change to parent frame
+				window.addEventListener("message", function(message) {					
+					var target = window.parent;
+					if (!target) {
+						// not embedded, maybe for testing
+						return;
+					}
+
+					var data = JSON.parse(message.data);
+
+					if (data.opcode == undefined || data.w == undefined || data.h == undefined) {
+						// not the type of message we are interested in
+						return;
+					}
+					
+                    var origin = (window.location != window.parent.location) ? document.referrer: document.location;                                       
+                    target.postMessage(data, origin);
+				}, false);			
+			</script>
 		</ui:define>
 		
 		<ui:define name="header" />

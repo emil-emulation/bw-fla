@@ -19,25 +19,50 @@
 
 package de.bwl.bwfla.objectarchive.conf;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
+import de.bwl.bwfla.objectarchive.*;
+import de.bwl.bwfla.common.datatypes.FileCollection;
 import de.bwl.bwfla.common.utils.config.ConfigurationManager;
 
 
-
+@Singleton
+@Startup
 public class ObjectArchiveSingleton
 {
 	protected static final Logger				LOG	= Logger.getLogger(ObjectArchiveSingleton.class.getName());
 	public static volatile boolean 				confValid = false;
 	public static volatile ObjectArchiveConf	CONF;
+	public static ConcurrentHashMap<String, DigitalObjectArchive> archiveMap = null;
+	// public static ConcurrentHashMap<String, List<FileCollection>> archiveContent = null;
 
-	static
+	@PostConstruct
+	public void init()
 	{
 		ObjectArchiveSingleton.loadConf();
 	}
 
 	public static boolean validate(ObjectArchiveConf conf)
 	{
-		// TODO: here perform validation
+		if(conf == null)
+			return false;
+		
+		if(conf.objDir == null || conf.httpExport == null)
+			return false;
+		
+		File test = new File(conf.objDir);
+		if(!test.exists())
+			return false;
+		
 		return true;
 	}
 
@@ -45,5 +70,19 @@ public class ObjectArchiveSingleton
 	{ 
 		CONF = ConfigurationManager.load(ObjectArchiveConf.class);
 		confValid = ObjectArchiveSingleton.validate(CONF); 
+		
+		if(!confValid)
+			return;
+		
+		List<DigitalObjectArchive> archives = DigitalObjectArchiveFactory.createFromJson(new File(CONF.objDir));
+		
+		// archiveContent = new ConcurrentHashMap<>();
+		ObjectArchiveSingleton.archiveMap = new ConcurrentHashMap<>();
+		for(DigitalObjectArchive a : archives)
+		{
+			ObjectArchiveSingleton.archiveMap.put(a.getName(), a);
+			LOG.info("adding archive: " + a.getName());
+			// archiveContent.put(a.getName(), a.getObjectList());
+		}
 	}
 }

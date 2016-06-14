@@ -19,63 +19,55 @@
 
 package de.bwl.bwfla.common.services.guacplay.replay;
 
-import de.bwl.bwfla.common.services.guacplay.GuacDefs.SourceType;
-import de.bwl.bwfla.common.services.guacplay.net.GuacReader;
-import de.bwl.bwfla.common.services.guacplay.net.PlayerSocket;
-import de.bwl.bwfla.common.services.guacplay.protocol.AsyncMessageProcessor;
+import de.bwl.bwfla.common.services.guacplay.protocol.AsyncWorker;
+import de.bwl.bwfla.common.services.guacplay.protocol.BufferedMessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.protocol.Message;
+import de.bwl.bwfla.common.services.guacplay.util.RingBufferSPSC;
+
+// Internal class (package-private)
 
 
-public class ServerMessageProcessor extends AsyncMessageProcessor
+final class ServerMessageProcessor extends AsyncWorker
 {
 	// Member fields
-	private final Message message;
-	private final PlayerSocket socket;
-	private final GuacReader input;
-	
-	/** Timeout for waiting, when nothing can be read. */
-	private static final long TIMEOUT_ON_UNAVAILABLE = 250L;
+	private final BufferedMessageProcessor processor;
 	
 
 	/** Constructor */
-	public ServerMessageProcessor(String name, GuacReader input, PlayerSocket socket)
+	public ServerMessageProcessor(BufferedMessageProcessor processor)
 	{
-		super(name);
+		super();
 		
-		this.message = new Message(SourceType.SERVER);
-		this.socket = socket;
-		this.input = input;
+		this.processor = processor;
 	}
 	
 	@Override
 	protected void execute() throws Exception
 	{
-		// Can something be read?
-		if (!input.available()) {
-			condition.await(TIMEOUT_ON_UNAVAILABLE);
-			return;  // No, retry later
-		}
+		RingBufferSPSC<Message> messages = processor.getMessages();
+		Message message = null;
 		
-		// Yes, then read the new message
-		final char[] data = input.read();
-		if (data == null)
-			return;  // End-of-stream reached!
-		
-		// Post this message to the client
-		if (socket != null) {
-			synchronized (socket) {
-				socket.post(data, 0, data.length);
+		// Process all buffered messages
+		while ((message = messages.beginTakeOp()) != null) {
+			try {
+				processor.process(message);
+			}
+			finally {
+				message.reset();
+				messages.finishTakeOp();
 			}
 		}
-		
-		// Process it also on the server-side
-		message.set(0L, data, 0, data.length);
-		this.process(message);
 	}
 
 	@Override
 	protected void finish() throws Exception
 	{
 		// Do nothing!
+	}
+
+	@Override
+	protected String getName()
+	{
+		return processor.getName();
 	}
 }

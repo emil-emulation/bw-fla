@@ -190,6 +190,7 @@ public final class GuacDefs
 		public static final int VSYNC_END      = 2;
 		public static final int SESSION_BEGIN  = 3;
 		public static final int TERMINATION    = 4;
+		public static final int TRACE_END      = 5;
 	}
 	
 	/** Predefined names of the metadata-chunks */

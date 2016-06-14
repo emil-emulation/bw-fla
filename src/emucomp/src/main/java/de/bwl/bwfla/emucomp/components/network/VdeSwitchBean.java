@@ -20,7 +20,6 @@
 package de.bwl.bwfla.emucomp.components.network;
 
 import java.io.IOException;
-import javax.annotation.PostConstruct;
 import javax.ejb.Stateful;
 import javax.xml.bind.JAXBException;
 import org.apache.commons.io.FileUtils;
@@ -51,11 +50,11 @@ public class VdeSwitchBean extends NetworkSwitchBean {
 	
 	@Override
 	public String getNetworkEndpoint() {
-		VdeNetworkEndpoint localEndpoint = new VdeNetworkEndpoint(
-				NetworkUtils.getHostAddress().getHostAddress(), 
-				this.tempDir.toPath().resolve("sockets").toString(),
-				null);
 		try {
+	        VdeNetworkEndpoint localEndpoint = new VdeNetworkEndpoint(
+	                NetworkUtils.getHostAddress().getHostAddress(), 
+	                this.tempDir.toPath().resolve("sockets").toString(),
+	                null);
 			return localEndpoint.value();
 		} catch (JAXBException e) {
 			LOG.severe("Could not marshal network endpoint information.");
@@ -63,6 +62,10 @@ public class VdeSwitchBean extends NetworkSwitchBean {
 
 			// TODO throw BWFLAException
 			return null;
+		} catch (Exception e) {
+            LOG.severe("Could not determine public IP address.");
+		    e.printStackTrace();
+		    return null;
 		}
 	}
 

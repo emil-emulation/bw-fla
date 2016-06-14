@@ -5,7 +5,9 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:h="http://java.sun.com/jsf/html"
 	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:bwlcc="http://java.sun.com/jsf/composite/component"
+	>
 
 <ui:composition template="/template/formTemplate.xhtml">
 	<ui:param name="beanName" value="#{WF_A_0}" />
@@ -132,6 +134,9 @@
 		</h:form>
 	</p:panel>
 	
+	<bwlcc:user-preference-dialog
+			rendered="#{not WF_A_0['didUserSetPrefs'] and WF_A_0['requirePrefs']}"
+			visible="true" closable="false" />
 	</ui:define>
 
 </ui:composition>

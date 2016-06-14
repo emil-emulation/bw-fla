@@ -42,7 +42,8 @@ import org.glyptodon.guacamole.GuacamoleServerException;
 public class GuacSocket implements GuacamoleSocket
 {
 	/** The number of milliseconds to wait for data on the TCP socket. */
-	private static final int SOCKET_TIMEOUT = 15000;
+	//private static final int SOCKET_TIMEOUT = 15000;
+	private static final int SOCKET_TIMEOUT = 30000;
 	
 	private final Socket socket;
 	private final GuacReader reader;
@@ -53,7 +54,7 @@ public class GuacSocket implements GuacamoleSocket
 	public GuacSocket(String hostname, int port, IGuacInterceptor interceptor) throws GuacamoleException
 	{
 		final Logger log = LoggerFactory.getLogger(GuacSocket.class);
-		log.info("Connecting to GUACD at {}:{}.", hostname, port);
+		log.info("Connecting to guacd at {}:{}.", hostname, port);
 		
 		try {
 			// Create addresses
@@ -111,7 +112,7 @@ public class GuacSocket implements GuacamoleSocket
 	public void close() throws GuacamoleException
 	{
 		final Logger log = LoggerFactory.getLogger(GuacSocket.class);
-		log.info("Closing socket to GUACD.");
+		log.info("Closing socket to guacd.");
 		
 		// Signal the session end first!
 		IGuacInterceptor interceptor = reader.getInterceptor();

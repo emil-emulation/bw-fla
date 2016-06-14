@@ -21,7 +21,6 @@ package de.bwl.bwfla.common.datatypes;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 

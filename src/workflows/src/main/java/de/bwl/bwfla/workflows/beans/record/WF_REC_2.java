@@ -53,9 +53,8 @@ public class WF_REC_2 extends BwflaEmulatorViewBean implements Serializable
 			return;
 		}
 		
-		super.initialize();
-		
 		super.emuHelper = wfdata.getRemoteEmulatorHelper();
+		super.initialize();
 		
 		// Create and initialize the remote recorder
 		this.recorder = new RemoteSessionRecorder(emuHelper.getEaasWS(), emuHelper.getSessionId());

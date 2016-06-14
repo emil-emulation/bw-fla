@@ -62,6 +62,12 @@ public final class Message
 		this.length = length;
 	}
 	
+	/** Reset this message. */
+	public void reset()
+	{
+		this.set(0L, null, 0, 0);
+	}
+	
 	/** Update the message's contents. */
 	public void set(long timestamp, char[] data, int offset, int length)
 	{

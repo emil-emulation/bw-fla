@@ -20,6 +20,7 @@
 package de.bwl.bwfla.emucomp.conf;
 
 import javax.xml.bind.annotation.XmlRootElement;
+
 import de.bwl.bwfla.common.utils.config.Configuration;
 
 
@@ -27,8 +28,11 @@ import de.bwl.bwfla.common.utils.config.Configuration;
 public class EmucompConf extends Configuration
 {	 
 	private static final long	serialVersionUID	= -2357225601116924014L;
-	
+
+	public int       inactivityTimeout = 0;  // in seconds (0 == disabled)
 	public boolean   localmode = false;
+    public String    controlUrlAddressHttp;
+    public String    controlUrlAddressHttps;
 	public String	 qemuBean;
 	public String 	 basiliskBean;
 	public String	 sheepShaverBean;
@@ -36,7 +40,11 @@ public class EmucompConf extends Configuration
 	public String	 mameBean;
 	public String	 messBean;
 	public VboxExecs vboxBean;
+	public ViceExecs viceBean;
+	public PceExecs  pceBean;
 	public String	 amigaBean;
 	public String	 hatariBean;
 	public String	 vdeSwitchBean;
+	public String beebemBean;
+	public String kegsBean;
 }

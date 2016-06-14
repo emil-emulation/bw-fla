@@ -20,20 +20,19 @@
 package de.bwl.bwfla.common.services.guacplay.protocol;
 
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.SourceType;
-import de.bwl.bwfla.common.services.guacplay.protocol.AsyncMessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.protocol.Message;
 import de.bwl.bwfla.common.services.guacplay.util.CharArrayWrapper;
 import de.bwl.bwfla.common.services.guacplay.util.RingBufferSPSC;
 
 
-/** An abstract class, representing a worker for processing posted messages. */
-public abstract class BufferedMessageProcessor extends AsyncMessageProcessor
+/** A {@link MessageProcessor} for buffered messages. */
+public class BufferedMessageProcessor extends MessageProcessor
 {
 	// Member fields
 	protected final RingBufferSPSC<Message> messages;
 	
 	/** Time to wait, when the message-buffer is empty (in ms) */
-	protected static final long TIMEOUT_ON_EMPTY_BUFFER  = 1000L; 
+	public static final long TIMEOUT_ON_EMPTY_BUFFER  = 1000L;
 	
 	
 	/** Constructor */
@@ -49,10 +48,11 @@ public abstract class BufferedMessageProcessor extends AsyncMessageProcessor
 	 * @param source The source-type of the message.
 	 * @param timestamp The timestamp, when the message was recieved.
 	 * @param message The message's data.
+	 * @return The current number of unprocessed messages.
 	 */
-	public void postMessage(SourceType source, long timestamp, CharArrayWrapper message)
+	public int postMessage(SourceType source, long timestamp, CharArrayWrapper message)
 	{
-		this.postMessage(source, timestamp, message.array(), message.offset(), message.length());
+		return this.postMessage(source, timestamp, message.array(), message.offset(), message.length());
 	}
 	
 	/**
@@ -60,10 +60,11 @@ public abstract class BufferedMessageProcessor extends AsyncMessageProcessor
 	 * @param source The source-type of the message.
 	 * @param timestamp The timestamp, when the message was recieved.
 	 * @param data The array containing the message's data.
+	 * @return The current number of unprocessed messages.
 	 */
-	public void postMessage(SourceType source, long timestamp, char[] data)
+	public int postMessage(SourceType source, long timestamp, char[] data)
 	{
-		this.postMessage(source, timestamp, data, 0, data.length);
+		return this.postMessage(source, timestamp, data, 0, data.length);
 	}
 	
 	/**
@@ -73,22 +74,26 @@ public abstract class BufferedMessageProcessor extends AsyncMessageProcessor
 	 * @param data The array containing the message's data.
 	 * @param offset The offset of valid data.
 	 * @param length The length of valid data.
+	 * @return The current number of unprocessed messages.
 	 */
-	public void postMessage(SourceType source, long timestamp, char[] data, int offset, int length)
+	public int postMessage(SourceType source, long timestamp, char[] data, int offset, int length)
 	{
-		Message message = null;
-		
-		// Begin the insertion operation, retrying when the buffer is full
-		while ((message = messages.beginPutOp()) == null)
-			Thread.yield();
-		
 		// Put the new message into the buffer
+		final Message message = messages.beginBlockingPutOp();
 		message.set(source, timestamp, data, offset, length);
-		final int cursize = messages.finishPutOp();
+		return messages.finishPutOp();
+	}
 
-		// Notify the waiting thread, if the buffer was empty before
-		if (cursize == 1)
-			condition.signal();
+	/** Returns the buffered messages. */
+	public RingBufferSPSC<Message> getMessages()
+	{
+		return messages;
+	}
+	
+	/** Returns true when pending messages exist, else false. */
+	public boolean hasPendingMessages()
+	{
+		return !messages.isEmpty();
 	}
 	
 	

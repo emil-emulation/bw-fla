@@ -81,7 +81,7 @@
                var guac = new Guacamole.Client(new Guacamole.HTTPTunnel(tunnelUrl));
                var displayElement = guac.getDisplay().getElement();
     
-               BWFLA.hideClientCursor(guac.getDisplay());
+               BWFLA.hideClientCursor(guac);
                $('#display').prepend(displayElement);
     
                function onIFrameResize(width, height) 
@@ -136,10 +136,9 @@
        
                oskeyboard.onkeydown = function (keysym) { guac.sendKeyEvent(1, keysym); };
                oskeyboard.onkeyup = function (keysym) { guac.sendKeyEvent(0, keysym); };
-                
+               
               <ui:fragment rendered="#{htmlConnector.pointerLock}">
                   BWFLA.requestPointerLock(displayElement, 'click');
-                  BWFLA.hideClientCursor(guac.getDisplay());
               </ui:fragment>
 		</h:outputScript>
 	</p:outputPanel>

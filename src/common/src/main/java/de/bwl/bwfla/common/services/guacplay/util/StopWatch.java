@@ -19,10 +19,16 @@
 
 package de.bwl.bwfla.common.services.guacplay.util;
 
+import java.util.concurrent.TimeUnit;
+
 
 /** A simple stopwatch timer, for measuring time durations. */
 public final class StopWatch
 {
+	/** Number of nanoseconds in one millisecond. */
+	private static final long NANOSECONDS_IN_ONE_MILLISECOND
+			= TimeUtils.convert(1L, TimeUnit.MILLISECONDS, TimeUnit.NANOSECONDS);
+	
 	private long stime;
 	
 	/** Constructor */
@@ -44,5 +50,11 @@ public final class StopWatch
 	public long time()
 	{
 		return (System.nanoTime() - stime);
+	}
+	
+	/** Returns the time duration in milli-seconds, since last start() call. */
+	public long timems()
+	{
+		return this.time() / NANOSECONDS_IN_ONE_MILLISECOND;
 	}
 }

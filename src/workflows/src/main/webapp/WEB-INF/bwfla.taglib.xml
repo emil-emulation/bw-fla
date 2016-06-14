@@ -5,26 +5,6 @@
 <facelet-taglib>
     <namespace>http://bwfla.bwl.de/facelets</namespace>
     <tag>
-		<tag-name>emulator-applet-panel</tag-name>
-		<source>tags/de/bwl/bwfla/emulator-applet-panel.xhtml</source>
-    </tag>
-    <tag>
-		<tag-name>emulator-guacamole-panel</tag-name>
-		<source>tags/de/bwl/bwfla/emulator-guacamole-panel.xhtml</source>
-    </tag>
-     <tag>
-		<tag-name>emulator-novnc-panel</tag-name>
-		<source>tags/de/bwl/bwfla/emulator-novnc-panel.xhtml</source>
-    </tag>
-    <tag>
-		<tag-name>emulator-error-panel</tag-name>
-		<source>tags/de/bwl/bwfla/emulator-error-panel.xhtml</source>
-    </tag>
-    <tag>
-		<tag-name>emulator-default-panel</tag-name>
-		<source>tags/de/bwl/bwfla/emulator-default-panel.xhtml</source>
-    </tag>
-    <tag>
 		<tag-name>file-injection-panel</tag-name>
 		<source>tags/de/bwl/bwfla/file-injection-panel.xhtml</source>
     </tag>

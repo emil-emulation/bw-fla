@@ -20,7 +20,11 @@
 package de.bwl.bwfla.eaas.sessions;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.ConcurrencyManagement;
@@ -30,6 +34,8 @@ import javax.ejb.LockType;
 import javax.ejb.Singleton;
 
 import de.bwl.bwfla.api.cluster.ResourceAllocatorWS;
+import de.bwl.bwfla.common.exceptions.BWFLAException;
+import de.bwl.bwfla.common.utils.SoftwareArchiveHelper;
 
 
 @Singleton
@@ -42,14 +48,18 @@ public class SessionBean
 	// name -> group
 	public Map<String, NetworkGroup> componentGroups;
 	
+	// software id -> num. seats
+	private Map<String, SeatCounter> softwareSeats;
+	
 	private static final int SESSID_MIN = 0x1111;
 	private int sessId = SESSID_MIN;
 	
 	@PostConstruct
 	private void initialize()
 	{
-		sessions = new HashMap<String, Session>();
+		sessions = new ConcurrentHashMap<String, Session>();
 		componentGroups = new HashMap<String, NetworkGroup>();
+		softwareSeats = new ConcurrentHashMap<String, SeatCounter>();
 	}
 	
 	@Lock(LockType.WRITE)
@@ -100,6 +110,56 @@ public class SessionBean
 	    	componentGroups.remove(name);
 	}
 	
+	@Lock(LockType.WRITE)
+	public Iterator<Entry<String, Session>> getSessionsIterator() 
+	{
+		return sessions.entrySet().iterator();
+	}
+	
+	public int getNumSessions()
+	{
+		return sessions.size(); 
+	}
+	
+	public boolean allocateSoftwareSeat(String softwareId, SoftwareArchiveHelper archive)
+	{
+		SeatCounter counter = softwareSeats.get(softwareId);
+		if (counter == null) {
+			// No entry found, add new one atomically
+			synchronized (softwareSeats) {
+				if (!softwareSeats.containsKey(softwareId)) {
+					// Not yet added by other threads...
+					int numSeats = -1;
+					try {
+						numSeats = archive.getNumSoftwareSeatsById(softwareId);
+					}
+					catch (BWFLAException exception) {
+						exception.printStackTrace();
+						return false;
+					}
+					
+					if (numSeats < 1)
+						return true;  // Max. number of seats not specified!
+					
+					counter = new SeatCounter(numSeats);
+					softwareSeats.put(softwareId, counter);
+				}
+				// else already added by other thread! 
+			}
+		}
+		
+		return counter.increment();
+	}
+	
+	public void releaseSoftwareSeat(String softwareId)
+	{
+		SeatCounter counter = softwareSeats.get(softwareId);
+		if (counter == null)
+			return;
+		
+		counter.decrement();
+	}
+	
 //	@Lock(LockType.WRITE)
 //	public String registerSession(String clusterId) {
 //		String sessionId = String.valueOf(sessId++);
@@ -113,4 +173,34 @@ public class SessionBean
 //	{	
 //		return sessions.remove(sessionId) != null; 
 //	}
+}
+
+
+class SeatCounter
+{
+	private final AtomicInteger curNumSeats;
+	private final int maxNumSeats;
+	
+	public SeatCounter(int maxnum)
+	{
+		this.curNumSeats = new AtomicInteger(0);
+		this.maxNumSeats = maxnum;
+	}
+	
+	public boolean increment()
+	{
+		int newnum = curNumSeats.incrementAndGet();
+		if (newnum > maxNumSeats) {
+			// Max number of seats reached!
+			curNumSeats.decrementAndGet();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public int decrement()
+	{
+		return curNumSeats.decrementAndGet();
+	}
 }

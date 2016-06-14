@@ -20,11 +20,16 @@
 package de.bwl.bwfla.workflows.beans.miniwf;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
+
 import org.apache.myfaces.extensions.cdi.core.api.scope.conversation.WindowScoped;
+
 import de.bwl.bwfla.workflows.beans.common.RemoteEmulatorHelper;
 import de.bwl.bwfla.workflows.catalogdata.SystemEnvironmentDescription;
+import de.bwl.bwfla.workflows.softwarearchive.SoftwareDescription;
 
 @Named
 @WindowScoped

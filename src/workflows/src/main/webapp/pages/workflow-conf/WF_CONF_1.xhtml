@@ -18,7 +18,7 @@
 					<p:inputTextarea rows="15" cols="50" value="#{WF_CONF_1.newContent}" widgetVar="inputAreaNewVar" style="margin-right: 10px;overflow-x: scroll;" />
 				</div>
 				
-				<p:commandButton value="Copy Template" type="push" onclick="inputAreaNewVar.getJQ().val(inputAreaTemplateVar.getJQ().val());" style="float: left; margin-right: 10px;"/>
+				<p:commandButton value="Copy Template" type="push" onclick="PF('inputAreaNewVar').getJQ().val(PF('inputAreaTemplateVar').getJQ().val());" style="float: left; margin-right: 10px;"/>
 				
 				<div>
 					<p:inputTextarea rows="15" cols="50" value="#{WF_CONF_1.selectedProperty.templateContent}" readonly="true" widgetVar="inputAreaTemplateVar" style="overflow-x: scroll;"/>
@@ -27,8 +27,8 @@
 			
 			<script>
 				$(function() {
-					inputAreaNewVar.getJQ().attr('wrap', 'off');
-					inputAreaTemplateVar.getJQ().attr('wrap', 'off');
+					PF('inputAreaNewVar').getJQ().attr('wrap', 'off');
+					PF('inputAreaTemplateVar').getJQ().attr('wrap', 'off');
 				});
 			</script>
 			

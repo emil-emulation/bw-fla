@@ -22,7 +22,6 @@ package de.bwl.bwfla.common.utils;
 
 import java.io.File;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,10 +35,11 @@ import javax.xml.bind.JAXBException;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.soap.SOAPBinding;
 
+import de.bwl.bwfla.common.datatypes.AbstractDataResource;
 import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
 import de.bwl.bwfla.common.datatypes.Environment;
 import de.bwl.bwfla.common.datatypes.NetworkEnvironment;
-import de.bwl.bwfla.common.datatypes.Resource;
+import de.bwl.bwfla.common.datatypes.Binding;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.jaxwsstubs.imagearchive.ImageArchiveWSRemote;
 import de.bwl.bwfla.common.jaxwsstubs.imagearchive.ImageArchiveWSService;
@@ -74,7 +74,6 @@ public class SystemEnvironmentHelper implements Serializable
 	public SystemEnvironmentHelper(String wsHost)
 	{
 		this.wsHost = wsHost;
-		// archive = getImageArchiveCon(wsHost);
 	}
 	
 	private void connectArchive() throws BWFLAException
@@ -88,22 +87,21 @@ public class SystemEnvironmentHelper implements Serializable
 		
 	}
 	
-	
-	
 	private static ImageArchiveWSRemote getImageArchiveCon(String host)
 	{
 		URL wsdl;
 		ImageArchiveWSRemote archive;
 		try 
 		{
-			wsdl = new URL("http://" + host + "/imagearchive-ejb/ImageArchiveWS?wsdl");
+			wsdl = new URL("http://" + host + "/image-archive/ImageArchiveWS?wsdl");
 			ImageArchiveWSService service = new ImageArchiveWSService(wsdl);
 			archive = service.getImageArchiveWSPort();
 		} 
 		catch (Throwable t) 
 		{
 			// TODO Auto-generated catch block
-			Logger.getLogger(SystemEnvironmentHelper.class.getName()).info("Can not initialize wsdl from http://" + host + "/imagearchive-ejb/ImageArchiveWS?wsdl");
+			Logger.getLogger(SystemEnvironmentHelper.class.getName()).info("Can not initialize wsdl from http://" + host + "/image-archive/ImageArchiveWS?wsdl");
+			t.printStackTrace();
 			return null;
 		}
 
@@ -113,11 +111,24 @@ public class SystemEnvironmentHelper implements Serializable
 		bp.getRequestContext().put("javax.xml.ws.client.receiveTimeout", "0");
 		bp.getRequestContext().put("javax.xml.ws.client.connectionTimeout", "0");
 		bp.getRequestContext().put("com.sun.xml.internal.ws.transport.http.client.streaming.chunk.size", 8192);
-		bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "http://" + host + "/imagearchive-ejb/ImageArchiveWS");
+		bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "http://" + host + "/image-archive/ImageArchiveWS");
 
 		return archive;
 	}
 
+	public List<EmulationEnvironment> getEnvironments() throws BWFLAException
+	{
+		connectArchive();
+		reloadEnvironmentList();
+		List<EmulationEnvironment> out = new ArrayList<EmulationEnvironment>();
+		for(Environment env : environments)
+		{
+			if(env instanceof EmulationEnvironment)
+				out.add((EmulationEnvironment)env);
+		}
+		return out;
+	}
+	
 	public List<String> getBeanList() throws BWFLAException
 	{
 		List <String> _beanList = new ArrayList<String>();
@@ -358,8 +369,13 @@ public class SystemEnvironmentHelper implements Serializable
 	public Environment getPlatformById(String id) throws BWFLAException
 	{
 		connectArchive();
+		
+		String imageConf = archive.getImageById(id);
+		if(imageConf == null)
+			throw new BWFLAException("image with the following id cannot be located in the image archive: " + id);
+				
 		try {
-			return EmulationEnvironment.fromValue(archive.getImageById(id));
+			return EmulationEnvironment.fromValue(imageConf);
 		}
 		catch (Exception e) {
 			throw new BWFLAException("can't load image with id " + id + ": "  + e.getMessage());
@@ -405,8 +421,9 @@ public class SystemEnvironmentHelper implements Serializable
 		return archive.addRecordingFile(envId, traceId, data);
 	}
 	
-	public String getRecording(String envId, String traceId)
+	public String getRecording(String envId, String traceId) throws BWFLAException
 	{
+		this.connectArchive();
 		return archive.getRecording(envId, traceId);
 	}
 
@@ -419,9 +436,12 @@ public class SystemEnvironmentHelper implements Serializable
 		
 		String ref = archive.publishImage(image, id);
 		
-		Iterator<Resource> iterator = env.getBinding().iterator();
+		Iterator<AbstractDataResource> iterator = env.getAbstractDataResource().iterator();
 		while (iterator.hasNext()) {
-			Resource b = iterator.next();    
+			AbstractDataResource ar = iterator.next();
+			if(!(ar instanceof Binding))
+				continue;
+			Binding b = (Binding)ar;
 			if(b.getId().equals("main_hdd"))
 			{
 				b.setUrl(ref);

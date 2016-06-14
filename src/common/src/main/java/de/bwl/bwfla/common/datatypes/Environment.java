@@ -21,7 +21,6 @@ package de.bwl.bwfla.common.datatypes;
 
 import java.io.StringReader;
 import java.io.StringWriter;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -68,7 +67,9 @@ public class Environment {
 
     
     public static Environment fromValue(String data) throws JAXBException {
-    	JAXBContext jc = JAXBContext.newInstance(NetworkEnvironment.class, EmulationEnvironment.class);
+    	JAXBContext jc = JAXBContext.newInstance(NetworkEnvironment.class, EmulationEnvironment.class, 
+    			AbstractDataResource.class, 
+    			Binding.class, ArchiveBinding.class);
     	Unmarshaller unmarshaller = jc.createUnmarshaller();
     	return (Environment)unmarshaller.unmarshal(new StreamSource(new StringReader(data)));
     }

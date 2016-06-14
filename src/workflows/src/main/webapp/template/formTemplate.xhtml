@@ -63,28 +63,65 @@
 	</div>
 	
 	<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
-    
-    <p:graphicImage library="images" name="ajaxloadingbar.gif" />
+    	<p:graphicImage library="images" name="ajaxloadingbar.gif" />
 	</p:dialog>
 	
-	<script type="text/javascript">
-		
-		function showLoadingAnimation(customMessage) {
-			 PF('statusDialog').show();
+	<script type="text/javascript">		
+		function showLoadingAnimation() {
+			PF('statusDialog').show();
 		}
 		
 		function hideLoadingAnimation() {
-			window.userTriggeredLoadingAnimation = false;
-			 PF('statusDialog').hide();
+			PF('statusDialog').hide();
 		}
 	</script>
 	
 	<script type="text/javascript">
 	$(function(){
 		if (!isPrimefacesCompatible()) {
-			growlVar.show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
+			PF('growlVar').show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
 		}
 	});
+	</script>
+	
+	<script type="text/javascript">
+		$(function() {
+			if($.browser.msie) {
+				if ($.browser.versionNumber == 8) {
+					PF('growlVar').show([{summary: 'Warning', detail: 'We do not yet fully support Internet Explorer 8. You may experience bugs.', severity: 'warn'}]);
+				}
+			}
+		});
+	</script>
+	
+	<script>
+	(function() {
+		var reloadWarningEnabled = true;
+		
+		window.setEnablePageReloadWarning = function(enabled) {
+			reloadWarningEnabled = enabled;
+			
+			if (!enabled) {
+				window.onbeforeunload = null;
+			}
+		}
+		
+		// remove the onbeforeunload handler when the user clicks links or buttons on the page to navigate
+	    $(window).on('mouseover', function () {
+	        window.onbeforeunload = null;
+	    });		
+		
+	    function onbeforeunloadHandler() {
+	    	if (reloadWarningEnabled) {
+		        window.onbeforeunload = function() {
+				    return "Using browser navigation (back, reload, etc.) breaks eaas workflows.";
+		        }
+	    	}
+		}
+		
+		// (re-)attach the handler when the user leaves the page e.g. to press the reload button
+	    $(window).on('mouseout', onbeforeunloadHandler);
+	})();
 	</script>
 </h:body>
 

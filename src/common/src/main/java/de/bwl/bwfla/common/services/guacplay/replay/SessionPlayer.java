@@ -32,8 +32,10 @@ import de.bwl.bwfla.common.services.guacplay.GuacDefs.EventType;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.ExtOpCode;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.MetadataTag;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.OpCode;
+import de.bwl.bwfla.common.services.guacplay.GuacDefs.SourceType;
 import de.bwl.bwfla.common.services.guacplay.events.EventSink;
 import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
+import de.bwl.bwfla.common.services.guacplay.events.IGuacEventListener;
 import de.bwl.bwfla.common.services.guacplay.graphics.OffscreenCanvas;
 import de.bwl.bwfla.common.services.guacplay.graphics.ScreenRegionList;
 import de.bwl.bwfla.common.services.guacplay.io.BlockReader;
@@ -45,6 +47,8 @@ import de.bwl.bwfla.common.services.guacplay.io.TraceFileReader;
 import de.bwl.bwfla.common.services.guacplay.net.GuacTunnel;
 import de.bwl.bwfla.common.services.guacplay.net.PlayerSocket;
 import de.bwl.bwfla.common.services.guacplay.net.PlayerTunnel;
+import de.bwl.bwfla.common.services.guacplay.protocol.BufferedMessageProcessor;
+import de.bwl.bwfla.common.services.guacplay.protocol.MessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.ActfinInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.ArcInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.CFillInstrHandler;
@@ -55,6 +59,7 @@ import de.bwl.bwfla.common.services.guacplay.protocol.handler.DisposeInstrHandle
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.InstructionSkipper;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.KeyInstrHandlerPLAY;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.LineInstrHandler;
+import de.bwl.bwfla.common.services.guacplay.protocol.handler.MouseInstrHandlerPLAY;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.PngInstrHandlerPLAY;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.RectInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.SizeInstrHandler;
@@ -68,7 +73,7 @@ import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
 import de.bwl.bwfla.common.utils.ProcessMonitor;
 
 
-public class SessionPlayer implements ICharArrayConsumer
+public class SessionPlayer implements ICharArrayConsumer, IGuacEventListener
 {
 	/** Logger instance. */
 	private final Logger log = LoggerFactory.getLogger(SessionPlayer.class);
@@ -79,8 +84,11 @@ public class SessionPlayer implements ICharArrayConsumer
 	private final EventSink esink;
 	private final OffscreenCanvas canvas;
 	private final TraceBlockReader tblock;
-	private final TraceFileProcessor traceFileProcessor;
-	private final ServerMessageProcessor serverMsgProcessor;
+	private final MessageProcessor traceFileProcessor;
+	private final BufferedMessageProcessor serverMsgProcessor;
+	private final TraceFileProcessor traceFileWorker;
+	private final ServerMessageProcessor serverMsgWorker;
+	private final ServerMessageReader serverMsgReader;
 	private TraceFile tfile;
 	private TraceFileReader treader;
 	private IReplayProgress progress;
@@ -94,18 +102,21 @@ public class SessionPlayer implements ICharArrayConsumer
 		FINISHED
 	}
 	
+	/** Number of unprocessed messages, before message-processors start to block. */
+	private static final int MESSAGE_BUFFER_CAPACITY = 1024;
+	
 	
 	/** Constructor */
 	public SessionPlayer(String id, GuacTunnel emutunnel, ProcessMonitor monitor)
 	{
-		this(id, emutunnel, null, monitor);
+		this(id, emutunnel, monitor, true);
 	}
 	
 	/** Constructor */
-	public SessionPlayer(String id, GuacTunnel emutunnel, PlayerTunnel tunnel, ProcessMonitor monitor)
+	public SessionPlayer(String id, GuacTunnel emutunnel, ProcessMonitor monitor, boolean headless)
 	{
 		this.emutunnel = emutunnel;
-		this.tunnel = tunnel;
+		this.tunnel = (headless) ? null : new PlayerTunnel(emutunnel, this, 128);
 		this.esink = new EventSink(2);
 		this.canvas = new OffscreenCanvas();
 		this.tblock = new TraceBlockReader();
@@ -113,29 +124,54 @@ public class SessionPlayer implements ICharArrayConsumer
 		this.treader = null;
 		this.progress = null;
 		
-		PlayerSocket socket = null;
-		if (tunnel != null) {
-			socket = (PlayerSocket) tunnel.getSocket();
-			socket.setWriterOutput(this);
-		}
-		
 		id = id.toUpperCase();
 		
-		this.serverMsgProcessor = new ServerMessageProcessor("SMP-" + id, emutunnel.getGuacReader(), socket);
-		this.traceFileProcessor = new TraceFileProcessor("TFP-" + id, tblock);
+		this.serverMsgProcessor = new BufferedMessageProcessor("SMP-" + id, MESSAGE_BUFFER_CAPACITY);
+		this.traceFileProcessor = new MessageProcessor("TFP-" + id);
+		this.serverMsgWorker = new ServerMessageProcessor(serverMsgProcessor);
+		this.traceFileWorker = new TraceFileProcessor(traceFileProcessor, tblock, esink);
+		this.serverMsgReader = (headless) ? new ServerMessageReader("SMR-" + id, serverMsgProcessor, emutunnel.getGuacReader(), this) : null;
+
+		final ICharArrayConsumer emuinput = new ICharArrayConsumer() {
+			@Override
+			public void consume(char[] data, int offset, int length) throws Exception
+			{
+				GuacTunnel tunnel = SessionPlayer.this.emutunnel;
+				try {
+					GuacamoleWriter writer = tunnel.acquireWriter();
+					writer.write(data, offset, length);
+				}
+				finally {
+					tunnel.releaseWriter();
+				}
+			}
+		};
 		
-		final InstructionForwarder forwarder = new InstructionForwarder(this);
+		ICharArrayConsumer client = null;
+		if (!headless) {
+			final PlayerSocket socket = (PlayerSocket) tunnel.getSocket();
+			client = new ICharArrayConsumer() {
+				@Override
+				public void consume(char[] data, int offset, int length) throws Exception
+				{
+					synchronized (socket) {
+						socket.post(data, offset, length);
+					}
+				}
+			};
+		}
+		
 		final ScreenRegionList updates = new ScreenRegionList(128);
 		
 		// Construct the handlers for client messages
 		{
-			VSyncInstrHandler vsyncInstrHandler = new VSyncInstrHandler(canvas, socket, esink);
-			SupdInstrHandler supdInstrHandler = new SupdInstrHandler(updates, socket);
+			VSyncInstrHandler vsyncInstrHandler = new VSyncInstrHandler(canvas, client, esink);
+			SupdInstrHandler supdInstrHandler = new SupdInstrHandler(updates, client);
 			esink.addConsumer(vsyncInstrHandler);
 			esink.addConsumer(supdInstrHandler);
 			
-			traceFileProcessor.addInstructionHandler(OpCode.KEY, new KeyInstrHandlerPLAY(this, esink));
-			traceFileProcessor.addInstructionHandler(OpCode.MOUSE, forwarder);
+			traceFileProcessor.addInstructionHandler(OpCode.KEY, new KeyInstrHandlerPLAY(emuinput, esink));
+			traceFileProcessor.addInstructionHandler(OpCode.MOUSE, new MouseInstrHandlerPLAY(emuinput, supdInstrHandler));
 			traceFileProcessor.addInstructionHandler(ExtOpCode.VSYNC, vsyncInstrHandler);
 			traceFileProcessor.addInstructionHandler(ExtOpCode.SCREEN_UPDATE, supdInstrHandler);
 			traceFileProcessor.addInstructionHandler(ExtOpCode.ACTION_FINISHED, new ActfinInstrHandler(monitor));
@@ -165,7 +201,7 @@ public class SessionPlayer implements ICharArrayConsumer
 			serverMsgProcessor.addInstructionHandler(OpCode.RECT, new RectInstrHandler(canvas));
 			serverMsgProcessor.addInstructionHandler(OpCode.SIZE, sizeInstrHandler);
 			serverMsgProcessor.addInstructionHandler(OpCode.START, new StartInstrHandler(canvas));
-			serverMsgProcessor.addInstructionHandler(OpCode.SYNC, forwarder);
+			serverMsgProcessor.addInstructionHandler(OpCode.SYNC, new InstructionForwarder(emuinput));
 			
 			// Mark instructions to ignore
 			serverMsgProcessor.addInstructionHandler(OpCode.ARGS, iskipper);
@@ -199,7 +235,15 @@ public class SessionPlayer implements ICharArrayConsumer
 			serverMsgProcessor.addInstructionHandler(OpCode.TRANSFORM, itrap);
 		}
 		
+		esink.addConsumer(this);
+		
 		this.state = State.READY;
+	}
+	
+	/** Returns the player's tunnel to use by a client. */
+	public PlayerTunnel getPlayerTunnel()
+	{
+		return tunnel;
 	}
 	
 	/** Returns the path of the replayed trace-file. */
@@ -229,7 +273,7 @@ public class SessionPlayer implements ICharArrayConsumer
 	/** Returns true, when this player is running, else false. */
 	public boolean isPlaying()
 	{
-		return traceFileProcessor.isRunning();
+		return traceFileWorker.isRunning();
 	}
 	
 	/** Returns true, when this player finished, else false. */
@@ -256,13 +300,15 @@ public class SessionPlayer implements ICharArrayConsumer
 		MetadataChunk chunk = tfile.getMetadata().getChunk(MetadataTag.INTERNAL);
 		if (chunk.containsKey(SessionRecorder.MDKEY_NUM_TRACE_ENTRIES)) {
 			int numEntriesMax = chunk.getAsInt(SessionRecorder.MDKEY_NUM_TRACE_ENTRIES);
-			progress = new EntryBasedProgress(traceFileProcessor, numEntriesMax);
+			progress = new EntryBasedProgress(traceFileWorker, numEntriesMax);
 		}
 		else progress = new SizeBasedProgress(tblock); 
 		
 		// Start the processors now
-		serverMsgProcessor.start();
-		traceFileProcessor.start();
+		serverMsgWorker.start();
+		traceFileWorker.start();
+		if (serverMsgReader != null)
+			serverMsgReader.start();
 		
 		state = State.PREPARED;
 	}
@@ -278,11 +324,15 @@ public class SessionPlayer implements ICharArrayConsumer
 		// Notify about the termination of the processor
 		esink.consume(new GuacEvent(EventType.TERMINATION, this));
 		
+		// Stop reading messages, when in headless-mode
+		if (serverMsgReader != null)
+			serverMsgReader.terminate(true);
+		
 		// Request the termination of server-processor, then
 		// trace-processor and wait for both to finish!
-		serverMsgProcessor.terminate(false);
-		traceFileProcessor.terminate(true);
-		serverMsgProcessor.terminate(true);
+		serverMsgWorker.terminate(false);
+		traceFileWorker.terminate(true);
+		serverMsgWorker.terminate(true);
 		
 		// Finish reading and close!
 		if (tfile != null) {
@@ -303,13 +353,20 @@ public class SessionPlayer implements ICharArrayConsumer
 		if (log.isDebugEnabled())
 			log.debug("Instruction consumed: {}", new String(data, offset, length));
 		
-		try {
-			GuacamoleWriter writer = emutunnel.acquireWriter();
-			writer.write(data, offset, length);
-		}
-		finally {
-			emutunnel.releaseWriter();
-		}
+		if (serverMsgProcessor.postMessage(SourceType.SERVER, 0L, data, offset, length) == 1)
+			serverMsgWorker.wakeup();
+	}
+
+	@Override
+	public void onGuacEvent(GuacEvent event)
+	{
+		if (event.getType() != EventType.TRACE_END)
+			return;
+		
+		// Now we can enable writing into the
+		// tunnel for the connected client!
+		if (tunnel != null)
+			tunnel.enableWriting();
 	}
 }
 

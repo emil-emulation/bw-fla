@@ -21,11 +21,17 @@ package de.bwl.bwfla.workflows.conf;
 
 import java.lang.reflect.Field;
 import java.util.logging.Logger;
+
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
+import de.bwl.bwfla.common.utils.ObjectArchiveHelper;
 import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 import de.bwl.bwfla.common.utils.config.ConfigurationManager;
 
 
-
+@Singleton
+@Startup
 public class WorkflowSingleton
 {
 	protected static final Logger			LOG	= Logger.getLogger(WorkflowSingleton.class.getName());
@@ -33,6 +39,7 @@ public class WorkflowSingleton
 	public static volatile WorkflowsConf	CONF;
 	
 	public static SystemEnvironmentHelper 	envHelper;
+	public static ObjectArchiveHelper		objHelper;
 	
 	static
 	{
@@ -83,7 +90,9 @@ public class WorkflowSingleton
 			LOG.severe("invalid workflow configuration");
 			return;
 		}
-		envHelper = new SystemEnvironmentHelper(CONF.archiveGw);
+		
+		envHelper = new SystemEnvironmentHelper(CONF.imageArchive);
+		objHelper = new ObjectArchiveHelper(CONF.objectArchive);
 	}
 	
 	synchronized public static void saveConf(WorkflowsConf conf)
@@ -92,6 +101,7 @@ public class WorkflowSingleton
 		confValid = validate(CONF);		
 		ConfigurationManager.save(conf);
 		
-		envHelper = confValid ? new SystemEnvironmentHelper(CONF.archiveGw) : null;
+		envHelper = confValid ? new SystemEnvironmentHelper(CONF.imageArchive) : null;
+		objHelper = confValid ? new ObjectArchiveHelper(CONF.objectArchive) : null;
 	}
 }

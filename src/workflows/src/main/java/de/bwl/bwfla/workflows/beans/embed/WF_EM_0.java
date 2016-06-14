@@ -24,9 +24,13 @@ import java.util.Map;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
+import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.workflows.beans.common.BwflaEmulatorViewBean;
 import de.bwl.bwfla.workflows.beans.common.CitationUrlHelper;
@@ -40,14 +44,16 @@ import de.bwl.bwfla.workflows.catalogdata.Description;
 public class WF_EM_0 extends BwflaEmulatorViewBean 
 {
 	private static final long	serialVersionUID	= -2323912800593361682L;
-	private boolean				sessionObtained		= false;
 	private boolean				sessionInitialised	= false;
+	
+	@Inject
+	private WF_EM_data wfData;
 
 	@Override
-	public void monitorState(ActionEvent event)
+	public void observeReadiness(ActionEvent event) throws BWFLAException
 	{
 		if(sessionInitialised)
-			super.monitorState(event);
+			super.observeReadiness(event);
 		else
 			log.warning("will not monitor state, remote emulator helper has to be initialized first");
 	}
@@ -58,29 +64,55 @@ public class WF_EM_0 extends BwflaEmulatorViewBean
 		if(jsf.isPostback())
 			return;
 		
-		super.initialize();
+		final ExternalContext extcontext = FacesContext.getCurrentInstance().getExternalContext();
+		final Map<String, String> parameters = extcontext.getRequestParameterMap();
+		String urlPrefix = null;
 		
-		String paramString = "";
-		for(Map.Entry<String, String> param:  FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().entrySet())
+		if(wfData.getStorage().initialURL == null)
 		{
-			paramString += param.getKey() + "=" + param.getValue() + "&";
-			if(param.getKey().equals("sessionOk"))
-				sessionObtained = true;
+			StringBuffer uri = ((HttpServletRequest) (extcontext.getRequest())).getRequestURL();
+			String query =  ((HttpServletRequest) (extcontext.getRequest())).getQueryString();
+			wfData.getStorage().initialURL = uri.toString() + "?" + query;
+			System.out.println("original url: " + wfData.getStorage().initialURL);
 		}
-				
-		if(!sessionObtained)
-			try 
-			{
+		
+		final String traceid = parameters.get("traceid");
+		if (traceid != null && !traceid.isEmpty())
+			urlPrefix = "/faces/pages/workflow-embed/WF_EM_replay.xhtml?";
+		else {
+			final String sessok = parameters.get("sessionOk");
+			if (sessok == null || !sessok.contentEquals("1")) 
+				urlPrefix = "/faces/pages/workflow-embed/WF_EM_0.xhtml?";
+		}
+		
+		if (urlPrefix != null) {
+			// Reconstruct the original URL
+			final StringBuilder url = new StringBuilder(1024);
+			url.append(urlPrefix);
+			
+			// ... append all parameters
+			for (Map.Entry<String, String> parameter : parameters.entrySet()) {
+				url.append(parameter.getKey());
+				url.append('=');
+				url.append(parameter.getValue());
+				url.append('&');
+			}
+			url.append("sessionOk=1&faces-redirect=true");
+			
+			try {
+				// Redirect to obtain user-session
 				jsf.getExternalContext().getSession(true);
-				FacesContext.getCurrentInstance().getExternalContext().redirect("/faces/pages/workflow-embed/WF_EM_0.xhtml?" + paramString + "sessionOk=1&faces-redirect=true");
+				log.info("Redirect to:  " + url.toString());
+				wfData.getStorage().initialURL = url.toString();
+				extcontext.redirect(url.toString());
 				return;
 			} 
-			catch (IOException e) 
-			{
-				e.printStackTrace();
-				panic("unable to perform redirection in order to obtain user session");
+			catch (IOException exception) {
+				exception.printStackTrace();
+				this.panic("Unable to perform redirection in order to obtain user session");
 			}
-		
+		}
+				
 		Description	desc = CitationUrlHelper.getDescription(jsf);
 		if(desc == null)
 			panic("user has specified wrong environment description, check passed URL parameter string");
@@ -92,9 +124,26 @@ public class WF_EM_0 extends BwflaEmulatorViewBean
 		}
 		if(this.emuHelper == null)
 			panic("emulator helper could not be created for the corresponding platform");
-			
+		
+		EmulationEnvironment env = emuHelper.getEmulationEnvironment();
+		if(emuHelper.requiresUserPrefs())
+		{
+			if(!this.isDidUserSetPrefs()) {
+				System.out.println("requires userprefs");
+				try {
+					extcontext.redirect("/faces/pages/workflow-embed/WF_EM_prefs.xhtml");
+					return;
+				} catch (IOException e) {
+					this.panic("failed redirecting to user pref site", e);
+				}
+			}
+			setUserPreferences(env);
+		}
+		
+		super.initialize();
 		try
-		{	
+		{
+			this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, this.emuHelper);
 			this.resourceManager.disableTimeout();
 			this.emuHelper.initialize();
 		}
@@ -103,7 +152,6 @@ public class WF_EM_0 extends BwflaEmulatorViewBean
 			this.resourceManager.restartTimeout();
 		}
 		
-		this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, this.emuHelper);
 		this.sessionInitialised = true;
 	}
 

@@ -19,6 +19,7 @@
 
 package de.bwl.bwfla.workflows.catalogdata;
 
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
 import de.bwl.bwfla.common.utils.SystemEnvironmentHelper;
 
 public class ObjectEvaluationDescription extends ObjectEnvironmentDescription 
@@ -29,8 +30,8 @@ public class ObjectEvaluationDescription extends ObjectEnvironmentDescription
 	private static final long serialVersionUID = 9117415344270769129L;
 
 	public ObjectEvaluationDescription(SystemEnvironmentHelper envHelper,
-			String envId, String objId, String objRef) {
-		super(envHelper, envId, objId, objRef);
+			String envId, String archiveHost, String archiveName, String objId, DriveType type) {
+		super(envHelper, envId, archiveHost, archiveName, objId, type);
 		this.setDescriptionType(DescriptionTypes.TYPE.EVALUATION);
 	}
 	

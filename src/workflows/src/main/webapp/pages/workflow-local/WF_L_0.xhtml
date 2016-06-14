@@ -7,21 +7,21 @@
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:p="http://primefaces.org/ui">
 
-<ui:composition template="/template/formTemplateAlternate.xhtml">
+<ui:composition template="/template/emil-local-template.xhtml">
 	<ui:param name="beanName" value="#{WF_L_0}" />
-	<ui:define name="title">bwFLA Demo-Server</ui:define>
+	<ui:define name="title">EMIL Local-Workflow</ui:define>
 	<ui:define name="menu"/>
 	
 	<ui:define name="content">
 		<div class="page-index">
-			<div style="width: 750px; margin: auto auto; text-align: center;">
-	    		<img style="margin: auto auto 40px; width=100%;" src="#{resource['images:emil-logo.png']}"/>
+			<div>
+	    		<img class="logo" src="#{resource['images:emil-logo.png']}"/>
 	    		<div class="tagline" style="margin-bottom: 1em;">This server shows <strong>demo access-workflow</strong> to illustrate use cases for a local emulation service</div>
-	    		<div>(Press <i>Ctrl+W</i> to close this workflow)</div>
+	    		<div class="tagline">(Press <i>Ctrl+W</i> to close this workflow)</div>
 	    	</div>
 	    	
 			<h:form>
-				<p:panelGrid style="width: 750px; margin: 50px auto;">  	
+				<p:panelGrid style="margin: 30px auto; text-align: left;">  	
 					<f:facet name="header">
 						<p:row><p:column colspan="2">
 							Emulator / Image Choice
@@ -31,7 +31,7 @@
 					<p:row>
 						<p:column>
 						    <p:selectOneListbox id="emulator" value="#{WF_L_0.selectedBean}" 
-						    	style="height:250px; width: 300px; margin: 10px auto;" 
+						    	style="height: 210px; width: auto; min-width: 180px; margin: 10px auto;" 
 						    	required="true" requiredMessage="Please select an Emulator to proceed">
 					        		<f:selectItems value="#{WF_L_0.beanList}" />	        	
 					        		<p:ajax event="change" update="env" listener="#{WF_L_0.loadEnvList}" 
@@ -41,7 +41,7 @@
 				        
 				        <p:column>
 					        <p:selectOneListbox id="env" value="#{WF_L_0.selectedEnv}" 
-					        	style="height:250px; width: 450px; margin: 10px auto"
+					        	style="height:210px; width: auto; min-width: 380px; margin: 10px auto"
 					        	required="true" requiredMessage="Please select an OS to proceed">
 					        		<f:selectItems value="#{WF_L_0.environmentList}" 
 					        			var="env" itemLabel="#{env.description.title}" itemValue="#{env.id}" />
@@ -67,19 +67,16 @@
 				</p:panelGrid>
 			</h:form>
 			
-			<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
-    
-		    <p:graphicImage library="images" name="ajaxloadingbar.gif" />
+			<p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">    
+		    	<p:graphicImage library="images" name="ajaxloadingbar.gif" />
 			</p:dialog>
 			
-			<script type="text/javascript">
-				
-				function showLoadingAnimation(customMessage) {
+			<script type="text/javascript">				
+				function showLoadingAnimation() {
 					 PF('statusDialog').show();
 				}
 				
 				function hideLoadingAnimation() {
-					window.userTriggeredLoadingAnimation = false;
 					 PF('statusDialog').hide();
 				}
 			</script>
@@ -87,7 +84,7 @@
 			<script type="text/javascript">
 			$(function(){
 				if (!isPrimefacesCompatible()) {
-					growlVar.show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
+					PF('growlVar').show([{summary: 'Warning', detail: 'You use a deprecated Browser which can cause incompability problems!', severity: 'warn'}]);
 				}
 			});
 			</script>

@@ -28,11 +28,11 @@ public class WorkflowsConf extends Configuration
 {
 	private static final long serialVersionUID	= 6112403137236164347L;
 	
-	public String				archiveGw;
+	public String				imageArchive;
+	public String				objectArchive;
 	public String				embedGw;
 	public String				eaasGw;
 	public String				metaDir;
-	public String				objDir;
 	public String				picDir;
 	public String				swArchive;
 	public EmailNotifierConf	emailNotifier;

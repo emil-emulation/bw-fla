@@ -1,15 +1,21 @@
 function isPrimefacesCompatible() {
-	if($.browser.safari){
-			return (jQuery.versionNumber >= 5)
-	} else if($.browser.opera){
-			return (jQuery.versionNumber >= 11)
-	} else if($.browser.msie){
-			return ($.browser.versionNumber >= 8)
-	} else if($.browser.mozilla){
-			return ($.browser.versionNumber >= 4)
-	} else if($.browser.chrome){
-			return ($.browser.versionNumber >= 10)
+	var result = false;
+	
+	if ($.browser.safari) {
+		result = ($.browser.versionNumber >= 5);
+	} else if ($.browser.opera) {
+		result = ($.browser.versionNumber >= 11);
+	} else if ($.browser.msie) {
+		result = ($.browser.versionNumber >= 10);
+	} else if ($.browser.msedge) {
+		result = true;
+	} else if ($.browser.mozilla) {
+		result = ($.browser.versionNumber >= 4);
+	} else if ($.browser.chrome) {
+		result = ($.browser.versionNumber >= 10);
 	}
+	
+	return result;
 }
 
 function read_cookie(k,r){

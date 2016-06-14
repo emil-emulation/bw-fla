@@ -21,6 +21,7 @@ package de.bwl.bwfla.common.datatypes;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -34,6 +35,9 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class InputOptions {
 
+	@XmlAttribute(name = "required", required = false)
+	protected boolean required = false;;
+	
 	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
 	protected String clientKbdLayout;
 	@XmlElement(namespace = "http://bwfla.bwl.de/common/datatypes")
@@ -66,5 +70,13 @@ public class InputOptions {
 	}
 	public void setEmulatorKbdModel(String emulatorKbdModel) {
 		this.emulatorKbdModel = emulatorKbdModel;
+	}
+
+	public boolean isRequired() {
+		return required;
+	}
+
+	public void setRequired(boolean required) {
+		this.required = required;
 	}
 }

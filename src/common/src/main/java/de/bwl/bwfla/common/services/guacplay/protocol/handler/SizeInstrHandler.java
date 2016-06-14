@@ -72,6 +72,10 @@ public class SizeInstrHandler extends InstructionHandler
 		final int width = instruction.argAsInt(1);
 		final int height = instruction.argAsInt(2);
 		
+		// Ignore invalid sizes!
+		if (width < 1 || height < 1)
+			return;
+		
 		// Update all registered listeners
 		for (ISizeInstrListener listener : listeners)
 			listener.resize(layer, width, height);

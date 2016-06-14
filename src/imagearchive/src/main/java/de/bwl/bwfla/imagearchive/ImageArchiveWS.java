@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
-import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -38,19 +37,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import javax.activation.DataHandler;
 import javax.annotation.PostConstruct;
 import javax.ejb.Remote;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
+import javax.ejb.Stateless;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlMimeType;
 
 import de.bwl.bwfla.common.datatypes.EmulationEnvironment;
+import de.bwl.bwfla.common.datatypes.Environment;
 import de.bwl.bwfla.common.datatypes.utils.EmulationEnvironmentHelper;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.interfaces.ImageArchiveWSRemote;
@@ -64,194 +61,36 @@ import de.bwl.bwfla.imagearchive.conf.ImageArchiveSingleton;
  * 
  */
 
+@Stateless 
 @WebService
-@Singleton
-@Startup
 @Remote(ImageArchiveWSRemote.class)
 public class ImageArchiveWS implements ImageArchiveWSRemote
 {
 	protected static final Logger		LOG			= Logger.getLogger(ImageArchiveWS.class.getName());
-	private static final AtomicBoolean	constructed	= new AtomicBoolean(false);
+	private boolean configured = false;
 	
-	private ImageArchiveConfig iaConfig;
-	private IWDArchive iwdArchive;
-	private ImageHandler imageHandler;
-	private WatchService watcher;
-	
-	volatile private ConcurrentHashMap<Path,String> templates;
-	volatile private ConcurrentHashMap<Path,String> base; 
-	volatile private ConcurrentHashMap<Path,String> derivate;
-	volatile private ConcurrentHashMap<Path,String> system;
-	volatile private ConcurrentHashMap<Path,String> user;
-	volatile private ConcurrentHashMap<Path,String> netenv;
-	volatile private Map<ImageType, Map<Path, String>> imagesCache = new ConcurrentHashMap<>();
-	
-	private void registerWatchRecursively(final Path root, final WatchService watcher) throws IOException
-	{
-		final Map<WatchKey, Path> keys = new HashMap<>();
-		
-		Files.walkFileTree(root, new SimpleFileVisitor<Path>() 
-		{
-			@Override
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException
-			{
-				if(!dir.equals(root))
-				{
-					WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.OVERFLOW);
-					LOG.info("watching :" + dir);
-					keys.put(key, dir);
-				}
-				
-				return FileVisitResult.CONTINUE;
-			}
-		});
-		
-		new Thread()
-		{	
-			@Override
-			public void run()
-			{	
-				while(true)
-		            try 
-		            {
-		            	WatchKey key = watcher.take();
-		            	Path dir = keys.get(key);
-		            	// key.pollEvents();
-		            	for (WatchEvent<?> event: key.pollEvents()) 
-		            	{
-		            		WatchEvent.Kind<?> kind = event.kind();
-		            	        
-		            	        if (kind == StandardWatchEventKinds.OVERFLOW) 
-		            	            continue;
-		            	        
-		            	        WatchEvent<Path> ev = (WatchEvent<Path>)event;
-		            	        Path filename = ev.context();
-		            	        if(filename != null)
-		            	        {
-//		            	        	LOG.info("dir " + dir + ", filename : " + filename + " has changed " + kind);
-		            	        	if(kind == StandardWatchEventKinds.ENTRY_MODIFY || kind == StandardWatchEventKinds.ENTRY_CREATE)
-		            	        		updateImageMetadata(dir, filename.toString());
-		            	        	else if(kind == StandardWatchEventKinds.ENTRY_DELETE)
-		            	        		removeImageMetadata(dir, filename.toString());
-		            	        }
-				            	else
-				            		LOG.info("unable to retrieve information about the changed watch key while recursively watching directory: " + root.toString());
-		            	 }
-		            	key.reset();   	
-		            	
-		            }
-		            catch(ClosedWatchServiceException e)
-		    		{
-		            	return;
-		    		}
-		            catch(Throwable e) 
-		            {
-		            	e.printStackTrace();
-		            	LOG.info("disabling recursive watching of the directory: " + root.toString());
-		            	return;
-		            }
-			}
-		}
-		.start();
-	}
-	
-	private void updateImageMetadata(Path path, String filename)
-	{
-		String[] elems = path.toString().split("/");
-		ImageType t;
-		try {
-			t = ImageType.valueOf(elems[elems.length-1]);
-		}
-		catch(IllegalArgumentException e)
-		{
-			LOG.warning("unknown ImageType " + e.getMessage());
-			return;
-		}
-		
-		Map<Path,String> map = imagesCache.get(t);
-		if(map == null)
-			return;
-		String env = imageHandler.loadMetaDataFile(new File(path.toFile(), filename));
-		if(env != null)
-		{
-			// LOG.info("updating " + new File(path.toFile(), filename).toPath() + " " + env);
-			map.put(new File(path.toFile(), filename).toPath(), env);
-		}
-	}
-	
-	private void removeImageMetadata(Path path, String filename)
-	{
-		String[] elems = path.toString().split("/");
-		ImageType t;
-		try {
-			t = ImageType.valueOf(elems[elems.length-1]);
-		}
-		catch(IllegalArgumentException e)
-		{
-			LOG.warning("unknown ImageType " + e.getMessage());
-			return;
-		}
-		
-		Map<Path,String> map = imagesCache.get(t);
-		if(map == null)
-			return;
-		// LOG.info("removing " + new File(path.toFile(), filename).toPath().toString());
-		map.remove(new File(path.toFile(), filename).toPath());
-	}
+	private ImageArchiveConfig iaConfig = null;
+	private IWDArchive iwdArchive = null;
+	private ImageHandler imageHandler = null;
 	
 	@PostConstruct
 	private void initialize()
 	{
-		if(constructed.compareAndSet(false, true))
-			this.reloadProperties();
+		this.reloadProperties();
 	}
 	
-	synchronized private boolean reloadProperties()
+	synchronized private void reloadProperties()
 	{	
 		ImageArchiveSingleton.loadConf();
 		if(!ImageArchiveSingleton.confValid)
 		{
 			LOG.severe("module configuration is invalid, without proper configuration all methods will fail");
-			return false;
+			return;
 		}
-		
-		String basePath   = ImageArchiveSingleton.CONF.archiveBase;
-		String nbdPrefix  = ImageArchiveSingleton.CONF.nbdPrefix;
-		String httpPrefix = ImageArchiveSingleton.CONF.httpPrefix;
-
-		iaConfig     = new ImageArchiveConfig(basePath, nbdPrefix, httpPrefix);
-		iwdArchive   = new IWDArchive(iaConfig);
-		imageHandler = new ImageHandler(iaConfig);
-		
-		base 		= imageHandler.getImages(ImageType.base.toString());
-		derivate 	= imageHandler.getImages(ImageType.derivate.toString());
-		system 	= imageHandler.getImages(ImageType.system.toString());
-		user		= imageHandler.getImages(ImageType.user.toString());
-		netenv 	= imageHandler.getImages(ImageType.netenv.toString());
-		
-		imagesCache     = new HashMap<>();
-		imagesCache.put(ImageType.base, base);
-		imagesCache.put(ImageType.derivate, derivate);
-		imagesCache.put(ImageType.system, system);
-		imagesCache.put(ImageType.user, user);
-		imagesCache.put(ImageType.netenv, netenv);
-		
-		templates 		= imageHandler.loadMetaData(iaConfig.templatesPath);
-		
-		try
-		{	
-			if(watcher != null)
-				watcher.close();
-						
-			this.watcher = FileSystems.getDefault().newWatchService();
-			this.registerWatchRecursively(iaConfig.metaDataPath.toPath(), watcher);
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		return true;
+		iaConfig = ImageArchiveSingleton.iaConfig;
+		iwdArchive = ImageArchiveSingleton.iwdArchive;
+		imageHandler = ImageArchiveSingleton.imageHandler;
+		configured = true;
 	}
 
 	private String updateConfig(String conf, String newId, boolean setIdOnly) throws BWFLAException
@@ -279,6 +118,12 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	@Override
 	public String registerImage(String conf, @XmlMimeType("application/octet-stream") DataHandler image, String type)
 	{	
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
+					
 		if(image == null)
 		{
 			LOG.severe("image data handler is null, aborting");
@@ -287,18 +132,7 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 
 		if(conf == null)
 		{
-			LOG.severe("image configuration dara is null, aborting");
-			return null;
-		}
-
-		ImageType imageType;
-		try
-		{
-			imageType = ImageType.valueOf(type);
-		}
-		catch(IllegalArgumentException e)
-		{
-			LOG.severe("incorrect image type specified: " + type != null ? type : "(null value)");
+			LOG.severe("image configuration data is null, aborting");
 			return null;
 		}
 		
@@ -327,22 +161,17 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	}
 	
 	@Override
-	public String registerImage(String conf, String image, boolean delete, String type) 
+	public String registerImageUsingFile(String conf, String image, boolean delete, String type) 
 	{
-		if(conf == null)
+		if(!configured)
 		{
-			LOG.severe("image configuration dara is null, aborting");
+			LOG.severe("ImageArchive is not configured");
 			return null;
 		}
 		
-		ImageType imageType;
-		try
+		if(conf == null)
 		{
-			imageType = ImageType.valueOf(type);
-		}
-		catch(IllegalArgumentException e)
-		{
-			LOG.severe("incorrect image type specified: " + type != null ? type : "(null value)");
+			LOG.severe("image configuration data is null, aborting");
 			return null;
 		}
 		
@@ -385,6 +214,12 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	@Override
 	public String publishImage(String image, String exportId)
 	{
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
+		
 		File img = new File(iaConfig.incomingPath, image);
 		if(!img.exists())
 		{
@@ -412,6 +247,11 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	@Override
 	public boolean releaseImage(String url)
 	{
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return false;
+		}
 		// TODO: implement
 		return false;
 	}
@@ -419,23 +259,39 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	@Override
 	public List<String> getIncomingImageList()
 	{	
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
 		return imageHandler.getIncomingImageList();
 	}
 	
 	@Override
 	public List<String> getTemplates()
 	{
-		return new ArrayList<String>(templates.values());
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
+		return new ArrayList<String>(ImageArchiveSingleton.templates.values());
 	}
 	
 	@Override
 	public List<String> getImages(String type) 
 	{	
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
+		
 		List<String> images = null;
 		
 		try
 		{
-			Map<Path,String> iMap = imagesCache.get(ImageType.valueOf(type));
+			Map<Path,String> iMap = ImageArchiveSingleton.imagesCache.get(ImageType.valueOf(type));
 			images = new ArrayList<String>(iMap.values());
 		}
 		catch(IllegalArgumentException e)
@@ -449,23 +305,45 @@ public class ImageArchiveWS implements ImageArchiveWSRemote
 	@Override
 	public String getRecording(String envId, String traceId)
 	{
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
 		return iwdArchive.getRecording(envId, traceId);
 	}
 
 	@Override
 	public List<IWDMetaData> getRecordings(String envId)
 	{	
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
 		return iwdArchive.getRecordings(envId);
 	}
 	
 	@Override
 	public boolean addRecordingFile(String envId, String traceId, String data)
-	{		
+	{	
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return false;
+		}
 		return iwdArchive.addRecordingFile(envId, traceId, data);
 	}
 
 	@Override
-	public String getImageById(String id) {
-		return imageHandler.getEnvById(id).toString();
+	public String getImageById(String id) 
+	{
+		if(!configured)
+		{
+			LOG.severe("ImageArchive is not configured");
+			return null;
+		}
+		Environment env = imageHandler.getEnvById(id);
+		return env == null ? null : env.toString(); 
 	}
 }

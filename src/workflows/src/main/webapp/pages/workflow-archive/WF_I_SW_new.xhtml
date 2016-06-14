@@ -210,7 +210,7 @@
 				<br />
 			</ui:fragment>
 			
-			<p:commandButton value="Save #{WF_I_SW_new.archive.id eq -1 ? 'new archive' : 'changes'}" action="#{WF_I_SW_new.forward}" />
+			<p:commandButton value="Save #{WF_I_SW_new.archive.id eq -1 ? 'new archive' : 'changes'}"  onclick="showLoadingAnimation()" action="#{WF_I_SW_new.forward}" />
 		</h:form>	
 	</p:panel>
 	

@@ -21,7 +21,6 @@ package de.bwl.bwfla.classification;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -30,14 +29,12 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import de.bwl.bwfla.classification.conf.FitsSingleton;
 import edu.harvard.hul.ois.fits.Fits;
 import edu.harvard.hul.ois.fits.FitsOutput;
 import edu.harvard.hul.ois.fits.exceptions.FitsException;
@@ -56,28 +53,7 @@ public class FitsClassifier
 	private final FitsClassifier self;
 	
 	private static final int NUMBER_OF_THREADS = 2 * Runtime.getRuntime().availableProcessors();
-	
-	// Properties
-	private static final String PROPERTY_FITS_HOME;
-	
-	// Load properties from file
-	static {
-		ClassLoader loader = FitsClassifier.class.getClassLoader();
-		InputStream stream = loader.getResourceAsStream("fits.properties");
-		if (stream == null)
-			log.error("Fits configuration resource not found!");
-		
-		Properties properties = new Properties();
-		try {
-			properties.load(stream);
-		}
-		catch (IOException exception) {
-			exception.printStackTrace();
-			log.error("Fits configuration resource could not be read!");
-		}
-		
-		PROPERTY_FITS_HOME = properties.getProperty("fits.home");
-	}
+	private static final String PROPERTY_FITS_HOME = FitsSingleton.CONF.fitsHome;
 	
 	/** Constructor */
 	public FitsClassifier() throws FitsException
@@ -107,7 +83,8 @@ public class FitsClassifier
 	 */
 	public void classify(Path input, final boolean verbose) throws FitsException, IOException, InterruptedException
 	{
-		// If input is a directory, process all files recursively.
+		if(!FitsSingleton.confValid)
+			throw new FitsException("fits module configuration is invalid, will not proceed");
 		
 		if (verbose)
 			log.info("Classifying file(s) in '{}' using {} threads...", input.toString(), NUMBER_OF_THREADS);

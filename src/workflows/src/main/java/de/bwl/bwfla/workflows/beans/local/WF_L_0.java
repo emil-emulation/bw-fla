@@ -112,8 +112,8 @@ public class WF_L_0 extends BwflaFormBean implements Serializable
 			return "";
 		}
 		
-		emuhelper.initialize();
 		resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, emuhelper);
+		emuhelper.initialize();
 		
 		return "/pages/workflow-local/WF_L_1.xhtml?faces-redirect=true";
 	}

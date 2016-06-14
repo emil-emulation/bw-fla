@@ -11,16 +11,22 @@
         <dependent-module archiveName="emucomp.war" deploy-path="/" handle="module:/resource/emucomp/emucomp">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="imagearchive-ejb.jar" deploy-path="/" handle="module:/resource/imagearchive/imagearchive">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="objectarchive-ejb.jar" deploy-path="/" handle="module:/resource/objectarchive/objectarchive">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <dependent-module archiveName="eaas-ejb.jar" deploy-path="/" handle="module:/resource/eaas/eaas">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="emil.war" deploy-path="/" handle="module:/resource/emil/emil">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <dependent-module archiveName="workflows.war" deploy-path="/" handle="module:/resource/workflows/workflows">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="objectarchive.war" deploy-path="/" handle="module:/resource/objectarchive/objectarchive">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="imagearchive.war" deploy-path="/" handle="module:/resource/imagearchive/imagearchive">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="softwarearchive.jar" deploy-path="/" handle="module:/resource/softwarearchive/softwarearchive">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="guava-14.0.1.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/com/google/guava/guava/14.0.1/guava-14.0.1.jar">
@@ -80,7 +86,7 @@
         <dependent-module archiveName="guacamole-common-0.9.5.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/guacamole-common/0.9.5/guacamole-common-0.9.5.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="commons-codec-1.7.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/commons-codec/1.7/commons-codec-1.7.jar">
+        <dependent-module archiveName="commons-codec-1.8.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/commons-codec/1.8/commons-codec-1.8.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="junit-4.11.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/junit/4.11/junit-4.11.jar">
@@ -362,7 +368,7 @@
         <dependent-module archiveName="spring-core-2.5.6.SEC03.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/spring-core/2.5.6.SEC03/spring-core-2.5.6.SEC03.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="commons-collections-3.2.1.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/commons-collections/3.2.1/commons-collections-3.2.1.jar">
+        <dependent-module archiveName="commons-collections-3.2.2.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/commons-collections/3.2.2/commons-collections-3.2.2.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="poi-3.7.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/de/bwl/bwfla/poi/3.7/poi-3.7.jar">

@@ -1,30 +1,14 @@
-/*
- * This file is part of the Emulation-as-a-Service framework.
- *
- * The Emulation-as-a-Service framework is free software: you can
- * redistribute it and/or modify it under the terms of the GNU General
- * Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * The Emulation-as-a-Service framework is distributed in the hope that
- * it will be useful, but WITHOUT ANY WARRANTY; without even the
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with the Emulation-as-a-Software framework.
- * If not, see <http://www.gnu.org/licenses/>.
- */
-
 package de.bwl.bwfla.workflows.beans.common;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+
 import javax.activation.DataHandler;
 import javax.faces.event.ActionEvent;
+
 import de.bwl.bwfla.common.datatypes.EaasState;
 import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.services.handle.HandleService;
@@ -41,79 +25,142 @@ public abstract class BwflaEmulatorViewBean extends BwflaFormBean
 	private static final long serialVersionUID = 1L;
 	protected AbstractRemoteEmulatorHelper emuHelper = null;
 	protected Description description = null;
-	protected boolean emulatorReady = false;
 	protected File screenshot = null;
 	private String hdlStr = "";
 	private String embedGw;
 	private String imageArchiveHost;
-	private int connectTries = 0;
-	
+	private EmulatorMediaManager mediaManager = null;
+	private EaasStateObserver eaasStateObserver = null;
 	private EaasState lastEmucompState;
-	
+	protected boolean eaasReady = false;
+	protected boolean eaasRunning = false;
+	private int connectionChecks = 0;
+
 	@Override
 	protected void initialize()
 	{
+		if(emuHelper == null)
+		{
+			log.severe("emuHelper not set before super.initialize was called");
+			panic("invalid workflow template");
+		}
 		super.initialize();
 		embedGw = WorkflowSingleton.CONF.embedGw;
-		imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
 		lastEmucompState = EaasState.SESSION_UNDEFINED;
+		// Prevent autostart by checking if the user set his preferences yet
+		mediaManager = emuHelper.getMediaManager();
 	}
 	
-	public void monitorState(ActionEvent event)
-	{
+	synchronized public void observeReadiness(ActionEvent event) throws BWFLAException
+	{	
+		if(this.eaasRunning)
+		{
+			log.warning("emulation-as-a-service is running, no need to proceed observation");
+			return;
+		}
+		
 		EaasState state = this.emuHelper.getEaasState();
 		if(state == null)
 		{
-			log.info("remote emulation session missing, state is 'null'");
+			log.severe("illegal state at this workflow step, unable to get emulation state, value is 'null'");
+			return;
+		}
+		
+		if(lastEmucompState != state)
+		{
+			log.info("Remote state changed: " + lastEmucompState.value() + " -> " + state.value());
+			this.lastEmucompState = state;
+		}
+		
+		final int MAX_CONNECT_TRIES = 300;
+		if(connectionChecks++ > MAX_CONNECT_TRIES)
+		{
+			panic("unable to connect to server after multiple attempts, last known state: " + state.value());
 			return;
 		}
 		
 		switch(state)
 		{
-			case SESSION_UNDEFINED:
 			case SESSION_ALLOCATING:
-				if(!this.emulatorReady);
-					panic("EAAS is in an illegal state at this point: " + state.value());
-				break;
-
-			case SESSION_READY:
-				break;
-
 			case SESSION_BUSY:
-				final int MAX_CONNECT_TRIES = 300;
-				if(connectTries++ > MAX_CONNECT_TRIES)
-					panic("unable to connect to server after multiple attempts, current state: " + state.value());
 				break;
-
+				
+			case SESSION_READY:
+				this.eaasReady = true;
+				break;
+				
 			case SESSION_RUNNING:
-				this.emulatorReady = true;
+				this.eaasReady = true;
+				this.eaasRunning = true;
+				this.connectionChecks = 0;
 				break;
-
-			case SESSION_STOPPED:
-				// XXX: decide whether this has to be handled
-				connectTries = 0;
-				if(lastEmucompState != EaasState.SESSION_RUNNING && lastEmucompState != EaasState.SESSION_STOPPED)
-					panic("failed starting remote emulator, check configuration");
-				break;
-
+	
 			case SESSION_OUT_OF_RESOURCES:
 				panic("emulation-as-a-service is out of resources, please try again later");
 				break;
 
 			case SESSION_CLIENT_FAULT:
-				panic("emulation-as-a-service message: client has supplied incorrect parameters");
+				panic("client has supplied incorrect input parameters to emulation-as-a-service ");
 				break;
 
 			case SESSION_FAILED:
-				panic("an internal error occured on the server-side");
+				panic("an internal error occured on the server-side of emulation-as-a-service");
+				break;
+				
+			default:
+				panic("emulation-as-a-service for this session is in an illegal state at this workflow-point: " + state.value());
 				break;
 		}
-		
-		if(lastEmucompState != state)
+	}
+	
+	synchronized public void observeConnection(ActionEvent event) throws BWFLAException
+	{	
+		if(!this.eaasRunning)
 		{
-			log.info("change of remote state to: " + state.value());
-			lastEmucompState = state;
+			log.warning("emulation-as-a-service is not running, no need to proceed observation");
+			return;
 		}
+		
+		EaasState state = this.emuHelper.getEaasState();
+		if(state == null)
+		{
+			log.severe("illegal state at this workflow step, unable to get emulation state, value is 'null'");
+			return;
+		}
+		
+		if (lastEmucompState != state) {
+			log.info("Remote state changed: " + lastEmucompState.value() + " -> " + state.value());
+			
+			// Notify state observer
+			if (eaasStateObserver != null) {
+				try {
+					eaasStateObserver.onStateChanged(lastEmucompState, state);
+				}
+				catch (Exception exception) {
+					this.panic("Executing EaasStateObserver failed!", exception);
+				}
+			}
+			
+			this.lastEmucompState = state;
+		}
+		
+		switch(state)
+		{
+			case SESSION_RUNNING:
+			case SESSION_BUSY:
+			case SESSION_INACTIVE:
+				// XXX: no action required
+				break;
+				
+			case SESSION_STOPPED:
+				this.eaasRunning = false;
+				break;
+				
+			default:
+				panic("emulation-as-a-service is in an illegal state at this point: " + state.value());
+				break;
+		}
+
 	}
 	
 	public boolean isAutostart()
@@ -121,20 +168,29 @@ public abstract class BwflaEmulatorViewBean extends BwflaFormBean
 		return true;
 	}
 	
-	public boolean isEmulatorReady()
+	public boolean isEaasReady()
 	{	
-		return this.emulatorReady;
+		return this.eaasReady;
 	}
 	
-	public String getControlUrl() 
+	public boolean isEaasRunning()
+	{	
+		return this.eaasRunning;
+	}
+	
+	public EaasStateObserver getEaasStateObserver()
 	{
-		
-		try {
-			return emuHelper.getControlUrl();
-		} catch (Throwable e) {
-			panic(e.getMessage(), e);
-		}
-		return null;
+		return eaasStateObserver;
+	}
+	
+	public void setEaasStateObserver(EaasStateObserver observer)
+	{
+		this.eaasStateObserver = observer;
+	}
+	
+	public String getControlUrl() throws BWFLAException 
+	{	
+		return emuHelper.getControlUrl();
 	}
 	
 	public void start() throws BWFLAException
@@ -142,14 +198,14 @@ public abstract class BwflaEmulatorViewBean extends BwflaFormBean
 		emuHelper.startEmulator();
 	}
 	
-	public void stop()
+	public void stop() throws BWFLAException
 	{
 		emuHelper.stop();
 	}
 	
 	public void takeScreenshot() throws BWFLAException
 	{
-		if (!this.isEmulatorReady()) {
+		if (!this.eaasRunning) {
 			log.warning("Emulator is not running, cannot take screenshot!");
 			return;
 		}
@@ -278,5 +334,27 @@ public abstract class BwflaEmulatorViewBean extends BwflaFormBean
 	public String getHandleStr()
 	{
 		return hdlStr;
+	}
+
+	public List<ChosenMediaForDeviceBean> getChosenMediaForDevices() {
+		if(mediaManager == null)
+			return null;
+        return mediaManager.getChosenMediaForDevices();
+    }
+	
+	public void updateChosenMedia() {
+		if(mediaManager == null)
+			return;
+	    try {
+			mediaManager.updateChosenMedia();
+		} catch (Exception e) {
+            UINotify.error("Change medium failed: " + e.getMessage());
+        }
+	}
+	
+	public void setChosenMediaForDevices(List<ChosenMediaForDeviceBean> chosenMediaForDevices) {
+		if(mediaManager == null)
+			return;
+		mediaManager.setChosenMedia(chosenMediaForDevices);
 	}
 }

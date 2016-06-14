@@ -27,7 +27,7 @@
 					<h:form enctype="multipart/form-data">
 					    <p:fileUpload widgetVar="fupload" fileUploadListener="#{WF_MESS_1.handleFileUpload}" 
 					    	update=":uploadedFilesForm:uploadedFiles" 
-					    	mode="advanced" auto="true" oncomplete="uploadDialog.hide();"/>
+					    	mode="advanced" auto="true" oncomplete="PF('uploadDialog').hide();"/>
 						<p:inputText id="hiddenUploadDeviceParam" style="display: none;" styleClass="hiddenInput" />
 					</h:form>
 				</p:dialog>

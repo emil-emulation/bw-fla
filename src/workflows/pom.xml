@@ -75,7 +75,7 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>de.bwl.bwfla</groupId>
+			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.8</version>
 		</dependency>
@@ -141,6 +141,16 @@
 			<groupId>edu.harvard.hul.ois.fits</groupId>
 			<artifactId>fits</artifactId>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jaxrs</artifactId>
+			<version>2.2.1.GA</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.resteasy</groupId>
+			<artifactId>resteasy-jackson-provider</artifactId>
+			<version>3.0.4.Final</version>
 		</dependency>
 	</dependencies>
 </project>

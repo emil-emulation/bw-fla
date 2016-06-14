@@ -19,23 +19,24 @@
 
 package de.bwl.bwfla.common.services.guacplay.replay;
 
-import java.util.concurrent.TimeUnit;
-
+import de.bwl.bwfla.common.services.guacplay.GuacDefs.EventType;
+import de.bwl.bwfla.common.services.guacplay.events.EventSink;
+import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
 import de.bwl.bwfla.common.services.guacplay.io.TraceBlockReader;
-import de.bwl.bwfla.common.services.guacplay.protocol.AsyncMessageProcessor;
+import de.bwl.bwfla.common.services.guacplay.protocol.AsyncWorker;
 import de.bwl.bwfla.common.services.guacplay.protocol.Message;
+import de.bwl.bwfla.common.services.guacplay.protocol.MessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.util.StopWatch;
-import de.bwl.bwfla.common.services.guacplay.util.TimeUtils;
+
+// Internal class (package-private)
 
 
-public class TraceFileProcessor extends AsyncMessageProcessor
+final class TraceFileProcessor extends AsyncWorker
 {
-	/** Number of nanoseconds in one millisecond. */
-	private static final long NANOSECONDS_IN_ONE_MILLISECOND
-			= TimeUtils.convert(1L, TimeUnit.MILLISECONDS, TimeUnit.NANOSECONDS);
-	
 	// Member fields
+	private final MessageProcessor processor;
 	private final TraceBlockReader block;
+	private final EventSink esink;
 	private final Message message;
 	private final StopWatch stopwatch;
 	private long lastTimestamp;
@@ -43,11 +44,13 @@ public class TraceFileProcessor extends AsyncMessageProcessor
 
 	
 	/** Constructor */
-	public TraceFileProcessor(String name, TraceBlockReader block)
+	public TraceFileProcessor(MessageProcessor processor, TraceBlockReader block, EventSink esink)
 	{
-		super(name);
+		super();
 		
+		this.processor = processor;
 		this.block = block;
+		this.esink = esink;
 		this.message = new Message();
 		this.stopwatch = new StopWatch();
 		this.lastTimestamp = Long.MAX_VALUE;
@@ -61,7 +64,7 @@ public class TraceFileProcessor extends AsyncMessageProcessor
 	}
 	
 	
-	/* ========== AsyncMessageProcessor Implementation ========== */
+	/* ========== AsyncMessageWorker Implementation ========== */
 
 	@Override
 	protected void execute() throws Exception
@@ -71,14 +74,13 @@ public class TraceFileProcessor extends AsyncMessageProcessor
 			final long timestamp = message.getTimestamp();
 			if (timestamp > lastTimestamp) {
 				// Compute the delay for the current message/instruction
-				final long delay = timestamp - lastTimestamp - stopwatch.time();
-				if (delay > NANOSECONDS_IN_ONE_MILLISECOND) {
-					// Delay, converting from nanoseconds to milliseconds
-					Thread.sleep(delay / NANOSECONDS_IN_ONE_MILLISECOND);
-				}
+				final long elapsed = stopwatch.timems();
+				final long delay = timestamp - lastTimestamp - elapsed;
+				if (delay > 0)
+					Thread.sleep(delay);
 			}
 			
-			this.process(message);
+			processor.process(message);
 			
 			// Update values for the next run
 			lastTimestamp = timestamp;
@@ -95,6 +97,12 @@ public class TraceFileProcessor extends AsyncMessageProcessor
 	@Override
 	protected void finish() throws Exception
 	{
-		// Do nothing!
+		esink.consume(new GuacEvent(EventType.TRACE_END, this));
+	}
+
+	@Override
+	protected String getName()
+	{
+		return processor.getName();
 	}
 }

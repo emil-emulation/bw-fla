@@ -61,7 +61,7 @@ public class HddFat16Helper extends ContainerHelper
 			sizeMB = MAX_HDD_SIZE_MB;	
 		
 		// acquire hdd_create.sh script location
-		File hddCreateScript = new File(CommonSingleton.CONF.helpersConf.hddFat16Create); 
+		File hddCreateScript = new File(CommonSingleton.helpersConf.hddFat16Create); 
 		File hddFile = null;
 		HddContainer hddContainer = null;
 		
@@ -109,7 +109,7 @@ public class HddFat16Helper extends ContainerHelper
 			return false;
 		
 		// acquire hdd_io.sh script location
-		File hddIoScript = new File(CommonSingleton.CONF.helpersConf.hddFat16Io);
+		File hddIoScript = new File(CommonSingleton.helpersConf.hddFat16Io);
 		ProcessRunner runner = new ProcessRunner();
 	
 		// iteratively inject files into hdd
@@ -137,7 +137,7 @@ public class HddFat16Helper extends ContainerHelper
 		if(!hddFile.exists())
 			return null;
 		
-		File hddIoScript = new File(CommonSingleton.CONF.helpersConf.hddFat16Io);
+		File hddIoScript = new File(CommonSingleton.helpersConf.hddFat16Io);
 		File result = null;
 		boolean success = false;
 		

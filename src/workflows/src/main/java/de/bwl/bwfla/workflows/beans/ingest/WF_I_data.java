@@ -30,7 +30,7 @@ import org.apache.myfaces.extensions.cdi.core.api.scope.conversation.WindowScope
 import de.bwl.bwfla.workflows.beans.common.RemoteEmulatorHelper;
 import de.bwl.bwfla.workflows.catalogdata.MetaDataFacade;
 import de.bwl.bwfla.workflows.catalogdata.ObjectEvaluationDescription;
-import de.bwl.bwfla.workflows.objectarchive.DigitalObjectArchive;
+// import de.bwl.bwfla.workflows.objectarchive.DigitalObjectArchive;
 
 @Named
 @WindowScoped
@@ -44,7 +44,7 @@ public class WF_I_data implements Serializable
 		
 		public ObjectEvaluationDescription description = null;
 		public RemoteEmulatorHelper emuHelper = null;
-		public List<DigitalObjectArchive> objectArchives = null;
+		//public List<DigitalObjectArchive> objectArchives = null;
 		public MetaDataFacade mdArchive = null;
 		
 		public String oldThumbnail = null;

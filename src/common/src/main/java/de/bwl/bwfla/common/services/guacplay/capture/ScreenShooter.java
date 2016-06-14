@@ -29,6 +29,7 @@ import de.bwl.bwfla.common.services.guacplay.GuacDefs.OpCode;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.SourceType;
 import de.bwl.bwfla.common.services.guacplay.graphics.OffscreenCanvas;
 import de.bwl.bwfla.common.services.guacplay.net.IGuacInterceptor;
+import de.bwl.bwfla.common.services.guacplay.protocol.BufferedMessageProcessor;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionBuilder;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.ArcInstrHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.handler.CFillInstrHandler;
@@ -57,7 +58,8 @@ public class ScreenShooter implements IGuacInterceptor
 	private final StopWatch stopwatch;
 	private final OffscreenCanvas canvas;
 	private final ScrShotInstrHandler screenshots;
-	private final BufferedMessageProcessorImpl msgProcessor;
+	private final BufferedMessageProcessor msgProcessor;
+	private final ServerMessageProcessor msgWorker;
 	
 	// Members read/written by different threads
 	private volatile State state;
@@ -86,7 +88,8 @@ public class ScreenShooter implements IGuacInterceptor
 		this.stopwatch = new StopWatch();
 		this.canvas = new OffscreenCanvas();
 		this.screenshots = new ScrShotInstrHandler(canvas);
-		this.msgProcessor = new BufferedMessageProcessorImpl("SSP-" + id, msgBufferCapacity);
+		this.msgProcessor = new BufferedMessageProcessor("SSP-" + id, msgBufferCapacity);
+		this.msgWorker = new ServerMessageProcessor(msgProcessor);
 
 		// Construct the handlers for drawing-messages
 		{
@@ -159,7 +162,7 @@ public class ScreenShooter implements IGuacInterceptor
 		// be calculated relative to this timepoint!
 		stopwatch.start();
 		
-		msgProcessor.start();
+		msgWorker.start();
 		state = State.PREPARED;
 	}
 	
@@ -171,7 +174,7 @@ public class ScreenShooter implements IGuacInterceptor
 			return;
 		}
 		
-		msgProcessor.terminate(true);
+		msgWorker.terminate(true);
 		state = State.FINISHED;
 	}
 
@@ -184,7 +187,7 @@ public class ScreenShooter implements IGuacInterceptor
 	/** Request a new screenshot. */
 	public void takeScreenshot()
 	{
-		msgProcessor.postMessage(SourceType.INTERNAL, stopwatch.time(), SCREENSHOT_MESSAGE);
+		msgProcessor.postMessage(SourceType.INTERNAL, stopwatch.timems(), SCREENSHOT_MESSAGE);
 	}
 	
 	/** Returns true, when next screenshot is available, else false. */
@@ -224,7 +227,9 @@ public class ScreenShooter implements IGuacInterceptor
 	public boolean onServerMessage(CharArrayWrapper message) throws Exception
 	{
 		// Pass the message unmodified to the processor and forward it
-		msgProcessor.postMessage(SourceType.SERVER, stopwatch.time(), message);
+		if (msgProcessor.postMessage(SourceType.SERVER, stopwatch.timems(), message) == 1)
+			msgWorker.wakeup();
+		
 		return true;
 	}
 }

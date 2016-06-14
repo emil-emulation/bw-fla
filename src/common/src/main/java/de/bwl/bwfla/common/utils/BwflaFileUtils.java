@@ -20,15 +20,25 @@
 package de.bwl.bwfla.common.utils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Logger;
+
+import org.apache.commons.io.IOUtils;
 
 
 
 public class BwflaFileUtils
 {
+	private static final long TMP_FILES_SIZE_LIMIT	= (100L) * 1024L * 1024L * 1024L;
+	protected static final Logger log = Logger.getLogger("BwflaFileUtils");
+	
 	// FIXME: implement appending and not rewriting
 	public static int appendStreamBytesToFile(InputStream in, File fl, int count) throws IOException
 	{	
@@ -58,6 +68,70 @@ public class BwflaFileUtils
 			
 			return totalBytesRead;
 		}
+	}
+	
+	public static boolean waitForFile(String filename, int retries, long timeout)
+	{
+		Path file = Paths.get(filename);
+		while (--retries >= 0) {
+
+			if (Files.exists(file))
+				return true;
+
+			try {
+				Thread.sleep(timeout);
+			}
+			catch (InterruptedException e) {
+				break;
+			}
+		}
+
+		return false;
+	}
+	
+	public static File streamToTmpFile(File tempDir, InputStream istream, String name) throws IOException
+	{
+		File tmpfile = File.createTempFile(name, null,tempDir);
+		FileOutputStream ostream = new FileOutputStream(tmpfile);
+		
+		try {
+			IOUtils.copy(istream, ostream);
+			ostream.flush();
+			ostream.getFD().sync();
+		}
+		catch (IOException exception) {
+			// Something gone wrong! Retries are not possible here,
+			// since we don't know much about the stream's state.
+			final String filename = tmpfile.getAbsolutePath();
+			log.severe("Writing input-data to temporary file '" + filename + "' failed!");
+			log.info("Removing incomplete file '" + filename + "'");
+			tmpfile.delete();
+			throw exception;
+		}
+		finally {
+			ostream.close();
+		}
+		
+		return tmpfile;
+	}
+	
+	public static File fileToTmpDir(File tempDir, File img)
+	{
+		if(img == null || !img.exists())
+			return null;
+
+		File result = null;
+		try
+		{
+			InputStream in = new FileInputStream(img);
+			result = BwflaFileUtils.streamToTmpFile(tempDir, in, img.getName());
+			in.close();
+		}
+		catch(IOException e)
+		{
+			log.severe(e.getMessage());
+		}
+		return result;
 	}
 	
 	/*

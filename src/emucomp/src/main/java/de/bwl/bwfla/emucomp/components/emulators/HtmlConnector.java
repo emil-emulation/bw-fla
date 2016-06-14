@@ -19,7 +19,10 @@
 
 package de.bwl.bwfla.emucomp.components.emulators;
 
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 import de.bwl.bwfla.common.services.guacplay.net.GuacTunnel;
+import de.bwl.bwfla.common.utils.NetworkUtils;
+import de.bwl.bwfla.emucomp.conf.EmucompSingleton;
 
 
 
@@ -27,19 +30,21 @@ public class HtmlConnector implements IConnector
 {
 	private final GuacTunnel tunnel;
 	private final String     cookie;
+	private final boolean    https;
 	private final boolean    pointerLock;
 	
-	public HtmlConnector(String cookie, GuacTunnel tunnel, boolean pointerLock)
+	public HtmlConnector(String cookie, GuacTunnel tunnel, boolean pointerLock, boolean https)
 	{
 		this.tunnel = tunnel;
 		this.cookie = cookie;
 		this.pointerLock = pointerLock;
+		this.https  = https;
 	}
 	
 	public boolean isPointerLock()
-	{
-		return pointerLock;
-	}
+    {
+        return pointerLock;
+    }
 	
 	public String getCookie()
 	{
@@ -54,6 +59,10 @@ public class HtmlConnector implements IConnector
 	@Override
 	public String toString()
 	{
-		return "/faces/pages/client-iframe.xhtml?cookie=" + this.cookie;
+	    String prefix = "http://" + EmucompSingleton.CONF.controlUrlAddressHttp;
+	    if (this.https) {
+	        prefix = "https://" + EmucompSingleton.CONF.controlUrlAddressHttps;
+	    }
+        return prefix + "/emucomp/faces/pages/client-iframe.xhtml?cookie=" + this.cookie;
 	}
 }

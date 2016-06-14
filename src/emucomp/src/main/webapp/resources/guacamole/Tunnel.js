@@ -162,6 +162,8 @@ Guacamole.HTTPTunnel = function(tunnelURL) {
     var sendingMessages = false;
     var outputMessageBuffer = "";
 
+    var begin_timestamp = 0;
+    
     /**
      * The current receive timeout ID, if any.
      * @private
@@ -244,15 +246,16 @@ Guacamole.HTTPTunnel = function(tunnelURL) {
         }
 
         // Initialized message with first element
-        var message = getElement(arguments[0]);
+        var relative_timestamp = (performance.now() - begin_timestamp) | 0;
+        var message = getElement(relative_timestamp);
 
         // Append remaining elements
-        for (var i=1; i<arguments.length; i++)
+        for (var i=0; i<arguments.length; i++)
             message += "," + getElement(arguments[i]);
 
         // Final terminator
         message += ";";
-
+        
         // Add message to buffer
         outputMessageBuffer += message;
 
@@ -546,6 +549,8 @@ Guacamole.HTTPTunnel = function(tunnelURL) {
         connect_xmlhttprequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8");
         connect_xmlhttprequest.send(data);
 
+        // Remember the begin of this session
+        begin_timestamp = performance.now();
     };
 
     this.disconnect = function() {

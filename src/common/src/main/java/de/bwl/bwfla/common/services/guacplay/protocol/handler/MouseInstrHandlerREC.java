@@ -19,21 +19,14 @@
 
 package de.bwl.bwfla.common.services.guacplay.protocol.handler;
 
-import java.util.concurrent.TimeUnit;
-
-import de.bwl.bwfla.common.services.guacplay.GuacDefs.EventType;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.MouseButton;
 import de.bwl.bwfla.common.services.guacplay.GuacDefs.OpCode;
-import de.bwl.bwfla.common.services.guacplay.events.EventSink;
-import de.bwl.bwfla.common.services.guacplay.events.GuacEvent;
-import de.bwl.bwfla.common.services.guacplay.events.IGuacEventListener;
-import de.bwl.bwfla.common.services.guacplay.events.SessionBeginEvent;
-import de.bwl.bwfla.common.services.guacplay.events.VisualSyncBeginEvent;
 import de.bwl.bwfla.common.services.guacplay.protocol.Instruction;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionDescription;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionHandler;
 import de.bwl.bwfla.common.services.guacplay.protocol.InstructionSink;
-import de.bwl.bwfla.common.services.guacplay.util.TimeUtils;
+import de.bwl.bwfla.common.services.guacplay.protocol.VSyncInstrGenerator;
+import de.bwl.bwfla.common.services.guacplay.util.FlagSet;
 
 
 /**
@@ -43,12 +36,12 @@ import de.bwl.bwfla.common.services.guacplay.util.TimeUtils;
  *          Guacamole's protocol reference
  *      </a>
  */
-public class MouseInstrHandlerREC extends InstructionHandler implements IGuacEventListener
+public class MouseInstrHandlerREC extends InstructionHandler
 {
 	// Member fields
+	private final VSyncInstrGenerator vsyncgen;
 	private final InstructionSink isink;
-	private final VisualSyncBeginEvent vsevent;
-	private final EventSink esink;
+	private final Instruction vsync;
 	private long lastPressedTimestamp;
 	private int lastPressedButtons;
 	private int lastButtons;
@@ -56,21 +49,25 @@ public class MouseInstrHandlerREC extends InstructionHandler implements IGuacEve
 	/** Mask for mouse buttons only! (excluding scroll-up and scroll-down buttons) */
 	private static final int BUTTONS_MASK = MouseButton.LEFT | MouseButton.MIDDLE | MouseButton.RIGHT;
 	
-	/** Maximal time between two mouse clicks (in ns) */
-	private static final long DOUBLE_CLICK_TIMEOUT
-			= TimeUtils.convert(250L, TimeUnit.MILLISECONDS, TimeUnit.NANOSECONDS);
+	/** Maximal time between two mouse clicks (in ms) */
+	private static final long DOUBLE_CLICK_TIMEOUT = 250L;
 	
 	
 	/** Constructor */
-	public MouseInstrHandlerREC(InstructionSink isink, EventSink esink)
+	public MouseInstrHandlerREC(InstructionSink isink, VSyncInstrGenerator vsyncgen)
 	{
 		super(OpCode.MOUSE);
+		this.vsyncgen = vsyncgen;
 		this.isink = isink;
-		this.esink = esink;
-		this.vsevent = new VisualSyncBeginEvent(this);
+		this.vsync = new Instruction(5);
 		this.lastPressedTimestamp = Long.MIN_VALUE;
-		this.lastButtons = 0;
 		this.lastPressedButtons = 0;
+		this.lastButtons = 0;
+		
+		// Mark this instruction-instance as shared!
+		final FlagSet flags = vsync.flags();
+		flags.set(Instruction.FLAG_SHARED_INSTANCE);
+		flags.set(Instruction.FLAG_SHARED_ARRAYDATA);
 	}
 	
 	@Override
@@ -89,17 +86,15 @@ public class MouseInstrHandlerREC extends InstructionHandler implements IGuacEve
 			// Yes! Is it a double click?
 			final long timestamp = desc.getTimestamp();
 			if ((buttons != lastPressedButtons) || (timestamp - lastPressedTimestamp) > DOUBLE_CLICK_TIMEOUT) {
-				// No, begin the synchronization
-				vsevent.setIntruction(instruction.clone());
-				vsevent.setTimestamp(timestamp);
-				esink.consume(vsevent);
+				// No, generate and send the vsync-instruction to the sink
+				final int xpos = instruction.argAsInt(0);
+				final int ypos = instruction.argAsInt(1);
+				vsyncgen.generate(xpos, ypos, vsync);
+				isink.consume(desc, vsync);
 
 				// Update variables for next run
 				lastPressedTimestamp = timestamp;
 				lastPressedButtons = buttons;
-				lastButtons = buttons;
-				
-				return;  // Defer writing of this mouse-click!
 			}
 			else {
 				// We have a double-click!
@@ -112,16 +107,5 @@ public class MouseInstrHandlerREC extends InstructionHandler implements IGuacEve
 		
 		// Write the instruction to sink
 		isink.consume(desc, instruction);
-	}
-
-	@Override
-	public void onGuacEvent(GuacEvent event)
-	{
-		if (event.getType() != EventType.SESSION_BEGIN)
-			return;
-		
-		// Initialize the timestamp here!
-		SessionBeginEvent sbevent = (SessionBeginEvent) event;
-		lastPressedTimestamp = sbevent.getTimestamp();
 	}
 }

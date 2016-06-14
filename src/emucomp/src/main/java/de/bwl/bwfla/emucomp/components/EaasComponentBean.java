@@ -31,11 +31,13 @@ import java.util.logging.Logger;
 
 public abstract class EaasComponentBean extends AbstractEaasComponent 
 {
-	protected static final Logger 	LOG			= Logger.getLogger(EaasComponentBean.class.getName());
-	protected File 		 			tempDir;
+	protected final Logger LOG;
+	protected File tempDir;
 	
 	protected EaasComponentBean()
 	{
+		LOG = Logger.getLogger(this.getClass().getName());
+		
 		try 
 		{
 			Set<PosixFilePermission> permissions = new HashSet<>();

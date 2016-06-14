@@ -21,15 +21,15 @@ package de.bwl.bwfla.workflows.beans.embedinit;
 
 import java.io.IOException;
 import java.util.Map;
+
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
-import de.bwl.bwfla.common.exceptions.BWFLAException;
+import javax.inject.Inject;
+
 import de.bwl.bwfla.workflows.beans.common.BwflaEmulatorViewBean;
 import de.bwl.bwfla.workflows.beans.common.WorkflowResources;
-
-
 
 @ManagedBean
 @ViewScoped
@@ -37,13 +37,15 @@ public class WF_EMN_0 extends BwflaEmulatorViewBean
 {
 	private static final long serialVersionUID = 825673104605199469L;
 
+	@Inject
+	private WF_EMN_data wfData;
+	
+	
 	@Override
 	public void initialize()
 	{	
 		if (jsf.isPostback())
 			return;
-		
-		super.initialize();
 		
 		final ExternalContext extcontext = FacesContext.getCurrentInstance().getExternalContext();
 		final Map<String, String> parameters = extcontext.getRequestParameterMap();
@@ -56,7 +58,7 @@ public class WF_EMN_0 extends BwflaEmulatorViewBean
 		if (sessok == null || !sessok.contentEquals("1")) {
 			// Reconstruct the original URL
 			final StringBuilder url = new StringBuilder(512);
-			url.append("/faces/pages/workflow-embednew/WF_EMN_0.xhtml?");
+			url.append("/faces/pages/workflow-embedinit/WF_EMN_0.xhtml?");
 			for (Map.Entry<String, String> parameter : parameters.entrySet()) {
 				url.append(parameter.getKey());
 				url.append('=');
@@ -69,6 +71,7 @@ public class WF_EMN_0 extends BwflaEmulatorViewBean
 			try {
 				// Redirect to obtain user-session
 				jsf.getExternalContext().getSession(true);
+				wfData.getStorage().initialURL = url.toString();
 				extcontext.redirect(url.toString());
 				return;
 			} 
@@ -79,17 +82,21 @@ public class WF_EMN_0 extends BwflaEmulatorViewBean
 		}
 		
 		this.emuHelper = new SimpleRemoteEmulatorHelper(sessid);
-		try {	
-			resourceManager.disableTimeout();
-			emuHelper.initialize();
-			emuHelper.startEmulator();
+		if(emuHelper.requiresUserPrefs())
+		{
+			if(!this.isDidUserSetPrefs()) {
+				System.out.println("requires userprefs");
+				try {
+					extcontext.redirect("/faces/pages/workflow-embedinit/WF_EMN_prefs.xhtml");
+					return;
+				} catch (IOException e) {
+					this.panic("failed redirecting to user pref site", e);
+				}
+			}
+			setUserPreferences(emuHelper.getEmulationEnvironment());
 		}
-		catch (BWFLAException exception) {
-			this.panic("Starting emulator failed!", exception);
-		}
-		finally {
-			resourceManager.restartTimeout();
-		}
+		super.initialize();
+		emuHelper.initialize();
 		
 		resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, this.emuHelper);
 	}

@@ -58,6 +58,7 @@ public class WF_IM_0 extends BwflaFormBean implements Serializable {
 	private boolean relMouse;
 	private String name;
 	private List<EmulationEnvironment> templates = null;
+	private boolean requirePrefs = false;
 	
 	@Inject
 	private WF_IM_data wfData;
@@ -65,12 +66,6 @@ public class WF_IM_0 extends BwflaFormBean implements Serializable {
 
 	private boolean configureBean()
 	{	
-		String imageArchiveHost = WorkflowSingleton.CONF.archiveGw;
-		if(imageArchiveHost == null)
-		{
-			log.info("imageArchiveHost property not set");
-			return false;
-		}
 		envHelper = WorkflowSingleton.envHelper;
 		return true;
 	}
@@ -170,10 +165,22 @@ public class WF_IM_0 extends BwflaFormBean implements Serializable {
 		wfData.getStorage().emuHelper = new RemoteEmulatorHelper(wfData.getStorage().env);
 		if(wfData.getStorage().emuHelper == null)
 		{
-			log.info("could init emulator");
+			panic("could init emulator");
 			return "";
 		}
 		wfData.getStorage().config = wfData.getStorage().env.toString();
+		if(wfData.getStorage().emuHelper.requiresUserPrefs())
+		{
+			System.out.println("requires userprefs");
+			requirePrefs = true;
+			if(!this.isDidUserSetPrefs())
+			{
+				return "";
+			}
+			
+			setUserPreferences(wfData.getStorage().emuHelper.getEmulationEnvironment());
+		}
+		
 		wfData.getStorage().emuHelper.initialize();
 		this.resourceManager.register(WorkflowResources.WF_RES.EMU_COMP, wfData.getStorage().emuHelper);
 		wfData.getStorage().description = new SystemEnvironmentDescription(wfData.getStorage().env.toString());
@@ -299,5 +306,10 @@ public class WF_IM_0 extends BwflaFormBean implements Serializable {
 	
 	public void setExternalImageCOW(boolean cow) {
 		this.wfData.getStorage().externalImageCOW = cow;
+	}
+	
+	public boolean isRequirePrefs()
+	{
+		return requirePrefs;
 	}
 }

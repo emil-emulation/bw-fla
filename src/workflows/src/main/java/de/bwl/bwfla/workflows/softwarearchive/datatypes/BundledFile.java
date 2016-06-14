@@ -27,6 +27,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
+import de.bwl.bwfla.common.datatypes.Drive.DriveType;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "file", propOrder = { "path", "type", "description", "platform" }, namespace="miep")
 public class BundledFile {
@@ -41,7 +43,7 @@ public class BundledFile {
 	protected File path;
 
 	@XmlElement(required = true, namespace="miep")
-	protected MediumType type;
+	protected DriveType type;
 	
 	@XmlElement(required = true, namespace="miep")
 	protected String platform;
@@ -50,11 +52,11 @@ public class BundledFile {
 	//	this(file, MediumType.UNKNOWN, null);
 	//}
 
-	public BundledFile(Path file, String platform, MediumType type) {
+	public BundledFile(Path file, String platform, DriveType type) {
 		this(file, platform, type, null);
 	}
 
-	public BundledFile(Path path, String platform, MediumType type, String description) {
+	public BundledFile(Path path, String platform, DriveType type, String description) {
 		this.path = path.toFile();
 		this.type = type;
 		this.platform = platform;
@@ -73,7 +75,7 @@ public class BundledFile {
 		return path.toPath();
 	}
 
-	public MediumType getType() {
+	public DriveType getType() {
 		return type;
 	}
 
@@ -85,7 +87,7 @@ public class BundledFile {
 		this.path = file.toFile();
 	}
 
-	public void setType(MediumType type) {
+	public void setType(DriveType type) {
 		this.type = type;
 	}
 	

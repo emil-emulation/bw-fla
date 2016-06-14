@@ -87,12 +87,12 @@ public class ProcessRunner
 	private static final String MESSAGE_IOSTREAM_NOT_AVAILABLE = "IO-stream is not available. Process was not started properly!";
 
 	// Initialize the constants from property file
-	private static final String PROPERTY_WRAPPER_SCRIPT = CommonSingleton.CONF.processRunner.wrapperScript;
-	private static final String PROPERTY_TMPDIR_PREFIX = CommonSingleton.CONF.processRunner.tmpdirPrefix;
-	private static final String PROPERTY_RUNFLAG_FILENAME = CommonSingleton.CONF.processRunner.runflagFilename;
-	private static final String PROPERTY_PID_FILENAME = CommonSingleton.CONF.processRunner.pidFilename;
-	private static final String PROPERTY_STDOUT_FILENAME = CommonSingleton.CONF.processRunner.stdoutFilename;
-	private static final String PROPERTY_STDERR_FILENAME = CommonSingleton.CONF.processRunner.stderrFilename;
+	private static final String PROPERTY_WRAPPER_SCRIPT = CommonSingleton.runnerConf.wrapperScript;
+	private static final String PROPERTY_TMPDIR_PREFIX = CommonSingleton.runnerConf.tmpdirPrefix;
+	private static final String PROPERTY_RUNFLAG_FILENAME = CommonSingleton.runnerConf.runflagFilename;
+	private static final String PROPERTY_PID_FILENAME = CommonSingleton.runnerConf.pidFilename;
+	private static final String PROPERTY_STDOUT_FILENAME = CommonSingleton.runnerConf.stdoutFilename;
+	private static final String PROPERTY_STDERR_FILENAME = CommonSingleton.runnerConf.stderrFilename;
 
 	/** Create a new ProcessRunner. */
 	public ProcessRunner()
@@ -130,6 +130,8 @@ public class ProcessRunner
 	 */
 	public synchronized void setCommand(String cmd, boolean keepenv)
 	{
+		ProcessRunner.ensureNotEmpty(cmd);
+		
 		if (state != State.INVALID)
 			throw new IllegalStateException("ProcessRunner was not stopped/cleaned correctly!");
 		
@@ -145,6 +147,7 @@ public class ProcessRunner
 	 */
 	public synchronized void addArgument(String arg)
 	{
+		ProcessRunner.ensureNotNull(arg);
 		this.ensureStateReady();
 		command.add(arg);
 	}
@@ -158,8 +161,10 @@ public class ProcessRunner
 		this.ensureStateReady();
 		
 		sbuilder.setLength(0);
-		for (String value : values)
+		for (String value : values) {
+			ProcessRunner.ensureNotNull(value);
 			sbuilder.append(value);
+		}
 
 		command.add(sbuilder.toString());
 	}
@@ -170,6 +175,7 @@ public class ProcessRunner
 	 */
 	public synchronized void addArgValue(String value)
 	{
+		ProcessRunner.ensureNotNull(value);
 		this.ensureStateReady();
 		
 		final int index = command.size() - 1;
@@ -186,8 +192,10 @@ public class ProcessRunner
 		this.ensureStateReady();
 		
 		sbuilder.setLength(0);
-		for (String value : values)
+		for (String value : values) {
+			ProcessRunner.ensureNotNull(value);
 			sbuilder.append(value);
+		}
 
 		final int index = command.size() - 1;
 		String argument = command.get(index);
@@ -203,8 +211,10 @@ public class ProcessRunner
 	{
 		this.ensureStateReady();
 
-		for (String arg : args)
+		for (String arg : args) {
+			ProcessRunner.ensureNotNull(arg);
 			command.add(arg);
+		}
 	}
 	
 	/**
@@ -215,8 +225,10 @@ public class ProcessRunner
 	{
 		this.ensureStateReady();
 		
-		for (String arg : args)
+		for (String arg : args) {
+			ProcessRunner.ensureNotNull(arg);
 			command.add(arg);
+		}
 	}
 	
 	/**
@@ -226,6 +238,8 @@ public class ProcessRunner
 	 */
 	public synchronized void addEnvVariable(String var, String value)
 	{
+		ProcessRunner.ensureNotEmpty(var);
+		ProcessRunner.ensureNotNull(value, "Value for environment variable " + var + " is null.");
 		environment.put(var, value);
 	}
 	
@@ -738,6 +752,17 @@ public class ProcessRunner
 	{
 		if (object == null)
 			throw new IllegalStateException(message);
+	}
+	
+    private static void ensureNotNull(Object object) {
+        if (object == null)
+            throw new IllegalStateException("Argument is null!");
+    }
+	
+	private static void ensureNotEmpty(String arg)
+	{
+		if (arg == null || arg.isEmpty())
+			throw new IllegalArgumentException("Argument is null or empty!");
 	}
 }
 

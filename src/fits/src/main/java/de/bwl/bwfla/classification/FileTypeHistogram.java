@@ -16,7 +16,6 @@
  * along with the Emulation-as-a-Software framework.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-
 package de.bwl.bwfla.classification;
 
 import java.io.BufferedWriter;
@@ -31,10 +30,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import de.bwl.bwfla.common.utils.Pair;
 import edu.harvard.hul.ois.fits.FitsMetadataElement;
 import edu.harvard.hul.ois.fits.FitsOutput;

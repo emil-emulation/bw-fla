@@ -34,6 +34,11 @@ public class EaasConf extends Configuration
 {
 	private static final long	serialVersionUID	= -4176097416561837971L;
 	
+	/** Timeout for unused/expired sessions (in seconds) */
+	public long sessionIdleTimeout = 5 * 60;
+	
+	public String softwareArchive;
+	
 	@XmlElements({@XmlElement(name="bladeClusterPlugin", type=BladeClusterPlugin.class), @XmlElement(name="googleCloudPlugin", type=GoogleCloudPlugin.class)})
 	public List<IPlugin> plugins;
 }

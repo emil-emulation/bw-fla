@@ -45,7 +45,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlEnum
 public enum ConnectionType {
 
-    HTML,
+    HTTP,
+    HTTPS,
     VNC,
     RDP,
     NONE;

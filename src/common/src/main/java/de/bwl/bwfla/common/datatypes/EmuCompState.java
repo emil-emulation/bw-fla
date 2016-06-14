@@ -19,6 +19,8 @@
 
 package de.bwl.bwfla.common.datatypes;
 
+import java.util.Map;
+import java.util.TreeMap;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 import javax.xml.bind.annotation.XmlType;
@@ -40,6 +42,9 @@ public enum EmuCompState
 	@XmlEnumValue("running")
 	EMULATOR_RUNNING("running"),
 	
+	@XmlEnumValue("inactive")
+	EMULATOR_INACTIVE("inactive"),
+	
 	@XmlEnumValue("stopped")
 	EMULATOR_STOPPED("stopped"),
 	
@@ -59,12 +64,20 @@ public enum EmuCompState
         return value;
     }
 
-    public static EmuCompState fromValue(String v) {
-        for (EmuCompState c: EmuCompState.values()) {
-            if (c.value.equals(v)) {
-                return c;
-            }
-        }
-        throw new IllegalArgumentException(v);
+    public static EmuCompState fromValue(String value)
+    {
+    	EmuCompState state = VALUES.get(value);
+        if (state == null)
+        	throw new IllegalArgumentException(value);
+        
+        return state;
+    }
+    
+    /** Local copy of the possible values */
+    private static final Map<String, EmuCompState> VALUES;
+    static {
+    	VALUES = new TreeMap<String, EmuCompState>(String.CASE_INSENSITIVE_ORDER);
+    	for (EmuCompState state: EmuCompState.values())
+    		VALUES.put(state.value(), state);
     }
 }

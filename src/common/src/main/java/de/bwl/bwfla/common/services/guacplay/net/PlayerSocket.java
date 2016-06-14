@@ -27,6 +27,7 @@ import org.glyptodon.guacamole.io.GuacamoleReader;
 import org.glyptodon.guacamole.io.GuacamoleWriter;
 import org.glyptodon.guacamole.net.GuacamoleSocket;
 import org.glyptodon.guacamole.protocol.GuacamoleInstruction;
+
 import de.bwl.bwfla.common.services.guacplay.util.CharArrayWrapper;
 import de.bwl.bwfla.common.services.guacplay.util.ConditionVariable;
 import de.bwl.bwfla.common.services.guacplay.util.ICharArrayConsumer;
@@ -37,46 +38,39 @@ import de.bwl.bwfla.common.services.guacplay.util.RingBufferSPSC;
 public final class PlayerSocket implements GuacamoleSocket
 {
 	// Member fields
-	private final MessageReader reader;
-	private final Forwarder forwarder;
-	private GuacamoleWriter writer;
+	private final GuacReaderWrapper reader;
+	private final GuacWriter writer;
+	private GuacamoleWriter curwriter;
 	private boolean opened;
 	
 	/** A dummy-writer instance.  */
 	private static final DisabledWriter DISABLED_WRITER = new DisabledWriter();
 	
-	
 	/** Constructor */
-	public PlayerSocket(IGuacInterceptor interceptor, int msgBufferCapacity)
+	public PlayerSocket(GuacReader reader, GuacWriter writer, ICharArrayConsumer output, int msgBufferCapacity)
 	{
-		this.reader = new MessageReader(interceptor, msgBufferCapacity);
-		this.forwarder = new Forwarder();
-		this.writer = DISABLED_WRITER;
+		this.reader = new GuacReaderWrapper(reader, output, msgBufferCapacity);
+		this.writer = writer;
+		this.curwriter = DISABLED_WRITER;
 		this.opened = true;
 	}
-	
+
 	/** Post a new message for the socket's reader. */
 	public void post(char[] data, int offset, int length)
 	{
-		reader.put(data, offset, length);
+		reader.post(data, offset, length);
 	}
 	
-	/** Disable the writing through this socket. */
+	/** Disable writing through this socket. */
 	public void disableWriting()
 	{
-		writer = DISABLED_WRITER;
+		curwriter = DISABLED_WRITER;
 	}
 	
-	/** Enable the writing through this socket. */
+	/** Enable writing through this socket. */
 	public void enableWriting()
 	{
-		writer = forwarder;
-	}
-	
-	/** Set the output-destination for the socket's writer. */
-	public void setWriterOutput(ICharArrayConsumer output)
-	{
-		forwarder.setOutput(output);
+		curwriter = writer;
 	}
 	
 	
@@ -85,7 +79,7 @@ public final class PlayerSocket implements GuacamoleSocket
 	@Override
 	public GuacamoleWriter getWriter()
 	{
-		return writer;
+		return curwriter;
 	}
 	
 	@Override
@@ -103,40 +97,39 @@ public final class PlayerSocket implements GuacamoleSocket
 	@Override
 	public void close() throws GuacamoleException
 	{
-		reader.close();
 		opened = false;
 	}
 }
 
 
-/** Internal class for reading from a message queue. */
-final class MessageReader implements IGuacReader
+/** Internal class for reading from a message queue and a wrapped reader. */
+final class GuacReaderWrapper implements IGuacReader
 {
 	// Member fields
 	private final RingBufferSPSC<CharArrayWrapper> messages;
-	private final IGuacInterceptor interceptor;
 	private final ConditionVariable condition;
-	private volatile boolean closed;
+	private final ICharArrayConsumer output;
+	private final GuacReader reader;
 	
 	/** A timeout for waiting on empty/full queue. */
 	private static final long RETRY_TIMEOUT = 500L;
 	
 	
 	/** Constructor */
-	public MessageReader(IGuacInterceptor interceptor, int msgBufferCapacity)
+	public GuacReaderWrapper(GuacReader reader, ICharArrayConsumer output, int msgBufferCapacity)
 	{
 		final CharArrayWrapper[] entries = new CharArrayWrapper[msgBufferCapacity];
 		for (int i = 0; i < msgBufferCapacity; ++i)
 			entries[i] = new CharArrayWrapper();
 		
 		this.messages = new RingBufferSPSC<CharArrayWrapper>(entries);
-		this.interceptor = interceptor;
 		this.condition = new ConditionVariable();
-		this.closed = false;
+		this.output = output;
+		this.reader = reader;
 	}
-	
+
 	/** Add a new message to the queue. */
-	public void put(char[] data, int offset, int length)
+	public void post(char[] data, int offset, int length)
 	{
 		CharArrayWrapper message = null;
 		
@@ -145,120 +138,80 @@ final class MessageReader implements IGuacReader
 			condition.await(RETRY_TIMEOUT);
 		
 		message.set(data, offset, length);
-		final int count = messages.finishPutOp();
-		if (count == 1)
-			condition.signal();  // Was empty before!
+		messages.finishPutOp();
 	}
-	
-	/** Mark this reader as closed. */
-	public void close()
-	{
-		closed = true;
-		condition.signalAll();
-	}
-	
+
 	
 	/* =============== IGuacReader Implementation =============== */
 	
 	@Override
-	public IGuacInterceptor getInterceptor()
-	{
-		return interceptor;
-	}
-	
-	@Override
 	public boolean available() throws GuacamoleException
 	{
-		return !messages.isEmpty();
+		return reader.available() || !messages.isEmpty();
 	}
 
-	@Override
-	public boolean readInto(Writer output) throws GuacamoleException
-	{
-		CharArrayWrapper message = null;
-		
-		// Read the next message
-		while ((message = messages.beginTakeOp()) == null) {
-			condition.await(RETRY_TIMEOUT);
-			if (closed)
-				return false;  // Nothing read!
-		}
-		
-		// Handle the data...
-		try {
-			// Write the message directly into the output, when not dropped.
-			if ((interceptor == null) || interceptor.onServerMessage(message))
-				output.write(message.array(), message.offset(), message.length());
-		}
-		catch (Exception exception) {
-			// Something is broken, rethrow
-			if (exception instanceof GuacamoleException)
-				throw (GuacamoleException) exception;
-			else throw new GuacamoleServerException(exception);
-		}
-		finally {
-			// Signal, that a new entry can be added!
-			messages.finishTakeOp();
-			condition.signal();
-		}
-
-		return true;
-	}
-	
 	@Override
 	public GuacamoleInstruction readInstruction() throws GuacamoleException
 	{
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public IGuacInterceptor getInterceptor()
+	{
+		return reader.getInterceptor();
+	}
+
+	@Override
+	public boolean readInto(Writer writer) throws GuacamoleException
+	{
+		boolean isDataRead = false;
+		
+		try {
+			// Write data from posted messages
+			CharArrayWrapper message = null;
+			while ((message = messages.beginTakeOp()) != null) {
+				try {
+					char[] data = message.array();
+					int offset = message.offset();
+					int length = message.length();
+					writer.write(data, offset, length);
+					isDataRead = true;
+				}
+				finally {
+					message.reset();
+					messages.finishTakeOp();
+				}
+			}
+			
+			// Write data from tunnel
+			final char[] data = this.read();
+			if (data != null) {
+				writer.write(data, 0, data.length);
+				isDataRead = true;
+			}
+		}
+		catch (Exception exception) {
+			throw new GuacamoleServerException(exception);
+		}
+		
+		return isDataRead;
+	}
 	
 	@Override
 	public char[] read() throws GuacamoleException
 	{
-		throw new UnsupportedOperationException();
-	}
-}
-
-
-/** Special writer, that forwards everything to the registered {@link ICharArrayConsumer}. */
-final class Forwarder implements GuacamoleWriter
-{
-	private ICharArrayConsumer output;
-	
-	/** Set the output-consumer. */
-	public void setOutput(ICharArrayConsumer output)
-	{
-		this.output = output;
-	}
-	
-	
-	/* =============== GuacamoleWriter Implementation =============== */
-	
-	@Override
-	public void write(char[] data) throws GuacamoleException
-	{
-		try {
-			output.consume(data, 0, data.length);
+		final char[] data = reader.read();
+		if (data != null) {
+			try {
+				output.consume(data, 0, data.length);
+			}
+			catch (Exception exception) {
+				throw new GuacamoleServerException(exception);
+			}
 		}
-		catch (Exception exception) {
-			throw new GuacamoleServerException(exception);
-		}
-	}
-
-	@Override
-	public void write(char[] data, int offset, int length) throws GuacamoleException
-	{
-		try {
-			output.consume(data, offset, length);
-		}
-		catch (Exception exception) {
-			throw new GuacamoleServerException(exception);
-		}
-	}
-
-	@Override
-	public void writeInstruction(GuacamoleInstruction instruction) throws GuacamoleException
-	{
-		this.write(instruction.toString().toCharArray());
+		
+		return data;
 	}
 }
 

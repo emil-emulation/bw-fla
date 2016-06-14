@@ -19,59 +19,142 @@
 
 package de.bwl.bwfla.common.utils;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+
+import de.bwl.bwfla.common.exceptions.BWFLAException;
 
 public class NetworkUtils {
+    public static List<InetAddress> getPublicHostAddresses() {
+        List<InetAddress> result = new ArrayList<InetAddress>();
+        
+        try {
+            for (Enumeration<NetworkInterface> ifaces = NetworkInterface
+                    .getNetworkInterfaces(); ifaces.hasMoreElements();) {
+                NetworkInterface iface = ifaces.nextElement();
+
+                for (Enumeration<InetAddress> addresses = iface
+                        .getInetAddresses(); addresses.hasMoreElements();) {
+                    InetAddress address = addresses.nextElement();
+                    if (!address.isLoopbackAddress()
+                            && !address.isAnyLocalAddress()
+                            && !address.isLinkLocalAddress()) {
+                        result.add(address);
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            // the only function that throws is the above block is
+            // NetworkInterface.getNetworkInterfaces()
+            // if this happens, we can't get a list of network interfaces,
+            // so we'll just return an empty list
+        }
+        return result;
+    }
+    
 	/**
-	 * Returns a network address the host is available on. If JBoss is bound to
-	 * a single IP address, this address is used. Else (e.g. JBoss listens on
-	 * 0.0.0.0), the list of all available network addresses for the host
-	 * machine is used to return the first address that is not 127.0.0.1.
+	 * Returns a non-loopback network address the host is reachable on.
+	 * If JBoss is bound to a single IP address, this address is preferred.
+	 * If JBoss' address is not suitable (e.g. JBoss listens on 0.0.0.0 or ::),
+	 * the list of all available network addresses for the host
+	 * machine is used to return the first address that is not a loopback
+	 * address.
 	 * 
 	 * @return An InetAddress that this host is available on or null if
 	 *         none can be found.
+	 * @throws BWFLAException if no public address can be found.
 	 */
-	public static InetAddress getHostAddress() {
+	public static InetAddress getHostAddress() throws BWFLAException {
+	    List<InetAddress> addresses = NetworkUtils.getPublicHostAddresses();
+	    if (addresses.size() > 0) {
+	        return addresses.get(0);
+	    }
+	    // we cannot determine a single public host address
+	    throw new BWFLAException("Cannot determine at least one public address for this host.");
+	}
+	
+	public static InetAddress getJBossAddress() throws UnknownHostException {
+        return InetAddress.getByName(System.getProperty("jboss.bind.address"));
+	}
+	
+	/**
+	 * Returns an address that is suitable for external binding a webservice
+	 * on this host.
+	 * This is either the address that JBoss is explicitly bound to or the
+	 * first public IP address if JBoss is bound to 0.0.0.0 or ::.
+	 * 
+     * @return An InetAddress that is suitable for use in a webservice
+     * @throws BWFLAException if no suitable address can be found.
+	 */
+	public static InetAddress getHostWSAddress(boolean allowlocal) throws BWFLAException {
+	    try {
+	        InetAddress address = NetworkUtils.getJBossAddress();
+	        // loopback or wildcard addresses are not suitable for externally
+	        // accessing a WSDL. If the caller is sure that he wants a
+	        // loopback address, he should just use one.
+	        if ((!allowlocal && address.isLoopbackAddress()) || address.isAnyLocalAddress()) {
+	            return NetworkUtils.getHostAddress();
+	        }
+	        return address;
+	    } catch (Exception e) {
+	        throw new BWFLAException("Cannot not determine a public WSDL address for this host.");
+	    }
+	}
+	public static InetAddress getHostWSAddress() throws BWFLAException {
+	    return NetworkUtils.getHostWSAddress(true);
+	}
+	
+	protected static InetAddress getJBossAddress2() throws BWFLAException {
+        try {
+            InetAddress address = InetAddress.getByName(System
+                    .getProperty("jboss.bind.address"));
+
+            // note that we allow multicast addresses here in case we want
+            // really strange scenarios
+            if (address.isLinkLocalAddress()) {
+                throw new BWFLAException("Could not determine jboss address: is a link local address");
+            }
+            if (address.isAnyLocalAddress()) {
+                // the IP address is "::" or "0.0.0.0",
+                // get a suitable public address
+                address = NetworkUtils.getHostAddress();
+            }
+            return address;
+        } catch (UnknownHostException e) {
+            throw new BWFLAException(e);
+        }
+	}
+	
+	/* grr execptions make things complicated */
+	private static boolean isPortOpen(Socket sock, InetSocketAddress isa) {
 		try {
-			InetAddress address = InetAddress.getByName(System
-					.getProperty("jboss.bind.address"));
-
-			// note that we allow multicast addresses here in case we want
-			// really strange scenarios
-			if (!address.isAnyLocalAddress()) {
-				return address;
-			}
-		} catch (Throwable t) {
-			// this can be ignored as it is thrown if jboss' binding address
-			// is invalid for some reason
-			// proceed with network address iteration
+			sock.connect(isa, 100);
+			sock.close();
+			return true;
+		} catch (IOException e) {
+			// log.info(e.getMessage());
+			return false;
 		}
+	}
 
-		// JBoss' address binding is not suitable, find available network
-		// addresses from the host system
-
-		try {
-			for (Enumeration<NetworkInterface> ifaces = NetworkInterface
-					.getNetworkInterfaces(); ifaces.hasMoreElements();) {
-				NetworkInterface iface = ifaces.nextElement();
-
-				for (Enumeration<InetAddress> addresses = iface
-						.getInetAddresses(); addresses.hasMoreElements();) {
-					InetAddress address = addresses.nextElement();
-					if (!address.isLoopbackAddress()) {
-						return address;
-					}
-				}
+	public static boolean waitForTcpPort(String ip, int port, int maxtrys) {
+		for (int i = 0; i < maxtrys; i++) {
+			Socket sock = new Socket();
+			InetSocketAddress isa = new InetSocketAddress(ip, port);
+			if (isPortOpen(sock, isa))
+				return true;
+			try {
+				Thread.sleep(100);
+			} catch (Exception e) {
 			}
-		} catch (Throwable t) {
-			// the only function that throws is the above block is
-			// NetworkInterface.getNetworkInterfaces()
-			// if this happens, we can't get a list of network interfaces,
-			// so we'll just return null
-			return null;
 		}
-		return null;
+		return false;
 	}
 }

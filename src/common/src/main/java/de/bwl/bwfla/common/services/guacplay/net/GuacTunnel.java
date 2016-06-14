@@ -21,8 +21,8 @@ package de.bwl.bwfla.common.services.guacplay.net;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.glyptodon.guacamole.GuacamoleException;
+import org.glyptodon.guacamole.io.GuacamoleWriter;
 import org.glyptodon.guacamole.net.GuacamoleSocket;
 import org.glyptodon.guacamole.net.GuacamoleTunnel;
 
@@ -30,6 +30,8 @@ import org.glyptodon.guacamole.net.GuacamoleTunnel;
 /** @see GuacamoleTunnel */
 public class GuacTunnel extends GuacamoleTunnel
 {
+	private String cookie;
+	
 	/** Factory method. */
 	public static GuacTunnel construct(TunnelConfig tunconf)
 	{
@@ -60,7 +62,7 @@ public class GuacTunnel extends GuacamoleTunnel
 
 		final String tunid = this.getUUID().toString().toUpperCase();
 		final Logger log = LoggerFactory.getLogger(this.getClass());
-		log.info("Tunnel established. ID: {}", tunid);
+		log.info("Tunnel established (ID: {}).", tunid);
 	}
 	
 	/** Returns the underlying socket's writer as {@link GuacWriter}. */
@@ -78,9 +80,18 @@ public class GuacTunnel extends GuacamoleTunnel
 	/** Send a disconnect-instruction to the underlying socket. */
 	public void disconnect() throws GuacamoleException
 	{
-		// Send termination instruction
-		GuacWriter writer = this.getGuacWriter();
-		writer.write("10.disconnect;".toCharArray());
+		GuacamoleWriter writer = this.acquireWriter();
+		try {
+			// Try to send termination instruction
+			writer.write("10.disconnect;".toCharArray());
+		}
+		catch (GuacamoleException exception) {
+			Logger log = LoggerFactory.getLogger(this.getClass());
+			log.warn("Sending disconnect-instruction to guacd failed!");
+		}
+		finally {
+			this.releaseWriter();
+		}
 	}
 	
 	@Override
@@ -97,6 +108,24 @@ public class GuacTunnel extends GuacamoleTunnel
 		
 		super.close();
 
-		log.info("Tunnel closed. ID: {}", tunid);
+		if (!(this.getSocket() instanceof GuacSocket)) {
+			log.info("Tunnel closed (ID: {}).", tunid);
+			return;
+		}
+		
+		// Print tunnel's statistics to log
+		final long numBytesRead = this.getGuacReader().getNumBytesRead();
+		final long numBytesWritten = this.getGuacWriter().getNumBytesWritten();
+		log.info("Tunnel closed (ID: {}). {} bytes read, {} bytes written.", tunid, numBytesRead, numBytesWritten);
+	}
+
+	public void setCookie(String cookie)
+	{
+		this.cookie = cookie;
+	}
+	
+	public String getCookie()
+	{
+		return this.cookie;
 	}
 }

@@ -19,4 +19,4 @@
 
 package de.bwl.bwfla.common.datatypes;
 
-public enum ConnectionType { HTML, VNC, RDP}
+public enum ConnectionType { HTTP, HTTPS, VNC, RDP}

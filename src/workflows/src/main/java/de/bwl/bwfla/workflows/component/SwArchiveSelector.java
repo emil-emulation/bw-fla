@@ -21,6 +21,7 @@ package de.bwl.bwfla.workflows.component;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -51,13 +52,18 @@ public class SwArchiveSelector extends UINamingContainer {
 		
 		try 
 		{
+			File swIndex = new File(swArchiveIndex);
+			if(!swIndex.exists())
+				return new ArrayList<SoftwareDescription>();
+			
 			SoftwareArchive softwareArchive = SoftwareArchive.fromFile(new File(swArchiveIndex));
 			return softwareArchive.getSoftwareList();
 		} 
 		catch (FileNotFoundException | JAXBException e) 
 		{
 			// e.printStackTrace();
-			throw new WFPanicException("Software Archive configuration seems to be broken: " + e.getMessage(), e);
+			log.severe("Software Archive configuration seems to be broken: " + e.getMessage());
+			return new ArrayList<>();
 		}
 	}
 	
