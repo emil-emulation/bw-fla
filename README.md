@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/eaas-framework/bw-fla.svg?branch=master)](https://travis-ci.org/eaas-framework/bw-fla)
+
 ## Prerequisites and Preparation
 + Java 7
 + Apache Maven > 3.x
